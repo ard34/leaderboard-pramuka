@@ -236,8 +236,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
           </div>
         </header>
 
-        {/* Dynamic Update Time text placed directly in pre-printed box space */}
-        <span className="update-time-display">{lastUpdate}</span>
+
 
         {/* Glass Table Container Overlay */}
         <div className="glass-table-container">
