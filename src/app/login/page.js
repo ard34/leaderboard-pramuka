@@ -56,7 +56,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 font-sans text-slate-200 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-200 relative overflow-hidden" style={{
+      backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.92) 0%, rgba(3, 7, 18, 0.96) 100%), url('/scout_event_live.png')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundAttachment: "fixed",
+    }}>
       {/* Offline Banner */}
       {!isOnline && (
         <div className="offline-banner">

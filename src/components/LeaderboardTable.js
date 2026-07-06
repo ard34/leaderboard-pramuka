@@ -1,59 +1,177 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-
-/**
- * LeaderboardTable — Komponen reusable untuk tabel klasemen.
- * Mendukung animasi auto-sort (FR-LB-02) saat posisi berubah.
- *
- * Props:
- * - data: Array of { id, nomor_dada, nama_regu, pangkalan, total_nilai }
- * - accentColor: "emerald" | "cyan" | "purple"
- * - tingkat: label tingkatan untuk display
- */
-
-const accentMap = {
-  emerald: {
-    gradient: "from-emerald-400 to-cyan-400",
-    badge: "bg-emerald-500/10 border-emerald-500/20",
-    badgeText: "text-emerald-400",
-    ping: "bg-emerald-400",
-    pingDot: "bg-emerald-500",
-    rowHighlight: "bg-emerald-900/10",
-    numberColor: "text-emerald-400",
-    glow1: "bg-emerald-500/10",
-    glow2: "bg-emerald-500/5",
-  },
-  cyan: {
-    gradient: "from-cyan-400 to-blue-500",
-    badge: "bg-cyan-500/10 border-cyan-500/20",
-    badgeText: "text-cyan-400",
-    ping: "bg-cyan-400",
-    pingDot: "bg-cyan-500",
-    rowHighlight: "bg-cyan-900/10",
-    numberColor: "text-cyan-400",
-    glow1: "bg-cyan-500/10",
-    glow2: "bg-blue-500/5",
-  },
-  purple: {
-    gradient: "from-purple-400 to-fuchsia-500",
-    badge: "bg-purple-500/10 border-purple-500/20",
-    badgeText: "text-purple-400",
-    ping: "bg-purple-400",
-    pingDot: "bg-purple-500",
-    rowHighlight: "bg-purple-900/10",
-    numberColor: "text-purple-400",
-    glow1: "bg-purple-500/10",
-    glow2: "bg-fuchsia-500/5",
-  },
-};
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LeaderboardTable({ data, accentColor = "emerald", tingkat }) {
-  const theme = accentMap[accentColor] || accentMap.emerald;
+  const [lombaList, setLombaList] = useState([]);
+  const [nilaiMap, setNilaiMap] = useState({});
+  const [tickerItems, setTickerItems] = useState([]);
+  const [clock, setClock] = useState("");
+  const [lastUpdate, setLastUpdate] = useState("—");
   const [changedIds, setChangedIds] = useState(new Set());
+  const [changedCellKey, setChangedCellKey] = useState(null);
+  
   const prevDataRef = useRef(new Map());
 
-  // Detect rank changes and trigger animations
+  // Determine category based on accentColor prop
+  const kategori = accentColor === "emerald" ? "SD" : accentColor === "cyan" ? "SMP" : "SMK";
+
+  // Live Clock
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      setClock(now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch lomba and assessment details
+  const fetchDetails = async () => {
+    try {
+      // 1. Fetch lomba
+      const { data: lombaData } = await supabase
+        .from("lomba")
+        .select("id, nama_lomba, kode_lomba")
+        .eq("kategori", kategori)
+        .order("nama_lomba", { ascending: true });
+
+      if (lombaData) setLombaList(lombaData);
+
+      // 2. Fetch nilai if there are participants
+      if (data && data.length > 0) {
+        const ids = data.map((p) => p.id);
+        const { data: nilaiData } = await supabase
+          .from("penilaian")
+          .select("peserta_id, lomba_id, nilai")
+          .in("peserta_id", ids);
+
+        if (nilaiData) {
+          const map = {};
+          const counts = {};
+          nilaiData.forEach((n) => {
+            const key = `${n.peserta_id}_${n.lomba_id}`;
+            if (!map[key]) {
+              map[key] = 0;
+              counts[key] = 0;
+            }
+            map[key] += n.nilai;
+            counts[key] += 1;
+          });
+          Object.keys(map).forEach((key) => {
+            map[key] = Math.round((map[key] / counts[key]) * 100) / 100;
+          });
+          setNilaiMap(map);
+        }
+      }
+
+      // 3. Fetch recent scores for ticker
+      const { data: recentScores } = await supabase
+        .from("penilaian")
+        .select(`
+          id,
+          nilai,
+          updated_at,
+          peserta!inner (nama_regu, pangkalan, kategori),
+          lomba:lomba_id (nama_lomba)
+        `)
+        .eq("peserta.kategori", kategori)
+        .order("updated_at", { ascending: false })
+        .limit(15);
+
+      if (recentScores) {
+        const items = recentScores.map((s) => {
+          const time = new Date(s.updated_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+          return {
+            id: s.id,
+            text: `${s.peserta.nama_regu}: ${s.lomba.nama_lomba} = ${s.nilai}`,
+            time,
+          };
+        });
+        setTickerItems(items);
+      }
+
+      setLastUpdate(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    } catch (e) {
+      console.error("Error loading subpage details:", e);
+    }
+  };
+
+  // Load details on mount or data change
+  useEffect(() => {
+    fetchDetails();
+  }, [data, kategori]);
+
+  // Realtime update listener specifically for this category
+  useEffect(() => {
+    const handleRealtimeChange = async (payload) => {
+      await fetchDetails();
+      if (payload?.new?.id) {
+        setChangedIds(new Set([payload.new.id]));
+        setTimeout(() => setChangedIds(new Set()), 3500);
+      }
+    };
+
+    const channelPeserta = supabase
+      .channel(`realtime-subpage-peserta-${kategori}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "peserta", filter: `kategori=eq.${kategori}` },
+        handleRealtimeChange
+      )
+      .subscribe();
+
+    const channelNilai = supabase
+      .channel(`realtime-subpage-nilai-${kategori}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "penilaian" },
+        async (payload) => {
+          await fetchDetails();
+
+          if (payload.new && payload.new.peserta_id) {
+            setChangedIds(new Set([payload.new.peserta_id]));
+            setTimeout(() => setChangedIds(new Set()), 3500);
+
+            const cellKey = `${payload.new.peserta_id}_${payload.new.lomba_id}`;
+            setChangedCellKey(cellKey);
+            setTimeout(() => setChangedCellKey(null), 3000);
+
+            const { data: p } = await supabase
+              .from("peserta")
+              .select("nama_regu, pangkalan, kategori")
+              .eq("id", payload.new.peserta_id)
+              .single();
+
+            const { data: l } = await supabase
+              .from("lomba")
+              .select("nama_lomba")
+              .eq("id", payload.new.lomba_id)
+              .single();
+
+            if (p && l && p.kategori === kategori) {
+              const time = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+              setTickerItems((prev) => [{
+                id: Date.now(),
+                text: `${p.nama_regu}: ${l.nama_lomba} = ${payload.new.nilai}`,
+                time,
+              }, ...prev].slice(0, 30));
+              setLastUpdate(time);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channelPeserta);
+      supabase.removeChannel(channelNilai);
+    };
+  }, [kategori]);
+
+  // Rank change detection animations for existing items
   useEffect(() => {
     const prevMap = prevDataRef.current;
     const newChangedIds = new Set();
@@ -67,11 +185,10 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
 
     if (newChangedIds.size > 0) {
       setChangedIds(newChangedIds);
-      const timer = setTimeout(() => setChangedIds(new Set()), 1200);
+      const timer = setTimeout(() => setChangedIds(new Set()), 1500);
       return () => clearTimeout(timer);
     }
 
-    // Store current positions for next comparison
     const newMap = new Map();
     data.forEach((item, index) => {
       newMap.set(item.id, { index, total_nilai: item.total_nilai });
@@ -79,115 +196,157 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
     prevDataRef.current = newMap;
   }, [data]);
 
-  // Update prevDataRef after change detection
-  useEffect(() => {
-    const newMap = new Map();
-    data.forEach((item, index) => {
-      newMap.set(item.id, { index, total_nilai: item.total_nilai });
-    });
-    prevDataRef.current = newMap;
-  }, [data]);
-
-  const getMedalClass = (index) => {
-    if (index === 0) return "medal-gold";
-    if (index === 1) return "medal-silver";
-    if (index === 2) return "medal-bronze";
-    return "bg-slate-800/80 text-slate-400";
+  const getNilai = (pesertaId, lombaId) => {
+    return nilaiMap[`${pesertaId}_${lombaId}`];
   };
 
-  return (
-    <div className="min-h-screen bg-[#030712] font-sans text-slate-200 p-4 md:p-10 relative overflow-hidden">
-      {/* Background Glow Effects */}
-      <div className={`absolute top-[-10%] left-[-10%] w-[500px] h-[500px] ${theme.glow1} blur-[120px] rounded-full pointer-events-none animate-pulse-glow`} />
-      <div className={`absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] ${theme.glow2} blur-[120px] rounded-full pointer-events-none animate-pulse-glow`} style={{ animationDelay: "1.5s" }} />
-      <div className="bg-grid absolute inset-0 pointer-events-none" />
+  const today = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
-      <div className="max-w-6xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="text-center mb-10 md:mb-14 space-y-3">
-          <p className="text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-slate-500 mb-2">
-            Lomba Pramuka 2026
-          </p>
-          <h1 className={`text-4xl sm:text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r ${theme.gradient} tracking-tight leading-tight`}>
-            LIVE KLASEMEN
-          </h1>
-          <p className="text-lg md:text-xl text-slate-400 font-semibold tracking-widest uppercase">
-            {tingkat}
-          </p>
-          <div className={`mt-5 inline-flex items-center space-x-2.5 ${theme.badge} border px-5 py-2.5 rounded-full`}>
-            <span className="relative flex h-2.5 w-2.5">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${theme.ping} opacity-75`} />
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${theme.pingDot}`} />
-            </span>
-            <span className={`${theme.badgeText} text-xs font-bold tracking-[0.2em]`}>
-              REAL-TIME BROADCAST
-            </span>
+  const getTotalClass = (score) => {
+    if (score === null || score === undefined || score === 0) return "total-mid";
+    if (score >= 93) return "total-high";
+    if (score >= 70) return "total-mid";
+    return "total-low";
+  };
+
+  const displayTickerItems = tickerItems.length > 0
+    ? tickerItems
+    : [
+        { id: "t1", text: `Lomba Pramuka Tingkat ${kategori} sedang berlangsung`, time: "" },
+        { id: "t2", text: "Klasemen diperbarui secara real-time melalui sistem dewan juri", time: "" }
+      ];
+
+  return (
+    <div className={`scoreboard-layout theme-${accentColor}`}>
+      <div className="scoreboard-container">
+        {/* Sidebar Image Overlay */}
+        <img src="/sidebar.png" className="scoreboard-sidebar-img" alt="Scout Sidebar" />
+
+        {/* Top Header Meta Info */}
+        <header className="scoreboard-header">
+          <div className="header-right-meta">
+            <div className="live-indicator">
+              LIVE
+            </div>
+            <span className="header-date">{today}</span>
+          </div>
+        </header>
+
+        {/* Dynamic Update Time text placed directly in pre-printed box space */}
+        <span className="update-time-display">{lastUpdate}</span>
+
+        {/* Glass Table Container Overlay */}
+        <div className="glass-table-container">
+          {/* Info Bar at top of glass container */}
+          <div className="scoreboard-info-bar">
+            <div className="info-bar-left">
+              <span className="info-bar-title">KLASEMEN KATEGORI {kategori} - LIVE</span>
+            </div>
+            <div className="info-bar-right">
+              <span className="info-bar-clock">LIVE CLOCK {clock}</span>
+            </div>
+          </div>
+
+          {/* Leaderboard Table Grid */}
+          <div className="scoreboard-table-wrap">
+            <div className="scoreboard-table-scroll no-scrollbar">
+              <table className="scoreboard-table">
+                <thead>
+                  <tr>
+                    <th className="sc-th-rank sticky-col-rank col-rank">Peringkat</th>
+                    <th className="sc-th-name sticky-col-name col-name">NAMA SEKOLAH</th>
+                    {lombaList.map((lomba) => (
+                      <th key={lomba.id} title={lomba.nama_lomba} className="col-lomba">
+                        <div className="sc-th-lomba">{lomba.kode_lomba || lomba.nama_lomba.substring(0, 4)}</div>
+                      </th>
+                    ))}
+                    <th className="sc-th-total sticky-col-total col-total">TOTAL<br />AKUMULASI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.length === 0 ? (
+                    <tr>
+                      <td colSpan={lombaList.length + 3} className="scoreboard-empty">
+                        Belum ada regu terdaftar untuk tingkat {kategori}.
+                      </td>
+                    </tr>
+                  ) : (
+                    data.map((regu, index) => {
+                      const isChanged = changedIds.has(regu.id);
+                      return (
+                        <tr
+                          key={regu.id}
+                          id={`row-${regu.id}`}
+                          className={`scoreboard-row leaderboard-row ${isChanged ? "rank-changed" : ""}`}
+                        >
+                          <td className="sticky-col-rank col-rank">
+                            <span className="rank-number">{index + 1}</span>
+                          </td>
+                          <td className="sticky-col-name col-name">
+                            <div className="school-name" title={`${regu.nama_regu} (${regu.pangkalan})`}>
+                              {regu.nama_regu}
+                            </div>
+                          </td>
+                          {lombaList.map((lomba) => {
+                            const val = getNilai(regu.id, lomba.id);
+                            const cellKey = `${regu.id}_${lomba.id}`;
+                            const isCellChanged = changedCellKey === cellKey;
+                            return (
+                              <td key={lomba.id} className="col-lomba">
+                                <span className={`score-chip ${val === undefined ? "empty" : ""} ${isCellChanged ? "cell-updated" : ""}`}>
+                                  {val !== undefined ? val : "\u2014"}
+                                </span>
+                              </td>
+                            );
+                          })}
+                          <td className="sticky-col-total col-total">
+                            <span className={`total-score ${getTotalClass(regu.total_nilai)} ${isChanged ? "score-updated" : ""}`}>
+                              {regu.total_nilai ?? 0}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="glass-card shadow-2xl overflow-hidden">
-          <table className="w-full text-left border-collapse leaderboard-table">
-            <thead>
-              <tr className="bg-slate-950/60 text-slate-500 text-[0.7rem] md:text-xs uppercase tracking-[0.15em]">
-                <th className="p-4 md:p-6 font-bold w-20 md:w-24 text-center">Rank</th>
-                <th className="p-4 md:p-6 font-bold hide-mobile">No. Dada</th>
-                <th className="p-4 md:p-6 font-bold">Regu & Pangkalan</th>
-                <th className="p-4 md:p-6 font-bold text-right w-28 md:w-40">Total Skor</th>
-              </tr>
-            </thead>
-            <tbody className="stagger-fade-in">
-              {data.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="p-16 text-center text-slate-600 italic text-lg">
-                    <div className="flex flex-col items-center gap-3">
-                      <svg className="w-12 h-12 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                      Belum ada regu yang dinilai.
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                data.map((regu, index) => (
-                  <tr
-                    key={regu.id}
-                    className={`leaderboard-row border-t border-slate-800/40 ${
-                      index < 3 ? theme.rowHighlight : "hover:bg-slate-800/30"
-                    } ${changedIds.has(regu.id) ? "rank-changed" : ""}`}
-                  >
-                    {/* Rank Medal */}
-                    <td className="p-4 md:p-6 text-center">
-                      <span className={`inline-flex items-center justify-center w-9 h-9 md:w-11 md:h-11 rounded-full font-black text-sm md:text-base ${getMedalClass(index)}`}>
-                        {index + 1}
-                      </span>
-                    </td>
-                    {/* Nomor Dada */}
-                    <td className={`p-4 md:p-6 text-xl md:text-2xl font-bold font-mono ${theme.numberColor} hide-mobile`}>
-                      {regu.nomor_dada}
-                    </td>
-                    {/* Nama Regu & Pangkalan */}
-                    <td className="p-4 md:p-6">
-                      <div className="text-base md:text-xl font-bold text-white mb-0.5">{regu.nama_regu}</div>
-                      <div className="text-xs md:text-sm text-slate-500">{regu.pangkalan}</div>
-                      <div className={`md:hidden text-xs font-mono ${theme.numberColor} mt-1`}>No. {regu.nomor_dada}</div>
-                    </td>
-                    {/* Total Score */}
-                    <td className="p-4 md:p-6 text-right">
-                      <span className={`text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 ${changedIds.has(regu.id) ? "score-updated" : ""}`}>
-                        {regu.total_nilai ?? 0}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* ===== BOTTOM TICKER ===== */}
+        <div className={`fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t ${
+          accentColor === "emerald" ? "bg-emerald-950/85 border-emerald-900/50" :
+          accentColor === "cyan" ? "bg-cyan-950/85 border-cyan-900/50" :
+          "bg-purple-950/85 border-purple-900/50"
+        }`}>
+          <div className="flex items-center h-8 md:h-10">
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 md:px-4 border-r border-slate-800/40 h-full bg-cyan-950 text-cyan-400 shadow-[5px_0_15px_rgba(0,0,0,0.3)]">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-500" />
+              </span>
+              <span className="text-[0.55rem] md:text-[0.65rem] font-black tracking-[0.2em]">TICKER</span>
+            </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-slate-600 text-xs tracking-wider">
-          Powered by Supabase Realtime • Data diperbarui secara otomatis
+            <div className="ticker-wrap flex-1">
+              <div className="ticker-content" style={{ "--ticker-duration": `${Math.max(20, displayTickerItems.length * 4)}s` }}>
+                {displayTickerItems.map((item, i) => (
+                  <div key={`${item.id}-${i}`} className="ticker-item">
+                    {item.time && <span className="text-slate-600 text-[0.5rem] md:text-[0.55rem] font-mono">[{item.time}]</span>}
+                    <span className="text-[0.55rem] md:text-[0.65rem] font-bold text-cyan-300">
+                      {item.text}
+                    </span>
+                    <span className="text-slate-700 mx-1">/</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

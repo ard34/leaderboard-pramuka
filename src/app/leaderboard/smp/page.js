@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import LeaderboardTable from "@/components/LeaderboardTable";
-import LiveTicker from "@/components/LiveTicker";
 
 export default function LeaderboardSMP() {
   const [peserta, setPeserta] = useState([]);
@@ -70,13 +69,10 @@ export default function LeaderboardSMP() {
   }
 
   return (
-    <>
-      <LeaderboardTable
-        data={peserta}
-        accentColor="cyan"
-        tingkat="Tingkat Menengah Pertama (SMP/MTs)"
-      />
-      <LiveTicker accentColor="cyan" kategori="SMP" />
-    </>
+    <LeaderboardTable
+      data={peserta}
+      accentColor="cyan"
+      tingkat="Tingkat Menengah Pertama (SMP/MTs)"
+    />
   );
 }

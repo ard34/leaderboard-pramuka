@@ -418,6 +418,33 @@ export default function Home() {
           setNilaiMap(map);
         }
       }
+
+      // Fetch recent scores for ticker
+      const { data: recentScores } = await supabase
+        .from("penilaian")
+        .select(`
+          id,
+          nilai,
+          updated_at,
+          peserta!inner (nama_regu, pangkalan, kategori, gender),
+          lomba:lomba_id (nama_lomba)
+        `)
+        .eq("peserta.kategori", kategori)
+        .order("updated_at", { ascending: false })
+        .limit(15);
+
+      if (recentScores) {
+        const items = recentScores.map((s) => {
+          const time = new Date(s.updated_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+          return {
+            id: s.id,
+            text: `${s.peserta.nama_regu}: ${s.lomba.nama_lomba} = ${s.nilai}`,
+            time,
+          };
+        });
+        setTickerItems(items);
+      }
+
       setLastUpdate(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     } catch (e) {
       console.error(e);
@@ -437,266 +464,117 @@ export default function Home() {
   const accentColor = activeTab === "SD" ? "emerald" : activeTab === "SMP" ? "cyan" : "purple";
   const currentLombaCols = lombaList.filter((l) => l.kategori === activeTab);
 
-  // Current category info for display badge
+  // Helper: determine total score color class
+  const getTotalClass = (score) => {
+    if (score === null || score === undefined || score === 0) return "total-mid";
+    if (score >= 93) return "total-high";
+    if (score >= 70) return "total-mid";
+    return "total-low";
+  };
+
+  // Current category info (used by TransitionOverlay)
   const currentRotation = ROTATION_SEQUENCE[rotationIndex];
 
-  // Ticker items
-  const defaultTicker = [
-    { id: 1, text: "Menunggu data penilaian masuk...", time: "" },
-    { id: 2, text: "Skor akan muncul secara real-time", time: "" },
-    { id: 3, text: "Klasemen diperbarui otomatis tanpa refresh", time: "" },
-  ];
-  const displayTicker = tickerItems.length > 0 ? tickerItems : defaultTicker;
-  const allTicker = [...displayTicker, ...displayTicker];
+  const displayTickerItems = tickerItems.length > 0
+    ? tickerItems
+    : [
+        { id: "t1", text: "Lomba Pramuka Kwaran Mekar Baru sedang berlangsung", time: "" },
+        { id: "t2", text: "Klasemen diperbarui secara real-time melalui sistem dewan juri", time: "" }
+      ];
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-200 font-sans flex relative overflow-hidden">
-      {/* Transition Overlay */}
-      <TransitionOverlay isActive={showTransition} nextItem={transitionTarget} />
+    <div className={`scoreboard-layout theme-${accentColor}`}>
+      <div className="scoreboard-container">
+        {/* Transition Overlay */}
+        <TransitionOverlay isActive={showTransition} nextItem={transitionTarget} />
 
-      {/* Background effects */}
-      <div className="absolute top-[-10%] left-[10%] w-[800px] h-[300px] bg-gradient-to-r from-cyan-500/10 via-emerald-500/10 to-transparent blur-[120px] rounded-full pointer-events-none" />
-      <div className="bg-grid absolute inset-0 pointer-events-none opacity-40" />
+        {/* Sidebar Image Overlay */}
+        <img src="/sidebar.png" className="scoreboard-sidebar-img" alt="Scout Sidebar" />
 
-      {/* ===== LEFT SIDEBAR (SCOUT ICON STRIPE) — Hidden on mobile ===== */}
-      <aside className="hidden lg:flex w-20 bg-gradient-to-b from-[#3a1d18] to-[#120705] border-r-2 border-r-cyan-500/40 flex-col items-center py-8 gap-10 z-20 shadow-[5px_0_25px_rgba(0,0,0,0.5)]">
-        <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-          <ScoutFleurDeLis />
-        </div>
-        <div className="flex flex-col gap-8 mt-10">
-          <TunasKelapa />
-          <ScoutFleurDeLis />
-          <TunasKelapa />
-          <ScoutFleurDeLis />
-          <TunasKelapa />
-        </div>
-      </aside>
-
-      {/* ===== MAIN CONTENT WRAPPER ===== */}
-      <div className="flex-1 flex flex-col min-h-screen relative z-10 overflow-hidden pb-12">
-
-        {/* ===== TOP HEADER BAR ===== */}
-        <header className="relative z-20 bg-[#030712]/90 backdrop-blur-xl border-b border-slate-800/60">
-          {/* Desktop header: 3-column grid with true centering */}
-          <div className="hidden md:grid grid-cols-[auto_1fr_auto] items-center max-w-[1900px] mx-auto px-4 lg:px-6 py-3 gap-4">
-
-            {/* LEFT: Logo slots */}
-            <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
-              <div className="logo-slot">
-                <img src="/logos/logo1.png" alt="Logo 1" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-              </div>
-              <div className="logo-slot">
-                <img src="/logos/logo2.png" alt="Logo 2" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-              </div>
-              <div className="logo-slot">
-                <img src="/logos/logo3.png" alt="Logo 3" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-              </div>
-              <div className="logo-slot">
-                <img src="/logos/logo4.png" alt="Logo 4" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-              </div>
-              <div className="logo-slot">
-                <img src="/logos/logo5.png" alt="Logo 5" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-              </div>
+        {/* Top Header Meta Info */}
+        <header className="scoreboard-header">
+          <div className="header-right-meta">
+            <div className="live-indicator">
+              LIVE
             </div>
-
-            {/* CENTER: Title + Category Badge — always centered */}
-            <div className="flex flex-col items-center gap-1 justify-self-center">
-              <h1 className="text-lg lg:text-2xl font-black tracking-wider text-white leading-tight text-center whitespace-nowrap">
-                LEADBOARD LIVE PENILAIAN <span className="text-gradient-gold">LOMBA PRAMUKA</span>
-              </h1>
-              <div className="flex items-center gap-2 flex-wrap justify-center">
-                <div className="flex items-center gap-1.5 bg-red-500/15 border border-red-500/30 px-2.5 py-0.5 rounded-full">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
-                  </span>
-                  <span className="text-red-400 text-[0.6rem] font-black tracking-wider">LIVE</span>
-                </div>
-                <span className="text-[0.6rem] text-slate-500 font-semibold">{today}</span>
-                <div className="w-px h-3 bg-slate-800" />
-                <span className={`text-[0.6rem] font-black tracking-[0.15em] px-2.5 py-0.5 rounded-full border ${
-                  accentColor === "emerald"
-                    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
-                    : accentColor === "cyan"
-                    ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
-                    : "text-purple-400 bg-purple-500/10 border-purple-500/30"
-                }`}>
-                  {currentRotation.label}
-                </span>
-                <span className={`text-[0.6rem] font-black tracking-[0.15em] px-2.5 py-0.5 rounded-full border ${
-                  activeGender === "Laki-laki"
-                    ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
-                    : "text-rose-400 bg-rose-500/10 border-rose-500/30"
-                }`}>
-                  {activeGender === "Laki-laki" ? "👦 PUTRA" : "👧 PUTRI"}
-                </span>
-                {isLocked && (
-                  <span className="text-[0.6rem] font-black tracking-[0.15em] px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400">
-                    📌 TERKUNCI (FOKUS)
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* RIGHT: Clock */}
-            <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-              <span className="text-xl lg:text-3xl font-black text-emerald-400 font-mono tracking-wider drop-shadow-[0_0_10px_rgba(16,185,129,0.4)]">
-                {clock}
-              </span>
-              <span className="text-[0.55rem] text-slate-600 font-bold uppercase tracking-widest">LIVE CLOCK</span>
-            </div>
-          </div>
-
-          {/* Mobile header: stacked layout */}
-          <div className="md:hidden px-3 py-2 flex flex-col gap-2">
-            {/* Top row: logos + clock */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <div className="logo-slot">
-                  <img src="/logos/logo1.png" alt="Logo 1" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-                </div>
-                <div className="logo-slot">
-                  <img src="/logos/logo2.png" alt="Logo 2" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-                </div>
-                <div className="logo-slot">
-                  <img src="/logos/logo3.png" alt="Logo 3" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-                </div>
-                <div className="logo-slot">
-                  <img src="/logos/logo4.png" alt="Logo 4" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-                </div>
-                <div className="logo-slot">
-                  <img src="/logos/logo5.png" alt="Logo 5" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-                </div>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-lg font-black text-emerald-400 font-mono tracking-wider drop-shadow-[0_0_10px_rgba(16,185,129,0.4)]">
-                  {clock}
-                </span>
-              </div>
-            </div>
-
-            {/* Title row — centered */}
-            <div className="text-center">
-              <h1 className="text-[0.7rem] xs:text-sm font-black tracking-wider text-white leading-tight">
-                LEADBOARD LIVE PENILAIAN <span className="text-gradient-gold">LOMBA PRAMUKA</span>
-              </h1>
-            </div>
-
-            {/* Badges row */}
-            <div className="flex items-center gap-1.5 justify-center flex-wrap">
-              <div className="flex items-center gap-1 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-full">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
-                </span>
-                <span className="text-red-400 text-[0.55rem] font-black tracking-wider">LIVE</span>
-              </div>
-              <span className="text-[0.55rem] text-slate-500 font-semibold">{today}</span>
-              <span className={`text-[0.55rem] font-black tracking-[0.1em] px-2 py-0.5 rounded-full border ${
-                accentColor === "emerald"
-                  ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
-                  : accentColor === "cyan"
-                  ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
-                  : "text-purple-400 bg-purple-500/10 border-purple-500/30"
-              }`}>
-                {currentRotation.label}
-              </span>
-              <span className={`text-[0.55rem] font-black tracking-[0.1em] px-2 py-0.5 rounded-full border ${
-                activeGender === "Laki-laki"
-                  ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
-                  : "text-rose-400 bg-rose-500/10 border-rose-500/30"
-              }`}>
-                {activeGender === "Laki-laki" ? "👦 PUTRA" : "👧 PUTRI"}
-              </span>
-              {isLocked && (
-                <span className="text-[0.55rem] font-black tracking-[0.1em] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400">
-                  📌 TERKUNCI
-                </span>
-              )}
-            </div>
+            <span className="header-date">{today}</span>
           </div>
         </header>
 
-        {/* ===== FULL-WIDTH LEADERBOARD TABLE ===== */}
-        <main className="flex-1 max-w-[1900px] w-full mx-auto px-2 md:px-4 lg:px-6 py-2 md:py-4 flex flex-col">
-          <div className={`flex-1 glass-card flex flex-col overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.4)] ${tableTransitionClass}`}>
+        {/* Dynamic Update Time text placed directly in pre-printed box space */}
+        <span className="update-time-display">{lastUpdate}</span>
+
+        {/* Glass Table Container Overlay */}
+        <div className={`glass-table-container ${tableTransitionClass}`}>
+          {/* Info Bar at top of glass container */}
+          <div className="scoreboard-info-bar">
+            <div className="info-bar-left">
+              <span className="info-bar-title">KLASEMEN UMUM - {activeTab} {activeGender === "Laki-laki" ? "PUTRA" : "PUTRI"}</span>
+            </div>
+            <div className="info-bar-right">
+              <span className="info-bar-clock">LIVE CLOCK {clock}</span>
+            </div>
+          </div>
+
+          {/* Leaderboard Table Grid */}
+          <div className="scoreboard-table-wrap">
             {loading ? (
-              <div className="flex-1 flex items-center justify-center py-32">
-                <div className="w-10 h-10 border-4 rounded-full animate-spin border-t-emerald-500" />
+              <div className="scoreboard-loading">
+                <div className="scoreboard-spinner" />
               </div>
             ) : (
-              <div className="overflow-x-auto flex-1 mobile-table-scroll">
-                <table className="w-full text-left asean-table mobile-table">
+              <div className="scoreboard-table-scroll no-scrollbar">
+                <table className="scoreboard-table">
                   <thead>
-                    <tr className="asean-header-row sticky top-0 z-10">
-                      <th className="p-2 md:p-3 text-center w-12 md:w-16 sticky left-0 bg-[#005fa9] z-20">
-                        <span className="hidden md:inline">PERINGKAT</span>
-                        <span className="md:hidden">#</span>
-                      </th>
-                      <th className="p-2 md:p-3 text-left sticky left-12 md:left-16 bg-[#005fa9] z-20 min-w-[120px] md:min-w-[180px]">
-                        <span className="hidden md:inline">NAMA SEKOLAH</span>
-                        <span className="md:hidden">NAMA</span>
-                      </th>
+                    <tr>
+                      <th className="sc-th-rank sticky-col-rank col-rank">Peringkat</th>
+                      <th className="sc-th-name sticky-col-name col-name">NAMA SEKOLAH</th>
                       {currentLombaCols.map((lomba) => (
-                        <th
-                          key={lomba.id}
-                          className="p-1.5 md:p-2 text-center min-w-[55px] md:min-w-[75px]"
-                          title={lomba.nama_lomba}
-                        >
-                          {lomba.kode_lomba}
+                        <th key={lomba.id} title={lomba.nama_lomba} className="col-lomba">
+                          <div className="sc-th-lomba">{lomba.kode_lomba || lomba.nama_lomba.substring(0, 4)}</div>
                         </th>
                       ))}
-                      <th className="p-2 md:p-3 text-center w-20 md:w-28">
-                        <span className="hidden md:inline">TOTAL AKUMULASI</span>
-                        <span className="md:hidden">TOTAL</span>
-                      </th>
+                      <th className="sc-th-total sticky-col-total col-total">TOTAL<br />AKUMULASI</th>
                     </tr>
                   </thead>
                   <tbody>
                     {peserta.length === 0 ? (
                       <tr>
-                        <td colSpan={currentLombaCols.length + 3} className="p-8 md:p-16 text-center text-slate-600 italic text-sm md:text-base">
-                          Belum ada regu terdaftar untuk tingkat {activeTab}.
+                        <td colSpan={currentLombaCols.length + 3} className="scoreboard-empty">
+                          Belum ada regu terdaftar untuk tingkat {activeTab} {activeGender === "Laki-laki" ? "Putra" : "Putri"}.
                         </td>
                       </tr>
                     ) : (
                       peserta.map((regu, index) => {
                         const isChanged = changedIds.has(regu.id);
-
                         return (
                           <tr
                             key={regu.id}
                             id={`row-${regu.id}`}
-                            className={`asean-row leaderboard-row ${isChanged ? "rank-changed" : ""}`}
+                            className={`scoreboard-row leaderboard-row ${isChanged ? "rank-changed" : ""}`}
                           >
-                            <td className="p-2 md:p-3 text-center sticky left-0 z-10 font-black text-cyan-400 text-xs md:text-base">
-                              {index + 1}
+                            <td className="sticky-col-rank col-rank">
+                              <span className="rank-number">{index + 1}</span>
                             </td>
-
-                            <td className="p-2 md:p-3 sticky left-12 md:left-16 z-10">
-                              <div className="text-[0.65rem] md:text-sm font-bold text-white leading-tight">{regu.nama_regu}</div>
-                              <div className="text-[0.5rem] md:text-[0.6rem] text-slate-400 leading-tight truncate max-w-[100px] md:max-w-none">{regu.pangkalan}</div>
+                            <td className="sticky-col-name col-name">
+                              <div className="school-name" title={`${regu.nama_regu} (${regu.pangkalan})`}>
+                                {regu.nama_regu}
+                              </div>
                             </td>
-
                             {currentLombaCols.map((lomba) => {
                               const val = getNilai(regu.id, lomba.id);
                               const cellKey = `${regu.id}_${lomba.id}`;
                               const isCellChanged = changedCellKey === cellKey;
                               return (
-                                <td key={lomba.id} className="p-1.5 md:p-2 text-center">
-                                  <span className={`text-[0.6rem] md:text-xs font-bold text-white tabular-nums ${
-                                    isCellChanged ? "cell-updated" : ""
-                                  }`}>
-                                    {val !== undefined ? val : "—"}
+                                <td key={lomba.id} className="col-lomba">
+                                  <span className={`score-chip ${val === undefined ? "empty" : ""} ${isCellChanged ? "cell-updated" : ""}`}>
+                                    {val !== undefined ? val : "\u2014"}
                                   </span>
                                 </td>
                               );
                             })}
-
-                            <td className="p-2 md:p-3 text-center">
-                              <span className={`text-[0.7rem] md:text-sm font-black text-amber-400 tabular-nums ${
-                                isChanged ? "score-updated" : ""
-                              }`}>
+                            <td className="sticky-col-total col-total">
+                              <span className={`total-score ${getTotalClass(regu.total_nilai)} ${isChanged ? "score-updated" : ""}`}>
                                 {regu.total_nilai ?? 0}
                               </span>
                             </td>
@@ -709,35 +587,35 @@ export default function Home() {
               </div>
             )}
           </div>
-        </main>
-      </div>
+        </div>
 
-      {/* ===== BOTTOM TICKER ===== */}
-      <div className={`fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t ${
-        accentColor === "emerald" ? "bg-emerald-950/85 border-emerald-900/50" :
-        accentColor === "cyan" ? "bg-cyan-950/85 border-cyan-900/50" :
-        "bg-purple-950/85 border-purple-900/50"
-      }`}>
-        <div className="flex items-center h-8 md:h-10">
-          <div className="flex-shrink-0 flex items-center gap-1.5 px-2 md:px-4 border-r border-slate-800/40 h-full bg-cyan-950 text-cyan-400 shadow-[5px_0_15px_rgba(0,0,0,0.3)]">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-500" />
-            </span>
-            <span className="text-[0.55rem] md:text-[0.65rem] font-black tracking-[0.2em]">TICKER</span>
-          </div>
+        {/* ===== BOTTOM TICKER ===== */}
+        <div className={`fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t ${
+          accentColor === "emerald" ? "bg-emerald-950/85 border-emerald-900/50" :
+          accentColor === "cyan" ? "bg-cyan-950/85 border-cyan-900/50" :
+          "bg-purple-950/85 border-purple-900/50"
+        }`}>
+          <div className="flex items-center h-8 md:h-10">
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 md:px-4 border-r border-slate-800/40 h-full bg-cyan-950 text-cyan-400 shadow-[5px_0_15px_rgba(0,0,0,0.3)]">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-500" />
+              </span>
+              <span className="text-[0.55rem] md:text-[0.65rem] font-black tracking-[0.2em]">TICKER</span>
+            </div>
 
-          <div className="ticker-wrap flex-1">
-            <div className="ticker-content" style={{ "--ticker-duration": `${Math.max(20, displayTicker.length * 4)}s` }}>
-              {allTicker.map((item, i) => (
-                <div key={`${item.id}-${i}`} className="ticker-item">
-                  {item.time && <span className="text-slate-600 text-[0.5rem] md:text-[0.55rem] font-mono">[{item.time}]</span>}
-                  <span className="text-[0.55rem] md:text-[0.65rem] font-bold text-cyan-300">
-                    {item.text}
-                  </span>
-                  <span className="text-slate-700 mx-1">/</span>
-                </div>
-              ))}
+            <div className="ticker-wrap flex-1">
+              <div className="ticker-content" style={{ "--ticker-duration": `${Math.max(20, displayTickerItems.length * 4)}s` }}>
+                {displayTickerItems.map((item, i) => (
+                  <div key={`${item.id}-${i}`} className="ticker-item">
+                    {item.time && <span className="text-slate-600 text-[0.5rem] md:text-[0.55rem] font-mono">[{item.time}]</span>}
+                    <span className="text-[0.55rem] md:text-[0.65rem] font-bold text-cyan-300">
+                      {item.text}
+                    </span>
+                    <span className="text-slate-700 mx-1">/</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

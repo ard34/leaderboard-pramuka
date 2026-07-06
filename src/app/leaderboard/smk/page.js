@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import LeaderboardTable from "@/components/LeaderboardTable";
-import LiveTicker from "@/components/LiveTicker";
 
 export default function LeaderboardSMK() {
   const [peserta, setPeserta] = useState([]);
@@ -70,13 +69,10 @@ export default function LeaderboardSMK() {
   }
 
   return (
-    <>
-      <LeaderboardTable
-        data={peserta}
-        accentColor="purple"
-        tingkat="Tingkat Atas/Kejuruan (SMA/SMK/MA)"
-      />
-      <LiveTicker accentColor="purple" kategori="SMK" />
-    </>
+    <LeaderboardTable
+      data={peserta}
+      accentColor="purple"
+      tingkat="Tingkat Atas/Kejuruan (SMA/SMK/MA)"
+    />
   );
 }
