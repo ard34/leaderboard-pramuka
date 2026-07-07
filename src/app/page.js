@@ -488,6 +488,11 @@ export default function Home() {
         {/* Transition Overlay */}
         <TransitionOverlay isActive={showTransition} nextItem={transitionTarget} />
 
+        {/* Banner Header */}
+        <div className="scoreboard-banner-header">
+          <h1 className="banner-title">Lomba Pramuka Kwaran Mekar Baru</h1>
+        </div>
+
         {/* Sidebar Image Overlay */}
         <img src="/sidebar.png" className="scoreboard-sidebar-img" alt="Scout Sidebar" />
 
@@ -495,8 +500,10 @@ export default function Home() {
         <header className="scoreboard-header">
           <div className="header-right-meta">
             <div className="live-indicator">
+              <span className="live-dot" />
               LIVE
             </div>
+            <span className="header-clock">{clock}</span>
             <span className="header-date">{today}</span>
           </div>
         </header>
@@ -508,10 +515,7 @@ export default function Home() {
           {/* Info Bar at top of glass container */}
           <div className="scoreboard-info-bar">
             <div className="info-bar-left">
-              <span className="info-bar-title">KLASEMEN UMUM - {activeTab} {activeGender === "Laki-laki" ? "PUTRA" : "PUTRI"}</span>
-            </div>
-            <div className="info-bar-right">
-              <span className="info-bar-clock">LIVE CLOCK {clock}</span>
+              <span className="info-bar-title">KLASEMEN UMUM CABANG {activeTab} {activeGender === "Laki-laki" ? "PUTRA" : "PUTRI"}</span>
             </div>
           </div>
 

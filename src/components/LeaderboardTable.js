@@ -223,6 +223,11 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
   return (
     <div className={`scoreboard-layout theme-${accentColor}`}>
       <div className="scoreboard-container">
+        {/* Banner Header */}
+        <div className="scoreboard-banner-header">
+          <h1 className="banner-title">Lomba Pramuka Kwaran Mekar Baru</h1>
+        </div>
+
         {/* Sidebar Image Overlay */}
         <img src="/sidebar.png" className="scoreboard-sidebar-img" alt="Scout Sidebar" />
 
@@ -230,8 +235,10 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
         <header className="scoreboard-header">
           <div className="header-right-meta">
             <div className="live-indicator">
+              <span className="live-dot" />
               LIVE
             </div>
+            <span className="header-clock">{clock}</span>
             <span className="header-date">{today}</span>
           </div>
         </header>
@@ -243,10 +250,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
           {/* Info Bar at top of glass container */}
           <div className="scoreboard-info-bar">
             <div className="info-bar-left">
-              <span className="info-bar-title">KLASEMEN KATEGORI {kategori} - LIVE</span>
-            </div>
-            <div className="info-bar-right">
-              <span className="info-bar-clock">LIVE CLOCK {clock}</span>
+              <span className="info-bar-title">KLASEMEN UMUM CABANG {kategori} - LIVE</span>
             </div>
           </div>
 
