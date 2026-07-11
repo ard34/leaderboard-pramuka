@@ -49,17 +49,12 @@ const TransitionOverlay = ({ isActive, nextItem }) => {
       {/* Center Shield Pop */}
       {isActive && (
         <div className="wipe-shield">
-          {/* Outer glowing shield container */}
-          <div className="shield-glow border-2 border-amber-500/35 bg-slate-950/85 rounded-3xl p-8 flex items-center justify-center shadow-[0_0_60px_rgba(245,166,35,0.35)]">
-            
-            {/* Logo HUT 65 */}
+            {/* Logo HUT 65 without any enclosing card/box */}
             <img 
               src="/logo_65.png" 
               alt="Logo 65 HUT Pramuka" 
-              className="h-56 md:h-72 w-auto object-contain drop-shadow-[0_0_25px_rgba(245,166,35,0.45)]" 
+              className="h-64 md:h-80 w-auto object-contain drop-shadow-[0_0_35px_rgba(245,166,35,0.6)]" 
             />
-
-          </div>
         </div>
       )}
     </div>

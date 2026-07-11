@@ -538,12 +538,14 @@ input[type="number"] {
   top: 0;
   bottom: 0;
   width: 160vw;
-  background: linear-gradient(135deg, #0b1329, #030712, #111e3f);
+  background: rgba(3, 7, 18, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-left: 4px solid #f5a623;
   border-right: 4px solid #f5a623;
   transform: skewX(-15deg) translateX(-160%);
   z-index: 9991;
-  box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.5);
 }
 
 .sports-wipe-overlay.active .wipe-bar-gold {
