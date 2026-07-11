@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
@@ -19,6 +19,12 @@ export default function LoginPage() {
   const lockoutTimerRef = useRef(null);
   const router = useRouter();
   const isOnline = useOnlineStatus();
+
+  // Prefetch dashboard routes so navigation is instant after login
+  useEffect(() => {
+    router.prefetch("/dashboard/admin");
+    router.prefetch("/dashboard/juri");
+  }, [router]);
 
   const startLockout = () => {
     setIsLockedOut(true);
@@ -83,24 +89,22 @@ export default function LoginPage() {
       // Reset attempts on success
       loginAttemptsRef.current = 0;
 
-      const { data: profileData, error: profileError } = await supabase
+      // Fetch profile role — use .maybeSingle() for speed, no error throw
+      const { data: profileData } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", authData.user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !profileData) {
+      if (!profileData) {
         await supabase.auth.signOut();
         setError("Profil tidak ditemukan. Hubungi Admin Utama.");
         setLoading(false);
         return;
       }
 
-      if (profileData.role === "admin") {
-        router.push("/dashboard/admin");
-      } else {
-        router.push("/dashboard/juri");
-      }
+      // Use replace() so login page is removed from browser history
+      router.replace(profileData.role === "admin" ? "/dashboard/admin" : "/dashboard/juri");
     } catch (err) {
       setError("Terjadi kesalahan jaringan. Silakan coba lagi.");
       setLoading(false);
