@@ -50,33 +50,14 @@ const TransitionOverlay = ({ isActive, nextItem }) => {
       {isActive && (
         <div className="wipe-shield">
           {/* Outer glowing shield container */}
-          <div className="shield-glow border-2 border-amber-500/40 bg-slate-950/90 rounded-2xl p-6 flex flex-col items-center gap-3 shadow-[0_0_50px_rgba(245,166,35,0.25)]">
+          <div className="shield-glow border-2 border-amber-500/35 bg-slate-950/85 rounded-3xl p-8 flex items-center justify-center shadow-[0_0_60px_rgba(245,166,35,0.35)]">
             
             {/* Logo HUT 65 */}
             <img 
               src="/logo_65.png" 
               alt="Logo 65 HUT Pramuka" 
-              className="h-20 w-auto object-contain mb-1 drop-shadow-[0_0_12px_rgba(245,166,35,0.3)]" 
+              className="h-56 md:h-72 w-auto object-contain drop-shadow-[0_0_25px_rgba(245,166,35,0.45)]" 
             />
-
-            {/* Transition Category Info */}
-            <div className="text-[0.65rem] font-bold text-amber-500/70 tracking-[0.25em] uppercase">
-              REPLAY PENILAIAN
-            </div>
-            
-            <div className="text-xl md:text-3xl font-black text-white tracking-wider uppercase whitespace-nowrap">
-              {nextItem.label}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className={`text-[0.7rem] font-black tracking-widest px-3.5 py-1 rounded-full border ${
-                nextItem.gender === "Laki-laki"
-                  ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
-                  : "text-rose-400 bg-rose-500/10 border-rose-500/30"
-              }`}>
-                {nextItem.gender === "Laki-laki" ? "👦 PUTRA" : "👧 PUTRI"}
-              </span>
-            </div>
 
           </div>
         </div>
@@ -129,28 +110,28 @@ export default function Home() {
     setShowTransition(true);
     setTableTransitionClass("table-transitioning-out");
 
-    // Phase 2: At midpoint of hold phase (1000ms), switch the actual data
+    // Phase 2: At midpoint of hold phase (1800ms), switch the actual data
     setTimeout(() => {
       setActiveTab(nextItem.tab);
       setActiveGender(nextItem.gender);
       setRotationIndex(nextIdx);
-    }, 1000);
+    }, 1800);
 
-    // Phase 3: Start fading in the new table as the sweep begins to open (1900ms)
+    // Phase 3: Start fading in the new table as the sweep begins to open (3400ms)
     setTimeout(() => {
       setTableTransitionClass("table-transitioning-in");
-    }, 1900);
+    }, 3400);
 
-    // Phase 4: Clean up transition overlay (matches 2.6s wipe duration)
+    // Phase 4: Clean up transition overlay (matches 4.2s wipe duration)
     setTimeout(() => {
       setShowTransition(false);
       setTransitionTarget(null);
-    }, 2600);
+    }, 4200);
 
     // Phase 5: Clean up transition class
     setTimeout(() => {
       setTableTransitionClass("");
-    }, 2900);
+    }, 4500);
   }, [rotationIndex]);
 
   // Initialize auto-rotation on mount
