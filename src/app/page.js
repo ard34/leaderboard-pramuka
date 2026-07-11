@@ -42,9 +42,8 @@ const TransitionOverlay = ({ isActive, nextItem }) => {
 
   return (
     <div className={`sports-wipe-overlay ${isActive ? "active" : ""}`}>
-      {/* Sweeping diagonal bars */}
-      <div className="wipe-bar-gold" />
-      <div className="wipe-bar-dark" />
+      {/* Sliding Glass Curtain */}
+      <div className="wipe-curtain" />
 
       {/* Center Shield Pop */}
       {isActive && (
@@ -105,28 +104,28 @@ export default function Home() {
     setShowTransition(true);
     setTableTransitionClass("table-transitioning-out");
 
-    // Phase 2: At midpoint of hold phase (1800ms), switch the actual data
+    // Phase 2: At midpoint of hold phase (1300ms), switch the actual data
     setTimeout(() => {
       setActiveTab(nextItem.tab);
       setActiveGender(nextItem.gender);
       setRotationIndex(nextIdx);
-    }, 1800);
+    }, 1300);
 
-    // Phase 3: Start fading in the new table as the sweep begins to open (3400ms)
+    // Phase 3: Start fading in the new table as the overlay begins to fade out (2100ms)
     setTimeout(() => {
       setTableTransitionClass("table-transitioning-in");
-    }, 3400);
+    }, 2100);
 
-    // Phase 4: Clean up transition overlay (matches 4.2s wipe duration)
+    // Phase 4: Clean up transition overlay (matches 2.6s duration)
     setTimeout(() => {
       setShowTransition(false);
       setTransitionTarget(null);
-    }, 4200);
+    }, 2600);
 
     // Phase 5: Clean up transition class
     setTimeout(() => {
       setTableTransitionClass("");
-    }, 4500);
+    }, 2900);
   }, [rotationIndex]);
 
   // Initialize auto-rotation on mount
