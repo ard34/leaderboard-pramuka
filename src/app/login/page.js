@@ -1,17 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 30 * 1000; // 30 detik
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const loginAttemptsRef = useRef(0);
+  const lockoutTimerRef = useRef(null);
   const router = useRouter();
   const isOnline = useOnlineStatus();
+
+  const startLockout = () => {
+    setIsLockedOut(true);
+    setLockoutRemaining(LOCKOUT_DURATION_MS / 1000);
+    lockoutTimerRef.current = setInterval(() => {
+      setLockoutRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(lockoutTimerRef.current);
+          setIsLockedOut(false);
+          loginAttemptsRef.current = 0;
+          setError(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,37 +45,65 @@ export default function LoginPage() {
       return;
     }
 
+    if (isLockedOut) {
+      setError(`Terlalu banyak percobaan. Coba lagi dalam ${lockoutRemaining} detik.`);
+      return;
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !password) {
+      setError("Email dan kata sandi wajib diisi.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    const { data: authData, error: authError } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    try {
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        });
 
-    if (authError) {
-      setError("Akses ditolak. Email atau password salah.");
+      if (authError) {
+        loginAttemptsRef.current += 1;
+        const remaining = MAX_LOGIN_ATTEMPTS - loginAttemptsRef.current;
+
+        if (loginAttemptsRef.current >= MAX_LOGIN_ATTEMPTS) {
+          setError("Terlalu banyak percobaan gagal. Akun dikunci sementara.");
+          startLockout();
+        } else {
+          setError(`Kredensial tidak valid. Sisa percobaan: ${remaining}`);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Reset attempts on success
+      loginAttemptsRef.current = 0;
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authData.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        await supabase.auth.signOut();
+        setError("Profil tidak ditemukan. Hubungi Admin Utama.");
+        setLoading(false);
+        return;
+      }
+
+      if (profileData.role === "admin") {
+        router.push("/dashboard/admin");
+      } else {
+        router.push("/dashboard/juri");
+      }
+    } catch (err) {
+      setError("Terjadi kesalahan jaringan. Silakan coba lagi.");
       setLoading(false);
-      return;
-    }
-
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", authData.user.id)
-      .single();
-
-    if (profileError || !profileData) {
-      setError("Profil tidak ditemukan. Hubungi Admin Utama.");
-      setLoading(false);
-      return;
-    }
-
-    if (profileData.role === "admin") {
-      router.push("/dashboard/admin");
-    } else {
-      router.push("/dashboard/juri");
     }
   };
 
@@ -114,7 +166,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="admin@contoh.com"
+                autoComplete="email"
                 className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
               />
             </div>
@@ -127,13 +179,13 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="••••••••"
+                autoComplete="current-password"
                 className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
               />
             </div>
             <button
               type="submit"
-              disabled={loading || !isOnline}
+              disabled={loading || !isOnline || isLockedOut}
               className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white font-black py-4 px-4 rounded-xl mt-2 transition-all duration-300 shadow-[0_8px_25px_rgba(245,166,35,0.2)] hover:shadow-[0_12px_35px_rgba(245,166,35,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_8px_25px_rgba(245,166,35,0.2)] tracking-wider"
             >
               {loading ? (
