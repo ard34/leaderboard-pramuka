@@ -544,10 +544,16 @@ input[type="number"] {
 
 @keyframes slideCurtain {
   0% {
+    transform: skewX(-12deg) translateX(-130%);
+  }
+  15% {
+    transform: skewX(-12deg) translateX(-20%);
+  }
+  85% {
     transform: skewX(-12deg) translateX(-20%);
   }
   100% {
-    transform: skewX(-12deg) translateX(-20%);
+    transform: skewX(-12deg) translateX(130%);
   }
 }
 
@@ -570,12 +576,32 @@ input[type="number"] {
 
 @keyframes shieldPop {
   0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-15deg);
+  }
+  15% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-15deg);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(1.05) rotate(2deg);
+  }
+  25% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
   }
-  100% {
+  80% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
+  }
+  85% {
+    opacity: 0;
+    transform: scale(0.85) rotate(3deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.7) rotate(5deg);
   }
 }
 
