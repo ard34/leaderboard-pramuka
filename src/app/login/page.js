@@ -76,22 +76,22 @@ export default function LoginPage() {
 
       <div className="relative z-10 max-w-md w-full">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 mb-4 shadow-[0_0_40px_rgba(16,185,129,0.25)]">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
+        <div className="text-center mb-6 flex justify-center">
+          <img 
+            src="/logo_65.png" 
+            alt="Logo 65 HUT Pramuka" 
+            className="h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.45)]"
+          />
         </div>
 
         {/* Login Card */}
-        <div className="glass-card p-8 md:p-10 shadow-[0_0_60px_rgba(16,185,129,0.08)]">
-          <div className="text-center space-y-2 mb-8">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
-              SECURE LOGIN
+        <div className="glass-card p-6 md:p-10 shadow-[0_0_60px_rgba(245,166,35,0.08)] border border-amber-500/15">
+          <div className="text-center space-y-2 mb-6">
+            <h1 className="text-xl md:text-2xl font-black tracking-widest text-white uppercase">
+              MASUK PANEL PENILAIAN
             </h1>
-            <p className="text-sm text-slate-500">
-              Sistem Penilaian Lomba Pramuka
+            <p className="text-xs text-slate-500 uppercase tracking-wider">
+              Lomba Pramuka Kwaran Mekar Baru
             </p>
           </div>
 
@@ -115,7 +115,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="admin@contoh.com"
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
               />
             </div>
             <div className="space-y-1.5">
@@ -128,13 +128,13 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
               />
             </div>
             <button
               type="submit"
               disabled={loading || !isOnline}
-              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-black py-4 px-4 rounded-xl mt-2 transition-all duration-300 shadow-[0_8px_25px_rgba(16,185,129,0.25)] hover:shadow-[0_12px_35px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_8px_25px_rgba(16,185,129,0.25)] tracking-wider"
+              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white font-black py-4 px-4 rounded-xl mt-2 transition-all duration-300 shadow-[0_8px_25px_rgba(245,166,35,0.2)] hover:shadow-[0_12px_35px_rgba(245,166,35,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_8px_25px_rgba(245,166,35,0.2)] tracking-wider"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

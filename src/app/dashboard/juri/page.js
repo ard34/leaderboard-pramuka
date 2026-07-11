@@ -161,24 +161,29 @@ export default function DashboardJuri() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{
+      <div className="min-h-screen flex items-center justify-center pl-[7.3%]" style={{
         backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.92) 0%, rgba(3, 7, 18, 0.96) 100%), url('/scout_event_live.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",
       }}>
+        {/* Sidebar Image */}
+        <img src="/sidebar.png" className="fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
+
         <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen text-slate-200 font-sans relative" style={{
+    <div className="min-h-screen text-slate-200 font-sans pl-[7.3%] relative" style={{
       backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.92) 0%, rgba(3, 7, 18, 0.96) 100%), url('/scout_event_live.png')",
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundAttachment: "fixed",
     }}>
+      {/* Sidebar Image */}
+      <img src="/sidebar.png" className="fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
       {!isOnline && (
         <div className="offline-banner">
           ⚠️ KONEKSI TERPUTUS — Nilai tidak dapat dikirim. Data form tetap aman.
