@@ -52,12 +52,12 @@ const TransitionOverlay = ({ isActive, nextItem }) => {
           {/* Outer glowing shield container */}
           <div className="shield-glow border-2 border-amber-500/40 bg-slate-950/90 rounded-2xl p-6 flex flex-col items-center gap-3 shadow-[0_0_50px_rgba(245,166,35,0.25)]">
             
-            {/* Double Scout Icons side-by-side or combined */}
-            <div className="flex gap-4 items-center justify-center mb-1">
-              <ScoutFleurDeLis />
-              <div className="w-px h-8 bg-amber-500/30" />
-              <TunasKelapa />
-            </div>
+            {/* Logo HUT 65 */}
+            <img 
+              src="/logo_65.png" 
+              alt="Logo 65 HUT Pramuka" 
+              className="h-20 w-auto object-contain mb-1 drop-shadow-[0_0_12px_rgba(245,166,35,0.3)]" 
+            />
 
             {/* Transition Category Info */}
             <div className="text-[0.65rem] font-bold text-amber-500/70 tracking-[0.25em] uppercase">
