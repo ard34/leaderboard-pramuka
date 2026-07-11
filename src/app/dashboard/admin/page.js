@@ -425,11 +425,17 @@ export default function DashboardAdmin() {
 
       {/* TABS */}
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 pt-6">
-        <div className="flex gap-2 border-b border-slate-800 overflow-x-auto whitespace-nowrap no-scrollbar py-1">
-          <button onClick={() => setActiveTab("penilaian")} className={`px-4 py-3 text-xs md:text-sm font-bold tracking-wider uppercase border-b-2 transition-colors ${activeTab === "penilaian" ? "border-emerald-500 text-emerald-400" : "border-transparent text-slate-500 hover:text-slate-300"} flex-shrink-0`}>Matriks Penilaian</button>
-          <button onClick={() => setActiveTab("peserta")} className={`px-4 py-3 text-xs md:text-sm font-bold tracking-wider uppercase border-b-2 transition-colors ${activeTab === "peserta" ? "border-emerald-500 text-emerald-400" : "border-transparent text-slate-500 hover:text-slate-300"} flex-shrink-0`}>Manajemen Peserta</button>
-          <button onClick={() => setActiveTab("juri")} className={`px-4 py-3 text-xs md:text-sm font-bold tracking-wider uppercase border-b-2 transition-colors ${activeTab === "juri" ? "border-emerald-500 text-emerald-400" : "border-transparent text-slate-500 hover:text-slate-300"} flex-shrink-0`}>Manajemen Juri</button>
-          <button onClick={() => setActiveTab("lomba")} className={`px-4 py-3 text-xs md:text-sm font-bold tracking-wider uppercase border-b-2 transition-colors ${activeTab === "lomba" ? "border-emerald-500 text-emerald-400" : "border-transparent text-slate-500 hover:text-slate-300"} flex-shrink-0`}>Cabang Lomba</button>
+        <div className="flex gap-2 overflow-x-auto whitespace-nowrap no-scrollbar py-1.5 px-4 rounded-t-xl" style={{
+          backgroundImage: "url('/table_header_banner.png')",
+          backgroundSize: "100% 100%",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          borderBottom: "1.5px solid rgba(6, 182, 212, 0.45)"
+        }}>
+          <button onClick={() => setActiveTab("penilaian")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "penilaian" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Matriks Penilaian</button>
+          <button onClick={() => setActiveTab("peserta")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "peserta" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Manajemen Peserta</button>
+          <button onClick={() => setActiveTab("juri")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "juri" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Manajemen Juri</button>
+          <button onClick={() => setActiveTab("lomba")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "lomba" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Cabang Lomba</button>
         </div>
       </div>
 
@@ -485,22 +491,17 @@ export default function DashboardAdmin() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[1200px]">
                   <thead>
-                    <tr style={{
-                      backgroundImage: "url('/table_header_banner.png')",
-                      backgroundSize: "100% 100%",
-                      backgroundPosition: "center",
-                      backgroundRepeat: "no-repeat"
-                    }}>
-                      <th className="p-3 text-[0.65rem] font-black text-white uppercase sticky left-0 bg-[#0b1329]/95 z-10 w-10">#</th>
-                      <th className="p-3 text-[0.65rem] font-black text-white uppercase sticky left-10 bg-[#0b1329]/95 z-10 min-w-[180px]">Regu</th>
-                      <th className="p-3 text-[0.65rem] font-black text-white uppercase w-16">Tkt</th>
+                    <tr className="bg-slate-950/60">
+                      <th className="p-3 text-[0.6rem] font-bold text-slate-500 uppercase sticky left-0 bg-slate-950/90 z-10 w-10">#</th>
+                      <th className="p-3 text-[0.6rem] font-bold text-slate-500 uppercase sticky left-10 bg-slate-950/90 z-10 min-w-[180px]">Regu</th>
+                      <th className="p-3 text-[0.6rem] font-bold text-slate-500 uppercase w-16">Tkt</th>
                       {dynamicLombaCols.map((lomba) => (
-                        <th key={lomba.id} className="p-2 text-[0.6rem] font-black text-white uppercase text-center min-w-[80px]" title={lomba.nama_lomba}>
+                        <th key={lomba.id} className="p-2 text-[0.55rem] font-bold text-slate-500 uppercase text-center min-w-[80px]" title={lomba.nama_lomba}>
                           {lomba.kode_lomba}
                         </th>
                       ))}
-                      <th className="p-3 text-[0.65rem] font-black text-amber-300 uppercase text-center w-20">Total</th>
-                      <th className="p-3 text-[0.65rem] font-black text-white uppercase text-center w-16">Status</th>
+                      <th className="p-3 text-[0.6rem] font-bold text-emerald-500 uppercase text-center w-20">Total</th>
+                      <th className="p-3 text-[0.6rem] font-bold text-slate-500 uppercase text-center w-16">Status</th>
                     </tr>
                   </thead>
                   <tbody>
