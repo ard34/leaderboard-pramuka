@@ -204,7 +204,12 @@ export default function DashboardJuri() {
       )}
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 bg-[#030712]/80 backdrop-blur-xl border-b border-slate-800/50">
+      <nav className="sticky top-0 z-40 border-b border-slate-800/50" style={{
+        backgroundImage: "url('/header_banner.png')",
+        backgroundSize: "100% 100%",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}>
         <div className="max-w-4xl mx-auto flex justify-between items-center px-4 md:px-8 py-3.5">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">

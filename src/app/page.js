@@ -461,7 +461,7 @@ export default function Home() {
     <div className={`scoreboard-layout theme-${accentColor}`}>
       <div className="scoreboard-container">
         {/* Transition Overlay */}
-        <TransitionOverlay isActive={showTransition} nextItem={transitionTarget} />
+        <TransitionOverlay isActive={true} nextItem={ROTATION_SEQUENCE[0]} />
 
         {/* Banner Header */}
         <div className="scoreboard-banner-header">

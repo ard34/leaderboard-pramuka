@@ -398,7 +398,12 @@ export default function DashboardAdmin() {
       {!isOnline && <div className="offline-banner">⚠️ KONEKSI TERPUTUS</div>}
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 bg-[#030712]/80 backdrop-blur-xl border-b border-slate-800/50">
+      <nav className="sticky top-0 z-40 border-b border-slate-800/50" style={{
+        backgroundImage: "url('/header_banner.png')",
+        backgroundSize: "100% 100%",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}>
         <div className="max-w-[1600px] mx-auto flex justify-between items-center px-4 md:px-8 py-3.5">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
@@ -480,17 +485,22 @@ export default function DashboardAdmin() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[1200px]">
                   <thead>
-                    <tr className="bg-slate-950/60">
-                      <th className="p-3 text-[0.6rem] font-bold text-slate-500 uppercase sticky left-0 bg-slate-950/90 z-10 w-10">#</th>
-                      <th className="p-3 text-[0.6rem] font-bold text-slate-500 uppercase sticky left-10 bg-slate-950/90 z-10 min-w-[180px]">Regu</th>
-                      <th className="p-3 text-[0.6rem] font-bold text-slate-500 uppercase w-16">Tkt</th>
+                    <tr style={{
+                      backgroundImage: "url('/table_header_banner.png')",
+                      backgroundSize: "100% 100%",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat"
+                    }}>
+                      <th className="p-3 text-[0.65rem] font-black text-white uppercase sticky left-0 bg-[#0b1329]/95 z-10 w-10">#</th>
+                      <th className="p-3 text-[0.65rem] font-black text-white uppercase sticky left-10 bg-[#0b1329]/95 z-10 min-w-[180px]">Regu</th>
+                      <th className="p-3 text-[0.65rem] font-black text-white uppercase w-16">Tkt</th>
                       {dynamicLombaCols.map((lomba) => (
-                        <th key={lomba.id} className="p-2 text-[0.55rem] font-bold text-slate-500 uppercase text-center min-w-[80px]" title={lomba.nama_lomba}>
+                        <th key={lomba.id} className="p-2 text-[0.6rem] font-black text-white uppercase text-center min-w-[80px]" title={lomba.nama_lomba}>
                           {lomba.kode_lomba}
                         </th>
                       ))}
-                      <th className="p-3 text-[0.6rem] font-bold text-emerald-500 uppercase text-center w-20">Total</th>
-                      <th className="p-3 text-[0.6rem] font-bold text-slate-500 uppercase text-center w-16">Status</th>
+                      <th className="p-3 text-[0.65rem] font-black text-amber-300 uppercase text-center w-20">Total</th>
+                      <th className="p-3 text-[0.65rem] font-black text-white uppercase text-center w-16">Status</th>
                     </tr>
                   </thead>
                   <tbody>
