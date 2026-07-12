@@ -487,7 +487,6 @@ export default function DashboardAdmin() {
                 <select value={filterTingkat} onChange={(e) => { setFilterTingkat(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50">
                   <option value="SD">SD / MI</option>
                   <option value="SMP">SMP / MTs</option>
-                  <option value="SMK">SMA / SMK / MA</option>
                 </select>
                 <select value={filterGender} onChange={(e) => { setFilterGender(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50">
                   <option value="Laki-laki">Laki-laki (Putra)</option>
@@ -592,7 +591,7 @@ export default function DashboardAdmin() {
               <form onSubmit={handleTambahPeserta} className="space-y-4">
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Tingkat</label>
                   <select value={formPeserta.kategori} onChange={(e) => setFormPeserta({...formPeserta, kategori: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
-                    <option value="SD">SD / MI</option><option value="SMP">SMP / MTs</option><option value="SMK">SMA / SMK / MA</option>
+                    <option value="SD">SD / MI</option><option value="SMP">SMP / MTs</option>
                   </select>
                 </div>
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Gender</label>
@@ -679,7 +678,7 @@ export default function DashboardAdmin() {
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Tugas Tingkatan</label>
                   <select value={formJuri.kategori} onChange={(e) => setFormJuri({...formJuri, kategori: e.target.value, lomba_id: "SEMUA"})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
                     <option value="SEMUA">Bebas Akses (Semua Tingkat)</option>
-                    <option value="SD">Khusus SD / MI</option><option value="SMP">Khusus SMP / MTs</option><option value="SMK">Khusus SMA / SMK</option>
+                    <option value="SD">Khusus SD / MI</option><option value="SMP">Khusus SMP / MTs</option>
                   </select>
                 </div>
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Tugas Cabang Lomba</label>
@@ -763,7 +762,7 @@ export default function DashboardAdmin() {
               <form onSubmit={handleTambahLomba} className="space-y-4">
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Tingkat</label>
                   <select value={formLomba.kategori} onChange={(e) => setFormLomba({...formLomba, kategori: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
-                    <option value="SD">SD / MI</option><option value="SMP">SMP / MTs</option><option value="SMK">SMA / SMK / MA</option>
+                    <option value="SD">SD / MI</option><option value="SMP">SMP / MTs</option>
                   </select>
                 </div>
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nama Cabang Lomba</label>

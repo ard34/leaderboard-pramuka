@@ -285,7 +285,6 @@ export default function DashboardJuri() {
                 >
                   <option value="SD">Tingkat SD / MI</option>
                   <option value="SMP">Tingkat SMP / MTs</option>
-                  <option value="SMK">Tingkat SMA / SMK / MA</option>
                 </select>
               </div>
 

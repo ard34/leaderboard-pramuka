@@ -6,17 +6,14 @@ import { supabase } from "@/lib/supabaseClient";
 const TABS = [
   { key: "SD", label: "SD / MI", color: "emerald" },
   { key: "SMP", label: "SMP / MTs", color: "cyan" },
-  { key: "SMK", label: "SMA / SMK / MA", color: "purple" },
 ];
 
-// Auto-rotation sequence: cycles through all 6 combinations
+// Auto-rotation sequence: cycles through all 4 combinations
 const ROTATION_SEQUENCE = [
   { tab: "SD", gender: "Laki-laki", label: "SD / MI", genderLabel: "PUTRA", color: "emerald", genderColor: "cyan" },
   { tab: "SD", gender: "Perempuan", label: "SD / MI", genderLabel: "PUTRI", color: "emerald", genderColor: "rose" },
   { tab: "SMP", gender: "Laki-laki", label: "SMP / MTs", genderLabel: "PUTRA", color: "cyan", genderColor: "cyan" },
   { tab: "SMP", gender: "Perempuan", label: "SMP / MTs", genderLabel: "PUTRI", color: "cyan", genderColor: "rose" },
-  { tab: "SMK", gender: "Laki-laki", label: "SMA / SMK / MA", genderLabel: "PUTRA", color: "purple", genderColor: "cyan" },
-  { tab: "SMK", gender: "Perempuan", label: "SMA / SMK / MA", genderLabel: "PUTRI", color: "purple", genderColor: "rose" },
 ];
 
 const ROTATION_INTERVAL_MS = 60 * 1000; // 1 menit (60 detik)
@@ -196,7 +193,7 @@ export default function Home() {
 
         if (urlKategori) {
           const katUpper = urlKategori.toUpperCase();
-          if (katUpper === "SD" || katUpper === "SMP" || katUpper === "SMK") {
+          if (katUpper === "SD" || katUpper === "SMP") {
             initTab = katUpper;
             locked = true;
           }
@@ -228,7 +225,7 @@ export default function Home() {
           try {
             const saved = JSON.parse(sessionStorage.getItem("_lb_state") || "null");
             if (saved && saved.tab && saved.gender) {
-              const validTabs = ["SD", "SMP", "SMK"];
+              const validTabs = ["SD", "SMP"];
               const validGenders = ["Laki-laki", "Perempuan"];
               if (validTabs.includes(saved.tab) && validGenders.includes(saved.gender)) {
                 initTab = saved.tab;
