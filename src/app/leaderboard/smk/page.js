@@ -7,16 +7,23 @@ import LeaderboardTable from "@/components/LeaderboardTable";
 export default function LeaderboardSMK() {
   const [peserta, setPeserta] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [gender, setGender] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("_lb_smk_gender") || "Laki-laki";
+    }
+    return "Laki-laki";
+  });
 
   useEffect(() => {
     fetchData();
 
     const channel = supabase
-      .channel("realtime-leaderboard-smk")
+      .channel(`realtime-leaderboard-smk-${gender}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "peserta", filter: "kategori=eq.SMK" },
         (payload) => {
+          if (payload.new.gender !== gender) return;
           setPeserta((currentData) => {
             const updatedData = currentData.map((p) =>
               p.id === payload.new.id ? { ...p, total_nilai: payload.new.total_nilai } : p
@@ -29,6 +36,7 @@ export default function LeaderboardSMK() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "peserta", filter: "kategori=eq.SMK" },
         (payload) => {
+          if (payload.new.gender !== gender) return;
           setPeserta((currentData) => {
             const exists = currentData.find((p) => p.id === payload.new.id);
             if (exists) return currentData;
@@ -42,13 +50,18 @@ export default function LeaderboardSMK() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [gender]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem("_lb_smk_gender", gender); } catch (_) {}
+  }, [gender]);
 
   const fetchData = async () => {
     const { data, error } = await supabase
       .from("peserta")
-      .select("id, nomor_dada, nama_regu, pangkalan, total_nilai")
+      .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender")
       .eq("kategori", "SMK")
+      .eq("gender", gender)
       .order("total_nilai", { ascending: false });
 
     if (!error && data) {
@@ -73,6 +86,8 @@ export default function LeaderboardSMK() {
       data={peserta}
       accentColor="purple"
       tingkat="Tingkat Atas/Kejuruan (SMA/SMK/MA)"
+      gender={gender}
+      onGenderChange={(g) => { setGender(g); setLoading(true); }}
     />
   );
 }

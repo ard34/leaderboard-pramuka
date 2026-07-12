@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function LeaderboardTable({ data, accentColor = "emerald", tingkat }) {
+export default function LeaderboardTable({ data, accentColor = "emerald", tingkat, gender, onGenderChange }) {
   const [lombaList, setLombaList] = useState([]);
   const [nilaiMap, setNilaiMap] = useState({});
   const [tickerItems, setTickerItems] = useState([]);
@@ -48,36 +48,42 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
           .select("peserta_id, lomba_id, nilai")
           .in("peserta_id", ids);
 
-        if (nilaiData) {
-          const map = {};
-          const counts = {};
-          nilaiData.forEach((n) => {
-            const key = `${n.peserta_id}_${n.lomba_id}`;
-            if (!map[key]) {
-              map[key] = 0;
-              counts[key] = 0;
-            }
-            map[key] += n.nilai;
-            counts[key] += 1;
-          });
-          Object.keys(map).forEach((key) => {
-            map[key] = Math.round((map[key] / counts[key]) * 100) / 100;
-          });
-          setNilaiMap(map);
-        }
+      if (nilaiData) {
+        const map = {};
+        const counts = {};
+        nilaiData.forEach((n) => {
+          const key = `${n.peserta_id}_${n.lomba_id}`;
+          if (!map[key]) {
+            map[key] = 0;
+            counts[key] = 0;
+          }
+          map[key] += n.nilai;
+          counts[key] += 1;
+        });
+        Object.keys(map).forEach((key) => {
+          map[key] = Math.round((map[key] / counts[key]) * 100) / 100;
+        });
+        setNilaiMap(map);
       }
+    }
 
       // 3. Fetch recent scores for ticker
-      const { data: recentScores } = await supabase
+      let query = supabase
         .from("penilaian")
         .select(`
           id,
           nilai,
           updated_at,
-          peserta!inner (nama_regu, pangkalan, kategori),
+          peserta!inner (nama_regu, pangkalan, kategori, gender),
           lomba:lomba_id (nama_lomba)
         `)
-        .eq("peserta.kategori", kategori)
+        .eq("peserta.kategori", kategori);
+
+      if (gender) {
+        query = query.eq("peserta.gender", gender);
+      }
+
+      const { data: recentScores } = await query
         .order("updated_at", { ascending: false })
         .limit(15);
 
@@ -99,14 +105,18 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
     }
   };
 
-  // Load details on mount or data change
+  // Load details on mount, data change, or gender change
   useEffect(() => {
     fetchDetails();
-  }, [data, kategori]);
+  }, [data, kategori, gender]);
 
-  // Realtime update listener specifically for this category
+  // Realtime update listener specifically for this category and gender
   useEffect(() => {
     const handleRealtimeChange = async (payload) => {
+      // If we got a payload, make sure it matches the current gender filter
+      if (payload?.new && payload.new.gender && payload.new.gender !== gender) {
+        return;
+      }
       await fetchDetails();
       if (payload?.new?.id) {
         setChangedIds(new Set([payload.new.id]));
@@ -115,7 +125,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
     };
 
     const channelPeserta = supabase
-      .channel(`realtime-subpage-peserta-${kategori}`)
+      .channel(`realtime-subpage-peserta-${kategori}-${gender}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "peserta", filter: `kategori=eq.${kategori}` },
@@ -124,7 +134,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       .subscribe();
 
     const channelNilai = supabase
-      .channel(`realtime-subpage-nilai-${kategori}`)
+      .channel(`realtime-subpage-nilai-${kategori}-${gender}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "penilaian" },
@@ -141,7 +151,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
 
             const { data: p } = await supabase
               .from("peserta")
-              .select("nama_regu, pangkalan, kategori")
+              .select("nama_regu, pangkalan, kategori, gender")
               .eq("id", payload.new.peserta_id)
               .single();
 
@@ -151,7 +161,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
               .eq("id", payload.new.lomba_id)
               .single();
 
-            if (p && l && p.kategori === kategori) {
+            if (p && l && p.kategori === kategori && p.gender === gender) {
               const time = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
               setTickerItems((prev) => [{
                 id: Date.now(),
@@ -169,7 +179,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       supabase.removeChannel(channelPeserta);
       supabase.removeChannel(channelNilai);
     };
-  }, [kategori]);
+  }, [kategori, gender]);
 
   // Rank change detection animations for existing items
   useEffect(() => {
@@ -250,8 +260,34 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
           {/* Info Bar at top of glass container */}
           <div className="scoreboard-info-bar">
             <div className="info-bar-left">
-              <span className="info-bar-title">KLASEMEN UMUM CABANG {kategori} - LIVE</span>
+              <span className="info-bar-title">
+                KLASEMEN UMUM CABANG {kategori} {gender ? (gender === "Laki-laki" ? "PUTRA" : "PUTRI") : ""} - LIVE
+              </span>
             </div>
+            {gender && onGenderChange && (
+              <div className="flex gap-2 mr-2" style={{ zIndex: 10 }}>
+                <button
+                  onClick={() => onGenderChange("Laki-laki")}
+                  className={`px-3 py-1 text-[0.65rem] font-black rounded-lg transition-all border ${
+                    gender === "Laki-laki"
+                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50"
+                      : "bg-slate-950/80 text-slate-400 border-slate-800 hover:text-slate-200"
+                  }`}
+                >
+                  👦 PUTRA
+                </button>
+                <button
+                  onClick={() => onGenderChange("Perempuan")}
+                  className={`px-3 py-1 text-[0.65rem] font-black rounded-lg transition-all border ${
+                    gender === "Perempuan"
+                      ? "bg-rose-500/20 text-rose-300 border-rose-500/50"
+                      : "bg-slate-950/80 text-slate-400 border-slate-800 hover:text-slate-200"
+                  }`}
+                >
+                  👧 PUTRI
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Leaderboard Table Grid */}

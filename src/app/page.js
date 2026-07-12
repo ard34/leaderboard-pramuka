@@ -73,6 +73,7 @@ export default function Home() {
   const [changedCellKey, setChangedCellKey] = useState(null);
   const [activeGender, setActiveGender] = useState("Laki-laki");
   const [isLocked, setIsLocked] = useState(false);
+  const [availableCounts, setAvailableCounts] = useState({});
 
 
   // Auto-rotation state
@@ -87,16 +88,25 @@ export default function Home() {
   const prevTab = useRef("SD");
   const prevGender = useRef("Laki-laki");
 
-  // Get next rotation item
-  const getNextRotationItem = useCallback(() => {
-    const nextIdx = (rotationIndex + 1) % ROTATION_SEQUENCE.length;
-    return { item: ROTATION_SEQUENCE[nextIdx], index: nextIdx };
-  }, [rotationIndex]);
+  // Find next rotation item that has participants (skip empty categories)
+  const findNextRotationIndex = useCallback((fromIdx) => {
+    const len = ROTATION_SEQUENCE.length;
+    for (let i = 1; i <= len; i++) {
+      const candidateIdx = (fromIdx + i) % len;
+      const candidate = ROTATION_SEQUENCE[candidateIdx];
+      const countKey = `${candidate.tab}_${candidate.gender}`;
+      if ((availableCounts[countKey] || 0) > 0) {
+        return candidateIdx;
+      }
+    }
+    return -1; // No categories have participants
+  }, [availableCounts]);
 
   // Execute the transition to next category
   const executeRotation = useCallback(() => {
-    const currentIdx = rotationIndex;
-    const nextIdx = (currentIdx + 1) % ROTATION_SEQUENCE.length;
+    const nextIdx = findNextRotationIndex(rotationIndex);
+    if (nextIdx === -1 || nextIdx === rotationIndex) return; // Skip if nothing to rotate to
+
     const nextItem = ROTATION_SEQUENCE[nextIdx];
 
     // Phase 1: Show sports wipe overlay + fade out current table simultaneously
@@ -130,7 +140,7 @@ export default function Home() {
     setTimeout(() => {
       setTableTransitionClass("");
     }, 2900);
-  }, [rotationIndex]);
+  }, [rotationIndex, findNextRotationIndex]);
 
   // Initialize auto-rotation on mount
   useEffect(() => {
@@ -159,6 +169,21 @@ export default function Home() {
   // Fetch data awal sekali saja saat website pertama dibuka, cek URL query params
   useEffect(() => {
     const loadAwal = async () => {
+      // Fetch participant counts for all 6 combos to know which categories have data
+      const countMap = {};
+      try {
+        const { data: countData } = await supabase
+          .from("peserta")
+          .select("kategori, gender");
+        if (countData) {
+          countData.forEach((p) => {
+            const key = `${p.kategori}_${p.gender}`;
+            countMap[key] = (countMap[key] || 0) + 1;
+          });
+        }
+      } catch (_) {}
+      setAvailableCounts(countMap);
+
       let initTab = "SD";
       let initGender = "Laki-laki";
       let initRotIdx = 0;
@@ -399,6 +424,8 @@ export default function Home() {
         });
         prevBounds.current = bounds;
         setPeserta(pesertaData);
+        // Update available counts so auto-rotation knows which categories have data
+        setAvailableCounts((prev) => ({ ...prev, [`${kategori}_${gender}`]: pesertaData.length }));
       }
 
       if (pesertaData && pesertaData.length > 0) {

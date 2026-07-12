@@ -7,16 +7,23 @@ import LeaderboardTable from "@/components/LeaderboardTable";
 export default function LeaderboardSMP() {
   const [peserta, setPeserta] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [gender, setGender] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("_lb_smp_gender") || "Laki-laki";
+    }
+    return "Laki-laki";
+  });
 
   useEffect(() => {
     fetchData();
 
     const channel = supabase
-      .channel("realtime-leaderboard-smp")
+      .channel(`realtime-leaderboard-smp-${gender}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "peserta", filter: "kategori=eq.SMP" },
         (payload) => {
+          if (payload.new.gender !== gender) return;
           setPeserta((currentData) => {
             const updatedData = currentData.map((p) =>
               p.id === payload.new.id ? { ...p, total_nilai: payload.new.total_nilai } : p
@@ -29,6 +36,7 @@ export default function LeaderboardSMP() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "peserta", filter: "kategori=eq.SMP" },
         (payload) => {
+          if (payload.new.gender !== gender) return;
           setPeserta((currentData) => {
             const exists = currentData.find((p) => p.id === payload.new.id);
             if (exists) return currentData;
@@ -42,13 +50,18 @@ export default function LeaderboardSMP() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [gender]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem("_lb_smp_gender", gender); } catch (_) {}
+  }, [gender]);
 
   const fetchData = async () => {
     const { data, error } = await supabase
       .from("peserta")
-      .select("id, nomor_dada, nama_regu, pangkalan, total_nilai")
+      .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender")
       .eq("kategori", "SMP")
+      .eq("gender", gender)
       .order("total_nilai", { ascending: false });
 
     if (!error && data) {
@@ -73,6 +86,8 @@ export default function LeaderboardSMP() {
       data={peserta}
       accentColor="cyan"
       tingkat="Tingkat Menengah Pertama (SMP/MTs)"
+      gender={gender}
+      onGenderChange={(g) => { setGender(g); setLoading(true); }}
     />
   );
 }
