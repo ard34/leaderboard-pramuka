@@ -997,8 +997,8 @@ input[type="number"] {
   border: 1.5px solid rgba(6, 182, 212, 0.45); /* cyan glowing border */
   border-radius: 12px;
   box-shadow: 0 0 25px rgba(6, 182, 212, 0.25), inset 0 0 20px rgba(6, 182, 212, 0.1);
-  background: rgba(11, 19, 41, 0.45); /* dark glass fill for readability */
-  backdrop-filter: blur(4px);
+  background: rgba(11, 19, 41, 0.25); /* dark glass fill for readability */
+  backdrop-filter: blur(8px);
 }
 
 /* Info Bar inside glass box (header space) */
@@ -1189,7 +1189,8 @@ input[type="number"] {
   position: sticky;
   left: 0;
   z-index: 25;
-  background: #0b1329;
+  background: rgba(11, 19, 41, 0.75);
+  backdrop-filter: blur(8px);
   width: 65px !important;
   min-width: 65px !important;
   max-width: 65px !important;
@@ -1200,7 +1201,8 @@ input[type="number"] {
   position: sticky;
   left: 65px;
   z-index: 25;
-  background: #0b1329;
+  background: rgba(11, 19, 41, 0.75);
+  backdrop-filter: blur(8px);
   width: 220px !important;
   min-width: 220px !important;
   max-width: 220px !important;
@@ -1211,7 +1213,8 @@ input[type="number"] {
   position: sticky;
   right: 0;
   z-index: 25;
-  background: #0b1329;
+  background: rgba(11, 19, 41, 0.75);
+  backdrop-filter: blur(8px);
   width: 95px !important;
   min-width: 95px !important;
   max-width: 95px !important;
@@ -1221,14 +1224,14 @@ input[type="number"] {
 .scoreboard-table thead th.sticky-col-rank,
 .scoreboard-table thead th.sticky-col-name,
 .scoreboard-table thead th.sticky-col-total {
-  background: #0a1628 !important;
+  background: rgba(10, 22, 40, 0.85) !important;
   z-index: 28;
 }
 
 .scoreboard-row:nth-child(even) td.sticky-col-rank,
 .scoreboard-row:nth-child(even) td.sticky-col-name,
 .scoreboard-row:nth-child(even) td.sticky-col-total {
-  background: #0d1733;
+  background: rgba(13, 23, 51, 0.8);
 }
 
 /* Column locking helper classes for uniform head-body alignment */
@@ -1261,7 +1264,7 @@ input[type="number"] {
 .scoreboard-row:hover td.sticky-col-rank,
 .scoreboard-row:hover td.sticky-col-name,
 .scoreboard-row:hover td.sticky-col-total {
-  background: #111e3f !important;
+  background: rgba(17, 30, 63, 0.85) !important;
 }
 
 .scoreboard-sidebar {
@@ -1342,7 +1345,7 @@ input[type="number"] {
 }
 
 .scoreboard-table thead th {
-  background: #0a1628;
+  background: rgba(10, 22, 40, 0.65);
   color: rgba(148, 163, 184, 0.75);
   font-size: 0.58rem;
   font-weight: 700;
@@ -1401,7 +1404,7 @@ input[type="number"] {
 }
 
 .scoreboard-row td {
-  background: #0b1329;
+  background: rgba(11, 19, 41, 0.35);
   padding: 7px 5px;
   font-size: 0.78rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.015);
@@ -1410,11 +1413,11 @@ input[type="number"] {
 }
 
 .scoreboard-row:nth-child(even) td {
-  background: #0d1733;
+  background: rgba(13, 23, 51, 0.45);
 }
 
 .scoreboard-row:hover td {
-  background: #111e3f !important;
+  background: rgba(17, 30, 63, 0.7) !important;
 }
 
 .scoreboard-row td:first-child {
