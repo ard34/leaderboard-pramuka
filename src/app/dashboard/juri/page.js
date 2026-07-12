@@ -41,27 +41,33 @@ export default function DashboardJuri() {
   }, [selectedKategori, lombaList, juri]);
 
   const cekAuthDanAmbilData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      router.push("/login");
-      return;
+    // Try to use cached profile from login page to skip getSession
+    let userId = null;
+    try {
+      const cached = JSON.parse(sessionStorage.getItem("_profile_cache") || "null");
+      if (cached && cached.role === "juri" && (Date.now() - cached.ts) < 30000) {
+        sessionStorage.removeItem("_profile_cache");
+        userId = cached.id;
+      }
+    } catch (_) { /* ignore */ }
+
+    // If no cache, do normal session check
+    if (!userId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      userId = session.user.id;
     }
 
-    // Ambil Profil Juri
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba)")
-      .eq("id", session.user.id)
-      .single();
-
-    if (profile?.role !== "juri") {
-      router.push("/dashboard/admin");
-      return;
-    }
-    setJuri(profile);
-
-    // Fetch lomba and peserta in parallel
-    const [lombaRes, pesertaRes] = await Promise.all([
+    // Fetch profile, lomba, and peserta ALL in parallel
+    const [profileRes, lombaRes, pesertaRes] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba)")
+        .eq("id", userId)
+        .single(),
       supabase
         .from("lomba")
         .select("id, nama_lomba, kode_lomba, kategori")
@@ -71,6 +77,13 @@ export default function DashboardJuri() {
         .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
         .order("nomor_dada", { ascending: true }),
     ]);
+
+    const profile = profileRes.data;
+    if (profile?.role !== "juri") {
+      router.push("/dashboard/admin");
+      return;
+    }
+    setJuri(profile);
 
     if (lombaRes.data) {
       setLombaList(lombaRes.data);

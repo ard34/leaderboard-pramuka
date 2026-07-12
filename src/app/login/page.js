@@ -89,10 +89,10 @@ export default function LoginPage() {
       // Reset attempts on success
       loginAttemptsRef.current = 0;
 
-      // Fetch profile role — use .maybeSingle() for speed, no error throw
+      // Fetch profile with nama_lengkap so dashboard can skip its own profile query
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, nama_lengkap")
         .eq("id", authData.user.id)
         .maybeSingle();
 
@@ -102,6 +102,16 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
+
+      // Cache profile so dashboard pages skip redundant profile query
+      try {
+        sessionStorage.setItem("_profile_cache", JSON.stringify({
+          id: authData.user.id,
+          role: profileData.role,
+          nama_lengkap: profileData.nama_lengkap,
+          ts: Date.now(),
+        }));
+      } catch (_) { /* ignore storage errors */ }
 
       // Use replace() so login page is removed from browser history
       router.replace(profileData.role === "admin" ? "/dashboard/admin" : "/dashboard/juri");

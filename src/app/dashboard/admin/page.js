@@ -44,6 +44,19 @@ export default function DashboardAdmin() {
   }, []);
 
   const cekAuth = async () => {
+    // Try to use cached profile from login page (avoids redundant getSession + profile query)
+    try {
+      const cached = JSON.parse(sessionStorage.getItem("_profile_cache") || "null");
+      if (cached && cached.role === "admin" && (Date.now() - cached.ts) < 30000) {
+        sessionStorage.removeItem("_profile_cache");
+        setAdmin({ nama_lengkap: cached.nama_lengkap, role: cached.role });
+        setLoading(false);
+        fetchAllData();
+        return;
+      }
+    } catch (_) { /* ignore parse errors */ }
+
+    // Fallback: normal auth check
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       router.push("/login");
@@ -63,7 +76,6 @@ export default function DashboardAdmin() {
 
     setAdmin(profile);
     setLoading(false);
-    // Fetch data in background (non-blocking) after UI is shown
     fetchAllData();
   };
 
