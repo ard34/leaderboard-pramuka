@@ -109,6 +109,10 @@ export default function Home() {
       setActiveTab(nextItem.tab);
       setActiveGender(nextItem.gender);
       setRotationIndex(nextIdx);
+      // Persist current view so refresh stays on this category
+      try {
+        sessionStorage.setItem("_lb_state", JSON.stringify({ tab: nextItem.tab, gender: nextItem.gender, rotIdx: nextIdx }));
+      } catch (_) {}
     }, 1300);
 
     // Phase 3: Start fading in the new table as the overlay begins to fade out (2100ms)
@@ -157,6 +161,7 @@ export default function Home() {
     const loadAwal = async () => {
       let initTab = "SD";
       let initGender = "Laki-laki";
+      let initRotIdx = 0;
       let locked = false;
 
       if (typeof window !== "undefined") {
@@ -192,6 +197,22 @@ export default function Home() {
             locked = true;
           }
         }
+
+        // If no URL params, restore from sessionStorage (survive refresh)
+        if (!locked) {
+          try {
+            const saved = JSON.parse(sessionStorage.getItem("_lb_state") || "null");
+            if (saved && saved.tab && saved.gender) {
+              const validTabs = ["SD", "SMP", "SMK"];
+              const validGenders = ["Laki-laki", "Perempuan"];
+              if (validTabs.includes(saved.tab) && validGenders.includes(saved.gender)) {
+                initTab = saved.tab;
+                initGender = saved.gender;
+                if (typeof saved.rotIdx === "number") initRotIdx = saved.rotIdx;
+              }
+            }
+          } catch (_) {}
+        }
       }
 
       if (locked) {
@@ -204,6 +225,10 @@ export default function Home() {
         if (matchIdx !== -1) {
           setRotationIndex(matchIdx);
         }
+      } else {
+        setActiveTab(initTab);
+        setActiveGender(initGender);
+        setRotationIndex(initRotIdx);
       }
 
       await fetchData(initTab, initGender);
@@ -211,6 +236,14 @@ export default function Home() {
     };
     loadAwal();
   }, []);
+
+  // Persist active view to sessionStorage so refresh stays on same category
+  useEffect(() => {
+    if (loading) return;
+    try {
+      sessionStorage.setItem("_lb_state", JSON.stringify({ tab: activeTab, gender: activeGender, rotIdx: rotationIndex }));
+    } catch (_) {}
+  }, [activeTab, activeGender, rotationIndex, loading]);
 
   // Fetch data secara senyap ketika tab atau gender diganti (tanpa memunculkan loading screen hitam)
   useEffect(() => {
