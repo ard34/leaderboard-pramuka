@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 
 /**
- * Next.js Middleware for Route Protection
+ * Next.js Middleware — Security Headers Only
  * 
- * Security layers:
- * 1. Adds security headers (XSS, clickjacking, MIME sniffing protection)
- * 2. Prevents direct access to /dashboard/* routes without a valid session cookie
- *    (Supabase stores its auth token in cookies automatically)
- * 3. Redirects unauthenticated users to /login
+ * Route protection is handled client-side by each dashboard page
+ * via supabase.auth.getSession() checks (Supabase stores auth
+ * tokens in localStorage, not cookies).
  */
 export function middleware(request) {
-  const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
   // ── Security Headers ──────────────────────────────────────────────
@@ -22,37 +19,6 @@ export function middleware(request) {
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=()"
   );
-
-  // ── Dashboard Route Guard ─────────────────────────────────────────
-  if (pathname.startsWith("/dashboard")) {
-    // Check for Supabase auth cookie (sb-*-auth-token or sb-*-auth-token.0)
-    const cookies = request.cookies.getAll();
-    const hasAuthCookie = cookies.some(
-      (cookie) =>
-        cookie.name.includes("auth-token") ||
-        cookie.name.startsWith("sb-")
-    );
-
-    if (!hasAuthCookie) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  // ── Prevent logged-in users from seeing login page ────────────────
-  if (pathname === "/login") {
-    const cookies = request.cookies.getAll();
-    const hasAuthCookie = cookies.some(
-      (cookie) =>
-        cookie.name.includes("auth-token") ||
-        cookie.name.startsWith("sb-")
-    );
-
-    // If already logged in, let the client-side handle the redirect
-    // (we don't redirect here because the cookie check is superficial;
-    //  the actual session validity is checked client-side by Supabase)
-  }
 
   return response;
 }

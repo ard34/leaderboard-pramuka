@@ -60,14 +60,20 @@ export default function DashboardJuri() {
     }
     setJuri(profile);
 
-    // Ambil Semua Cabang Lomba
-    const { data: lombaData } = await supabase
-      .from("lomba")
-      .select("id, nama_lomba, kode_lomba, kategori")
-      .order("nama_lomba", { ascending: true });
+    // Fetch lomba and peserta in parallel
+    const [lombaRes, pesertaRes] = await Promise.all([
+      supabase
+        .from("lomba")
+        .select("id, nama_lomba, kode_lomba, kategori")
+        .order("nama_lomba", { ascending: true }),
+      supabase
+        .from("peserta")
+        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
+        .order("nomor_dada", { ascending: true }),
+    ]);
 
-    if (lombaData) {
-      setLombaList(lombaData);
+    if (lombaRes.data) {
+      setLombaList(lombaRes.data);
       if (profile.assigned_lomba_id) {
         setSelectedLombaId(profile.assigned_lomba_id);
       }
@@ -81,13 +87,7 @@ export default function DashboardJuri() {
       setSelectedGender(profile.assigned_gender);
     }
 
-    // Ambil Daftar Peserta
-    const { data: peserta } = await supabase
-      .from("peserta")
-      .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
-      .order("nomor_dada", { ascending: true });
-
-    if (peserta) setPesertaList(peserta);
+    if (pesertaRes.data) setPesertaList(pesertaRes.data);
     setLoading(false);
   };
 

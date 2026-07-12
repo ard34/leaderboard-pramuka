@@ -62,36 +62,63 @@ export default function DashboardAdmin() {
     }
 
     setAdmin(profile);
-    await fetchAllData();
     setLoading(false);
+    // Fetch data in background (non-blocking) after UI is shown
+    fetchAllData();
   };
 
   const fetchAllData = async () => {
-    // Fetch all cabang lomba
-    const { data: lomba } = await supabase
-      .from("lomba")
-      .select("id, nama_lomba, kode_lomba, kategori")
-      .order("nama_lomba", { ascending: true });
+    // Run ALL queries in parallel instead of sequential
+    const [lombaRes, pesertaRes, penilaianRes, jurisRes, logsRes] = await Promise.all([
+      // Fetch all cabang lomba
+      supabase
+        .from("lomba")
+        .select("id, nama_lomba, kode_lomba, kategori")
+        .order("nama_lomba", { ascending: true }),
 
-    if (lomba) setLombaList(lomba);
+      // Fetch all peserta
+      supabase
+        .from("peserta")
+        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai")
+        .order("nomor_dada", { ascending: true }),
 
-    // Fetch all peserta
-    const { data: peserta } = await supabase
-      .from("peserta")
-      .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai")
-      .order("nomor_dada", { ascending: true });
+      // Fetch all penilaian
+      supabase
+        .from("penilaian")
+        .select("peserta_id, lomba_id, nilai"),
 
-    if (peserta) setPesertaList(peserta);
+      // Fetch all juri from profiles
+      supabase
+        .from("profiles")
+        .select("id, nama_lengkap, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba)")
+        .eq("role", "juri")
+        .order("nama_lengkap", { ascending: true }),
 
-    // Fetch all penilaian
-    const { data: penilaian } = await supabase
-      .from("penilaian")
-      .select("peserta_id, lomba_id, nilai");
+      // Fetch scoring activity logs (Join tables dynamically)
+      supabase
+        .from("penilaian")
+        .select(`
+          created_at,
+          nilai,
+          peserta (nama_regu, pangkalan),
+          lomba (nama_lomba),
+          profiles (nama_lengkap)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(30),
+    ]);
 
-    if (penilaian) {
+    // Apply all results
+    if (lombaRes.data) setLombaList(lombaRes.data);
+    if (pesertaRes.data) setPesertaList(pesertaRes.data);
+    if (jurisRes.data) setJuriList(jurisRes.data);
+    if (logsRes.data) setLogEntries(logsRes.data);
+
+    // Process penilaian map
+    if (penilaianRes.data) {
       const map = {};
       const counts = {};
-      penilaian.forEach((p) => {
+      penilaianRes.data.forEach((p) => {
         const key = `${p.peserta_id}_${p.lomba_id}`;
         if (!map[key]) {
           map[key] = 0;
@@ -105,30 +132,6 @@ export default function DashboardAdmin() {
       });
       setNilaiMap(map);
     }
-
-    // Fetch all juri from profiles
-    const { data: juris } = await supabase
-      .from("profiles")
-      .select("id, nama_lengkap, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba)")
-      .eq("role", "juri")
-      .order("nama_lengkap", { ascending: true });
-    
-    if (juris) setJuriList(juris);
-
-    // Fetch scoring activity logs (Join tables dynamically)
-    const { data: dbLogs } = await supabase
-      .from("penilaian")
-      .select(`
-        created_at,
-        nilai,
-        peserta (nama_regu, pangkalan),
-        lomba (nama_lomba),
-        profiles (nama_lengkap)
-      `)
-      .order("created_at", { ascending: false })
-      .limit(30);
-
-    if (dbLogs) setLogEntries(dbLogs);
   };
 
   // Add local log helper (for simple UI actions)
