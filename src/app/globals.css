@@ -1648,3 +1648,20 @@ input[type="number"] {
   color: #22d3ee !important; /* cyan glow text override */
 }
 
+/* Custom Scrollbar for admin tables */
+.mobile-table-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+.mobile-table-scroll::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
+}
+.mobile-table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.4);
+  border-radius: 4px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.mobile-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.7);
+}
+

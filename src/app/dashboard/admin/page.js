@@ -646,16 +646,16 @@ export default function DashboardAdmin() {
             
             <div className="lg:col-span-2 glass-card overflow-hidden">
               <div className="overflow-x-auto max-h-[600px] mobile-table-scroll">
-                <table className="w-full text-left border-collapse min-w-[900px]">
+                <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
                     <tr>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">No. Dada</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Nama Regu</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Pangkalan & Gudep</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Kategori</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Kontak CP</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Status</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">No. Dada</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Nama Regu</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Pangkalan & Gudep</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Kategori</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Kontak CP</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Status</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -663,30 +663,30 @@ export default function DashboardAdmin() {
                       const isVerifying = verifyingId === p.id;
                       return (
                         <tr key={p.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
-                          <td className="p-4 text-sm font-mono text-emerald-400">
+                          <td className="p-3 text-sm font-mono text-emerald-400">
                             {isVerifying ? (
                               <input 
                                 type="number" 
-                                placeholder="No Dada" 
+                                placeholder="No" 
                                 value={noDadaInput} 
                                 onChange={(e) => setNoDadaInput(e.target.value)} 
-                                className="w-20 bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-500"
+                                className="w-16 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-white text-xs outline-none focus:border-amber-500"
                               />
                             ) : (
                               p.nomor_dada || "—"
                             )}
                           </td>
-                          <td className="p-4 text-sm font-bold text-white">{p.nama_regu}</td>
-                          <td className="p-4 text-sm text-slate-400">
+                          <td className="p-3 text-sm font-bold text-white">{p.nama_regu}</td>
+                          <td className="p-3 text-sm text-slate-400">
                             <div className="font-semibold text-slate-300">{p.pangkalan}</div>
                             {p.no_gudep && <div className="text-[0.65rem] text-slate-500 font-mono">Gudep: {p.no_gudep}</div>}
                           </td>
-                          <td className="p-4 text-xs font-black">
+                          <td className="p-3 text-xs font-black">
                             <div>{p.kategori}</div>
                             <div className="text-slate-500 text-[0.65rem] font-normal">{p.gender === 'Laki-laki' ? '👦 Putra' : '👧 Putri'}</div>
                           </td>
-                          <td className="p-4 text-xs font-mono text-slate-300">{p.kontak_person || "—"}</td>
-                          <td className="p-4 text-xs">
+                          <td className="p-3 text-xs font-mono text-slate-300">{p.kontak_person || "—"}</td>
+                          <td className="p-3 text-xs">
                             {p.is_verified ? (
                               <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
                                 ✅ Aktif
@@ -697,44 +697,44 @@ export default function DashboardAdmin() {
                               </span>
                             )}
                           </td>
-                          <td className="p-4 text-right">
+                          <td className="p-3 text-right">
                             {isVerifying ? (
-                              <div className="flex justify-end gap-1.5">
+                              <div className="flex justify-end gap-1">
                                 <button 
                                   onClick={() => handleVerifikasiPeserta(p.id)} 
-                                  className="text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                  className="text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-1 rounded text-xs font-bold transition-all"
                                 >
                                   Simpan
                                 </button>
                                 <button 
                                   onClick={() => { setVerifyingId(null); setNoDadaInput(""); }} 
-                                  className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                  className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-xs font-bold transition-all"
                                 >
                                   Batal
                                 </button>
                               </div>
                             ) : (
-                              <div className="flex justify-end gap-2 text-right items-center">
+                              <div className="flex justify-end gap-1.5 text-right items-center">
                                 {!p.is_verified && (
                                   <button 
                                     onClick={() => { setVerifyingId(p.id); setNoDadaInput(""); }} 
-                                    className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                                    className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors"
                                   >
                                     Verifikasi
                                   </button>
                                 )}
                                 
                                 {confirmDeleteId === p.id ? (
-                                  <div className="flex justify-end gap-1.5">
-                                    <button onClick={() => handleHapusPeserta(p.id, p.nama_regu)} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
-                                      Ya, Hapus
+                                  <div className="flex justify-end gap-1">
+                                    <button onClick={() => handleHapusPeserta(p.id, p.nama_regu)} className="text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-xs font-bold transition-all">
+                                      Ya
                                     </button>
-                                    <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                                    <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-xs font-bold transition-all">
                                       Batal
                                     </button>
                                   </div>
                                 ) : (
-                                  <button onClick={() => setConfirmDeleteId(p.id)} className="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                  <button onClick={() => setConfirmDeleteId(p.id)} className="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white px-2.5 py-1.5 rounded text-xs font-bold transition-colors">
                                     Hapus
                                   </button>
                                 )}
