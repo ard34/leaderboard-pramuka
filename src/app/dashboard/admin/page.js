@@ -37,6 +37,8 @@ export default function DashboardAdmin() {
   const [logEntries, setLogEntries] = useState([]);
   const [pesanAdmin, setPesanAdmin] = useState({ type: "", text: "" });
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [verifyingId, setVerifyingId] = useState(null);
+  const [noDadaInput, setNoDadaInput] = useState("");
 
   // Auth check
   useEffect(() => {
@@ -88,10 +90,11 @@ export default function DashboardAdmin() {
         .select("id, nama_lomba, kode_lomba, kategori")
         .order("nama_lomba", { ascending: true }),
 
-      // Fetch all peserta
+      // Fetch all peserta (including Gudep, CP, is_verified)
       supabase
         .from("peserta")
-        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai")
+        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai, no_gudep, kontak_person, is_verified")
+        .order("is_verified", { ascending: true })
         .order("nomor_dada", { ascending: true }),
 
       // Fetch all penilaian
@@ -240,7 +243,8 @@ export default function DashboardAdmin() {
       nama_regu: formPeserta.nama_regu,
       pangkalan: formPeserta.pangkalan,
       kategori: formPeserta.kategori,
-      gender: formPeserta.gender
+      gender: formPeserta.gender,
+      is_verified: true // Admin added participants are verified automatically
     });
 
     if (error) {
@@ -260,6 +264,32 @@ export default function DashboardAdmin() {
     else {
       showPesan("success", `Regu ${nama} berhasil dihapus.`);
       setConfirmDeleteId(null);
+      await fetchAllData();
+    }
+    setSaving(false);
+  };
+
+  const handleVerifikasiPeserta = async (id) => {
+    const cleanNoDada = noDadaInput.trim();
+    if (!cleanNoDada) {
+      showPesan("error", "Masukkan nomor dada terlebih dahulu.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("peserta")
+      .update({
+        nomor_dada: Number(cleanNoDada),
+        is_verified: true
+      })
+      .eq("id", id);
+
+    if (error) {
+      showPesan("error", "Gagal melakukan verifikasi: " + error.message);
+    } else {
+      showPesan("success", "Regu berhasil diverifikasi!");
+      setVerifyingId(null);
+      setNoDadaInput("");
       await fetchAllData();
     }
     setSaving(false);
@@ -616,43 +646,104 @@ export default function DashboardAdmin() {
             
             <div className="lg:col-span-2 glass-card overflow-hidden">
               <div className="overflow-x-auto max-h-[600px] mobile-table-scroll">
-                <table className="w-full text-left border-collapse min-w-[700px]">
+                <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
                     <tr>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">No. Dada</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Nama Regu</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Pangkalan</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Tingkat</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Gender</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Pangkalan & Gudep</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Kategori</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Kontak CP</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Status</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pesertaList.map((p) => (
-                      <tr key={p.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
-                        <td className="p-4 text-sm font-mono text-emerald-400">{p.nomor_dada}</td>
-                        <td className="p-4 text-sm font-bold text-white">{p.nama_regu}</td>
-                        <td className="p-4 text-sm text-slate-400">{p.pangkalan}</td>
-                        <td className="p-4 text-xs font-black">{p.kategori}</td>
-                        <td className="p-4 text-xs font-bold text-slate-300">{p.gender === 'Laki-laki' ? '👦 Putra' : '👧 Putri'}</td>
-                        <td className="p-4 text-right">
-                          {confirmDeleteId === p.id ? (
-                            <div className="flex justify-end gap-1.5">
-                              <button onClick={() => handleHapusPeserta(p.id, p.nama_regu)} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
-                                Ya, Hapus
-                              </button>
-                              <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
-                                Batal
-                              </button>
-                            </div>
-                          ) : (
-                            <button onClick={() => setConfirmDeleteId(p.id)} className="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
-                              Hapus
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {pesertaList.map((p) => {
+                      const isVerifying = verifyingId === p.id;
+                      return (
+                        <tr key={p.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
+                          <td className="p-4 text-sm font-mono text-emerald-400">
+                            {isVerifying ? (
+                              <input 
+                                type="number" 
+                                placeholder="No Dada" 
+                                value={noDadaInput} 
+                                onChange={(e) => setNoDadaInput(e.target.value)} 
+                                className="w-20 bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-500"
+                              />
+                            ) : (
+                              p.nomor_dada || "—"
+                            )}
+                          </td>
+                          <td className="p-4 text-sm font-bold text-white">{p.nama_regu}</td>
+                          <td className="p-4 text-sm text-slate-400">
+                            <div className="font-semibold text-slate-300">{p.pangkalan}</div>
+                            {p.no_gudep && <div className="text-[0.65rem] text-slate-500 font-mono">Gudep: {p.no_gudep}</div>}
+                          </td>
+                          <td className="p-4 text-xs font-black">
+                            <div>{p.kategori}</div>
+                            <div className="text-slate-500 text-[0.65rem] font-normal">{p.gender === 'Laki-laki' ? '👦 Putra' : '👧 Putri'}</div>
+                          </td>
+                          <td className="p-4 text-xs font-mono text-slate-300">{p.kontak_person || "—"}</td>
+                          <td className="p-4 text-xs">
+                            {p.is_verified ? (
+                              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
+                                ✅ Aktif
+                              </span>
+                            ) : (
+                              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
+                                ⏳ Menunggu
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-4 text-right">
+                            {isVerifying ? (
+                              <div className="flex justify-end gap-1.5">
+                                <button 
+                                  onClick={() => handleVerifikasiPeserta(p.id)} 
+                                  className="text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                >
+                                  Simpan
+                                </button>
+                                <button 
+                                  onClick={() => { setVerifyingId(null); setNoDadaInput(""); }} 
+                                  className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                >
+                                  Batal
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-end gap-2 text-right items-center">
+                                {!p.is_verified && (
+                                  <button 
+                                    onClick={() => { setVerifyingId(p.id); setNoDadaInput(""); }} 
+                                    className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                                  >
+                                    Verifikasi
+                                  </button>
+                                )}
+                                
+                                {confirmDeleteId === p.id ? (
+                                  <div className="flex justify-end gap-1.5">
+                                    <button onClick={() => handleHapusPeserta(p.id, p.nama_regu)} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                                      Ya, Hapus
+                                    </button>
+                                    <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                                      Batal
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button onClick={() => setConfirmDeleteId(p.id)} className="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                    Hapus
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

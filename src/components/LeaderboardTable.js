@@ -67,17 +67,17 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       }
     }
 
-      // 3. Fetch recent scores for ticker
       let query = supabase
         .from("penilaian")
         .select(`
           id,
           nilai,
           updated_at,
-          peserta!inner (nama_regu, pangkalan, kategori, gender),
+          peserta!inner (nama_regu, pangkalan, kategori, gender, is_verified),
           lomba:lomba_id (nama_lomba)
         `)
-        .eq("peserta.kategori", kategori);
+        .eq("peserta.kategori", kategori)
+        .eq("peserta.is_verified", true);
 
       if (gender) {
         query = query.eq("peserta.gender", gender);
@@ -151,7 +151,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
 
             const { data: p } = await supabase
               .from("peserta")
-              .select("nama_regu, pangkalan, kategori, gender")
+              .select("nama_regu, pangkalan, kategori, gender, is_verified")
               .eq("id", payload.new.peserta_id)
               .single();
 
@@ -161,7 +161,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
               .eq("id", payload.new.lomba_id)
               .single();
 
-            if (p && l && p.kategori === kategori && p.gender === gender) {
+            if (p && l && p.is_verified && p.kategori === kategori && p.gender === gender) {
               const time = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
               setTickerItems((prev) => [{
                 id: Date.now(),

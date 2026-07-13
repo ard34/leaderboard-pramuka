@@ -171,7 +171,8 @@ export default function Home() {
       try {
         const { data: countData } = await supabase
           .from("peserta")
-          .select("kategori, gender");
+          .select("kategori, gender")
+          .eq("is_verified", true);
         if (countData) {
           countData.forEach((p) => {
             const key = `${p.kategori}_${p.gender}`;
@@ -275,6 +276,10 @@ export default function Home() {
   // Realtime subscription (Membaca perubahan secara background)
   useEffect(() => {
     const handleRealtimeChange = async (payload) => {
+      // Ignore updates for unverified participants
+      if (payload?.new && !payload.new.is_verified) {
+        return;
+      }
       await fetchData(activeTab, activeGender);
       if (payload?.new?.id) {
         setChangedIds(new Set([payload.new.id]));
@@ -309,7 +314,7 @@ export default function Home() {
 
             const { data: p } = await supabase
               .from("peserta")
-              .select("nama_regu, pangkalan, kategori, gender")
+              .select("nama_regu, pangkalan, kategori, gender, is_verified")
               .eq("id", payload.new.peserta_id)
               .single();
 
@@ -319,7 +324,7 @@ export default function Home() {
               .eq("id", payload.new.lomba_id)
               .single();
 
-            if (p && l && p.kategori === activeTab && p.gender === activeGender) {
+            if (p && l && p.is_verified && p.kategori === activeTab && p.gender === activeGender) {
               const time = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
               setTickerItems((prev) => [{
                 id: Date.now(),
@@ -409,6 +414,7 @@ export default function Home() {
         .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender")
         .eq("kategori", kategori)
         .eq("gender", gender)
+        .eq("is_verified", true)
         .order("total_nilai", { ascending: false });
 
       if (pesertaData) {

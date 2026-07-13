@@ -75,6 +75,7 @@ export default function DashboardJuri() {
       supabase
         .from("peserta")
         .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
+        .eq("is_verified", true)
         .order("nomor_dada", { ascending: true }),
     ]);
 

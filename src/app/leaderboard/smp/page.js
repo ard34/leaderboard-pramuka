@@ -62,6 +62,7 @@ export default function LeaderboardSMP() {
       .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender")
       .eq("kategori", "SMP")
       .eq("gender", gender)
+      .eq("is_verified", true)
       .order("total_nilai", { ascending: false });
 
     if (!error && data) {

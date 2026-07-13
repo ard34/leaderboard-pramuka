@@ -65,11 +65,11 @@ export default function LiveTicker({ accentColor = "emerald", kategori = "SD" })
           if (payload.new && payload.new.peserta_id) {
             const { data: peserta } = await supabase
               .from("peserta")
-              .select("nama_regu, pangkalan, kategori")
+              .select("nama_regu, pangkalan, kategori, is_verified")
               .eq("id", payload.new.peserta_id)
               .single();
 
-            if (peserta && peserta.kategori === kategori) {
+            if (peserta && peserta.kategori === kategori && peserta.is_verified) {
               const timestamp = new Date().toLocaleTimeString("id-ID", {
                 hour: "2-digit",
                 minute: "2-digit",
