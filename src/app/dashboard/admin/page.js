@@ -12,7 +12,13 @@ export default function DashboardAdmin() {
 
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("penilaian"); // "penilaian", "peserta", "juri", "lomba"
+  const [activeTab, setActiveTab] = useState("penilaian"); // "penilaian", "peserta", "juri", "lomba", "laporan", "informasi"
+
+  // Live Ticker & Report states
+  const [informasiList, setInformasiList] = useState([]);
+  const [newInformasi, setNewInformasi] = useState("");
+  const [reportTingkat, setReportTingkat] = useState("SD");
+  const [reportGender, setReportGender] = useState("Laki-laki");
 
   // Data state
   const [pesertaList, setPesertaList] = useState([]);
@@ -83,7 +89,7 @@ export default function DashboardAdmin() {
 
   const fetchAllData = async () => {
     // Run ALL queries in parallel instead of sequential
-    const [lombaRes, pesertaRes, penilaianRes, jurisRes, logsRes] = await Promise.all([
+    const [lombaRes, pesertaRes, penilaianRes, jurisRes, logsRes, informasiRes] = await Promise.all([
       // Fetch all cabang lomba
       supabase
         .from("lomba")
@@ -121,6 +127,12 @@ export default function DashboardAdmin() {
         `)
         .order("created_at", { ascending: false })
         .limit(30),
+
+      // Fetch all live ticker announcements
+      supabase
+        .from("informasi")
+        .select("id, text, created_at")
+        .order("created_at", { ascending: false }),
     ]);
 
     // Apply all results
@@ -128,6 +140,7 @@ export default function DashboardAdmin() {
     if (pesertaRes.data) setPesertaList(pesertaRes.data);
     if (jurisRes.data) setJuriList(jurisRes.data);
     if (logsRes.data) setLogEntries(logsRes.data);
+    if (informasiRes.data) setInformasiList(informasiRes.data);
 
     // Process penilaian map
     if (penilaianRes.data) {
@@ -392,6 +405,56 @@ export default function DashboardAdmin() {
     setSaving(false);
   };
 
+  // --- HANDLERS: INFORMASI (LIVE TICKER) ---
+  const handleTambahInformasi = async (e) => {
+    e.preventDefault();
+    const cleanText = newInformasi.trim();
+    if (!cleanText) return;
+    setSaving(true);
+    const { error } = await supabase.from("informasi").insert({ text: cleanText });
+    if (error) {
+      showPesan("error", "Gagal menambahkan informasi: " + error.message);
+    } else {
+      showPesan("success", "Informasi berhasil ditambahkan ke Live Ticker!");
+      setNewInformasi("");
+      await fetchAllData();
+    }
+    setSaving(false);
+  };
+
+  const handleHapusInformasi = async (id) => {
+    setSaving(true);
+    const { error } = await supabase.from("informasi").delete().eq("id", id);
+    if (error) {
+      showPesan("error", "Gagal menghapus informasi: " + error.message);
+    } else {
+      showPesan("success", "Informasi berhasil dihapus.");
+      await fetchAllData();
+    }
+    setSaving(false);
+  };
+
+  // --- RENDERING HELPERS: LAPORAN ---
+  const getJuaraForLomba = (lombaId) => {
+    const activePeserta = pesertaList.filter(
+      (p) =>
+        p.kategori === reportTingkat &&
+        p.gender === reportGender &&
+        p.is_verified === true
+    );
+
+    const scores = activePeserta.map((p) => {
+      const key = `${p.id}_${lombaId}`;
+      const score = nilaiMap[key] !== undefined ? nilaiMap[key] : 0;
+      return { ...p, score };
+    });
+
+    // Sort descending
+    scores.sort((a, b) => b.score - a.score);
+
+    return scores.slice(0, 3);
+  };
+
   // --- RENDERING HELPERS ---
   const filteredPesertaMatrix = pesertaList.filter((p) => {
     const matchesSearch = searchQuery === "" ||
@@ -481,6 +544,8 @@ export default function DashboardAdmin() {
           <button onClick={() => setActiveTab("peserta")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "peserta" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Manajemen Peserta</button>
           <button onClick={() => setActiveTab("juri")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "juri" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Manajemen Juri</button>
           <button onClick={() => setActiveTab("lomba")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "lomba" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Cabang Lomba</button>
+          <button onClick={() => setActiveTab("laporan")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "laporan" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Laporan & Rekap</button>
+          <button onClick={() => setActiveTab("informasi")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "informasi" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Live Ticker Info</button>
         </div>
       </div>
 
@@ -906,6 +971,254 @@ export default function DashboardAdmin() {
                     ))}
                     {lombaList.length === 0 && (
                       <tr><td colSpan="4" className="p-8 text-center text-slate-500 italic">Belum ada cabang lomba diinput.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: LAPORAN & REKAPITULASI */}
+        {activeTab === "laporan" && (
+          <div className="space-y-6">
+            {/* Filter & Print Action Banner */}
+            <div className="glass-card p-4 flex flex-col md:flex-row gap-4 items-center justify-between no-print">
+              <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                <div className="space-y-1">
+                  <label className="text-[0.65rem] text-slate-500 font-bold uppercase">Tingkatan</label>
+                  <select
+                    value={reportTingkat}
+                    onChange={(e) => setReportTingkat(e.target.value)}
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                  >
+                    <option value="SD">SD / MI</option>
+                    <option value="SMP">SMP / MTs</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Regu (Gender)</label>
+                  <select
+                    value={reportGender}
+                    onChange={(e) => setReportGender(e.target.value)}
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
+                  >
+                    <option value="Laki-laki">Putra (Laki-laki)</option>
+                    <option value="Perempuan">Putri (Perempuan)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={() => window.print()}
+                className="w-full md:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white font-black px-6 py-3 rounded-xl transition-all duration-300 shadow-[0_4px_15px_rgba(245,166,35,0.2)] flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                CETAK LAPORAN (PDF/PRINTER)
+              </button>
+            </div>
+
+            {/* Printable Report Document Card */}
+            <div className="glass-card p-6 md:p-10 border border-amber-500/10 shadow-2xl printable-report print-bg-white print-text-dark">
+              {/* Document Header */}
+              <div className="text-center border-b-2 border-slate-700/40 pb-6 mb-8 print-border">
+                <h1 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider print-text-dark">
+                  LAPORAN HASIL PENILAIAN AKHIR
+                </h1>
+                <p className="text-lg font-bold text-amber-400 uppercase tracking-widest mt-1 print-text-dark">
+                  LOMBA TINGKAT II KWARTIR RANTING MEKAR BARU
+                </p>
+                <div className="flex justify-center gap-6 mt-4 text-xs font-semibold text-slate-400 uppercase tracking-wider print-text-dark">
+                  <div>Tingkat: <span className="text-white font-bold print-text-dark">{reportTingkat === "SD" ? "SD / MI" : "SMP / MTs"}</span></div>
+                  <div>Golongan: <span className="text-white font-bold print-text-dark">{reportGender === "Laki-laki" ? "👦 PUTRA" : "👧 PUTRI"}</span></div>
+                  <div>Tanggal Cetak: <span className="text-white font-bold print-text-dark">{new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</span></div>
+                </div>
+              </div>
+
+              {/* SECTION 1: KLASEMEN AKUMULASI */}
+              <div className="space-y-4">
+                <h2 className="text-base md:text-lg font-black text-white uppercase tracking-wide border-l-4 border-amber-500 pl-3 print-text-dark print-border">
+                  I. Klasemen Akhir Akumulasi Nilai
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse print-table">
+                    <thead>
+                      <tr className="bg-slate-900/60 text-slate-400 font-bold text-xs uppercase print-text-dark">
+                        <th className="p-3 w-16 text-center">Peringkat</th>
+                        <th className="p-3 w-20 text-center">No. Dada</th>
+                        <th className="p-3">Asal Sekolah / Pangkalan</th>
+                        <th className="p-3 w-32 text-center">No. Gudep</th>
+                        <th className="p-3 w-32 text-right">Total Nilai</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pesertaList
+                        .filter((p) => p.kategori === reportTingkat && p.gender === reportGender && p.is_verified === true)
+                        .sort((a, b) => b.total_nilai - a.total_nilai)
+                        .map((regu, index) => (
+                          <tr key={regu.id} className="border-t border-slate-800/40 text-sm hover:bg-slate-800/10 print-text-dark">
+                            <td className="p-3 font-bold text-center">{index + 1}</td>
+                            <td className="p-3 font-mono text-center font-bold text-amber-400 print-text-dark">{regu.nomor_dada}</td>
+                            <td className="p-3 font-bold text-white print-text-dark">
+                              <div>{regu.pangkalan}</div>
+                              <span className="text-[0.65rem] text-slate-500 font-normal print-text-dark">Regu: {regu.nama_regu}</span>
+                            </td>
+                            <td className="p-3 font-mono text-center text-slate-300 print-text-dark">{regu.no_gudep || "—"}</td>
+                            <td className="p-3 font-mono font-black text-right text-emerald-400 print-text-dark">{regu.total_nilai}</td>
+                          </tr>
+                        ))}
+                      {pesertaList.filter((p) => p.kategori === reportTingkat && p.gender === reportGender && p.is_verified === true).length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="p-8 text-center text-slate-500 italic print-text-dark">
+                            Belum ada regu terverifikasi untuk kategori ini.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* SECTION 2: JUARA MASING-MASING LOMBA */}
+              <div className="space-y-6 mt-10">
+                <h2 className="text-base md:text-lg font-black text-white uppercase tracking-wide border-l-4 border-amber-500 pl-3 print-text-dark print-border">
+                  II. Rekapitulasi Pemenang Cabang Lomba (Juara 1, 2, 3)
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print-bg-white print-text-dark">
+                  {lombaList
+                    .filter((l) => l.kategori === reportTingkat)
+                    .map((lomba) => {
+                      const juaraList = getJuaraForLomba(lomba.id);
+                      return (
+                        <div key={lomba.id} className="p-4 rounded-xl border border-slate-800 bg-slate-950/40 space-y-3 print-border print-bg-white">
+                          <h3 className="text-sm font-black text-white uppercase tracking-wide border-b border-slate-800 pb-2 print-text-dark">
+                            🏆 {lomba.nama_lomba} ({lomba.kode_lomba})
+                          </h3>
+                          <div className="space-y-2">
+                            {juaraList.map((juara, idx) => (
+                              <div key={juara.id} className="flex justify-between items-center text-xs font-semibold">
+                                <span className={`px-2 py-0.5 rounded text-[0.6rem] font-bold ${
+                                  idx === 0 ? "bg-amber-400/10 text-amber-400" :
+                                  idx === 1 ? "bg-slate-400/10 text-slate-400" :
+                                  "bg-amber-700/10 text-amber-700"
+                                }`}>
+                                  Juara {idx + 1}
+                                </span>
+                                <span className="text-white font-bold flex-1 px-3 truncate print-text-dark">
+                                  {juara.pangkalan} <span className="text-[0.65rem] text-slate-500 font-normal print-text-dark">(Regu: {juara.nama_regu})</span>
+                                </span>
+                                <span className="font-mono text-emerald-400 font-black print-text-dark">
+                                  {juara.score} Pts
+                                </span>
+                              </div>
+                            ))}
+                            {juaraList.length === 0 && (
+                              <div className="text-center text-slate-500 italic text-xs py-2 print-text-dark">
+                                Belum ada penilaian diinput.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Signature Section */}
+              <div className="mt-16 grid grid-cols-2 text-center text-xs font-semibold text-slate-400 tracking-wider no-print md:flex md:justify-around print-border print-text-dark">
+                <div className="space-y-20">
+                  <div>Ketua Kwartir Ranting</div>
+                  <div className="font-black text-white border-t border-slate-700 pt-2 w-48 mx-auto print-text-dark">
+                    ( ____________________ )
+                  </div>
+                </div>
+                <div className="space-y-20">
+                  <div>Ketua Dewan Juri</div>
+                  <div className="font-black text-white border-t border-slate-700 pt-2 w-48 mx-auto print-text-dark">
+                    ( ____________________ )
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 6: MANAJEMEN LIVE TICKER (INFORMASI) */}
+        {activeTab === "informasi" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Input Form */}
+            <div className="lg:col-span-1 glass-card p-6 h-fit">
+              <h2 className="text-lg font-black text-white mb-4">Buat Informasi Pengumuman</h2>
+              <form onSubmit={handleTambahInformasi} className="space-y-4">
+                <div>
+                  <label className="text-[0.65rem] text-slate-500 font-bold uppercase">
+                    Isi Informasi Pengumuman
+                  </label>
+                  <textarea
+                    required
+                    value={newInformasi}
+                    onChange={(e) => setNewInformasi(e.target.value)}
+                    rows={4}
+                    placeholder="Contoh: Upacara Pembukaan Lomba Tingkat II akan dimulai pukul 08.00 WIB di Lapangan Utama"
+                    className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20"
+                  />
+                  <p className="text-[0.6rem] text-slate-500 mt-1">
+                    Informasi ini akan langsung dimunculkan di halaman depan utama pada text berjalan (Live Ticker) dengan lambang 📢.
+                  </p>
+                </div>
+                <button
+                  type="submit"
+                  disabled={saving || !isOnline}
+                  className="w-full bg-cyan-500 text-white font-bold py-3 rounded-lg mt-2 disabled:opacity-50 transition-colors"
+                >
+                  {saving ? "Menyimpan..." : "+ Munculkan di Ticker"}
+                </button>
+              </form>
+            </div>
+
+            {/* List Table */}
+            <div className="lg:col-span-2 glass-card overflow-hidden">
+              <div className="overflow-x-auto max-h-[600px] mobile-table-scroll">
+                <table className="w-full text-left border-collapse min-w-[500px]">
+                  <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
+                    <tr>
+                      <th className="p-4 w-28 text-[0.65rem] font-bold text-slate-500 uppercase">Waktu</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Pesan Pengumuman</th>
+                      <th className="p-4 w-24 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {informasiList.map((info) => (
+                      <tr key={info.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
+                        <td className="p-4 text-xs font-mono text-slate-500">
+                          {new Date(info.created_at).toLocaleTimeString("id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </td>
+                        <td className="p-4 text-sm font-bold text-slate-100 flex items-center gap-2">
+                          <span className="text-base flex-shrink-0">📢</span>
+                          {info.text}
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => handleHapusInformasi(info.id)}
+                            className="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                          >
+                            Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {informasiList.length === 0 && (
+                      <tr>
+                        <td colSpan="3" className="p-8 text-center text-slate-500 italic">
+                          Belum ada pengumuman kustom diinput. Ticker hanya menampilkan aktivitas dewan juri secara default.
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>

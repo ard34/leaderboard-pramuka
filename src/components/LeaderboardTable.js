@@ -11,6 +11,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
   const [lastUpdate, setLastUpdate] = useState("—");
   const [changedIds, setChangedIds] = useState(new Set());
   const [changedCellKey, setChangedCellKey] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
   
   const prevDataRef = useRef(new Map());
 
@@ -86,6 +87,16 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       const { data: recentScores } = await query
         .order("updated_at", { ascending: false })
         .limit(15);
+
+      const { data: infoData } = await supabase
+        .from("informasi")
+        .select("id, text, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (infoData) {
+        setAnnouncements(infoData);
+      }
 
       if (recentScores) {
         const items = recentScores.map((s) => {
@@ -223,8 +234,21 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
     return "total-low";
   };
 
-  const displayTickerItems = tickerItems.length > 0
-    ? tickerItems
+  const announcementItems = announcements.map((info) => ({
+    id: info.id,
+    text: `📢 ${info.text}`,
+    time: info.created_at
+      ? new Date(info.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+      : "",
+  }));
+
+  const displayTickerItemsList = [
+    ...announcementItems,
+    ...tickerItems
+  ].slice(0, 15);
+
+  const displayTickerItems = displayTickerItemsList.length > 0
+    ? displayTickerItemsList
     : [
         { id: "t1", text: `Lomba Pramuka Tingkat ${kategori} sedang berlangsung`, time: "" },
         { id: "t2", text: "Klasemen diperbarui secara real-time melalui sistem dewan juri", time: "" }

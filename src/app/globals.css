@@ -1665,3 +1665,71 @@ input[type="number"] {
   background: rgba(245, 158, 11, 0.7);
 }
 
+/* Print-specific layout optimization for reports */
+@media print {
+  /* Hide navigation, tabs, forms, buttons, and alert banners */
+  nav, 
+  .no-print, 
+  button, 
+  form, 
+  input, 
+  select,
+  .offline-banner {
+    display: none !important;
+  }
+  
+  /* Reset background and layout for print container */
+  body, html, main {
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+  }
+  
+  .printable-report {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 99999 !important;
+  }
+  
+  .printable-report * {
+    color: #000000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  
+  .printable-report table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 2rem !important;
+  }
+  
+  .printable-report th, 
+  .printable-report td {
+    border: 1px solid #000000 !important;
+    padding: 8px 12px !important;
+    background: transparent !important;
+    font-size: 10pt !important;
+  }
+  
+  .printable-report th {
+    font-weight: bold !important;
+    background: #f1f5f9 !important;
+  }
+  
+  .printable-report h1 {
+    font-size: 16pt !important;
+  }
+  
+  .printable-report h2 {
+    font-size: 12pt !important;
+    margin-top: 1.5rem !important;
+  }
+}
+

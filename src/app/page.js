@@ -71,6 +71,7 @@ export default function Home() {
   const [activeGender, setActiveGender] = useState("Laki-laki");
   const [isLocked, setIsLocked] = useState(false);
   const [availableCounts, setAvailableCounts] = useState({});
+  const [announcements, setAnnouncements] = useState([]);
 
 
   // Auto-rotation state
@@ -470,7 +471,17 @@ export default function Home() {
         .eq("peserta.kategori", kategori)
         .order("updated_at", { ascending: false })
         .limit(15);
-
+ 
+      const { data: infoData } = await supabase
+        .from("informasi")
+        .select("id, text, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5);
+ 
+      if (infoData) {
+        setAnnouncements(infoData);
+      }
+ 
       if (recentScores) {
         const items = recentScores.map((s) => {
           const time = new Date(s.updated_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
@@ -513,8 +524,22 @@ export default function Home() {
   // Current category info (used by TransitionOverlay)
   const currentRotation = ROTATION_SEQUENCE[rotationIndex];
 
-  const displayTickerItems = tickerItems.length > 0
-    ? tickerItems
+  // Combine custom announcements and real-time scores
+  const announcementItems = announcements.map((info) => ({
+    id: info.id,
+    text: `📢 ${info.text}`,
+    time: info.created_at
+      ? new Date(info.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+      : "",
+  }));
+ 
+  const displayTickerItemsList = [
+    ...announcementItems,
+    ...tickerItems
+  ].slice(0, 15);
+ 
+  const displayTickerItems = displayTickerItemsList.length > 0
+    ? displayTickerItemsList
     : [
         { id: "t1", text: "Lomba Tingkat II Kwartir Ranting Mekar Baru sedang berlangsung", time: "" },
         { id: "t2", text: "Klasemen diperbarui secara real-time melalui sistem dewan juri", time: "" }
