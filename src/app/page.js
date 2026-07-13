@@ -569,7 +569,7 @@ export default function Home() {
                   <thead>
                     <tr>
                       <th className="sc-th-rank sticky-col-rank col-rank">Peringkat</th>
-                      <th className="sc-th-name sticky-col-name col-name">REGU / NO. GUDEP</th>
+                      <th className="sc-th-name sticky-col-name col-name">NO. GUDEP</th>
                       {currentLombaCols.map((lomba) => (
                         <th key={lomba.id} title={lomba.nama_lomba} className="col-lomba">
                           <div className="sc-th-lomba">{lomba.kode_lomba || lomba.nama_lomba.substring(0, 4)}</div>
@@ -598,9 +598,8 @@ export default function Home() {
                               <span className="rank-number">{index + 1}</span>
                             </td>
                             <td className="sticky-col-name col-name">
-                              <div className="school-name" title={`Sekolah: ${regu.pangkalan}`}>
-                                <div className="font-bold text-white text-xs md:text-sm">{regu.nama_regu}</div>
-                                <div className="text-[0.65rem] text-amber-400 font-mono font-semibold mt-0.5">Gudep: {regu.no_gudep || "—"}</div>
+                              <div className="school-name text-xs md:text-sm font-mono font-bold text-white" title={`Regu: ${regu.nama_regu} | Sekolah: ${regu.pangkalan}`}>
+                                {regu.no_gudep || "—"}
                               </div>
                             </td>
                             {currentLombaCols.map((lomba) => {
