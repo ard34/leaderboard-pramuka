@@ -16,7 +16,7 @@ const ROTATION_SEQUENCE = [
   { tab: "SMP", gender: "Perempuan", label: "SMP / MTs", genderLabel: "PUTRI", color: "cyan", genderColor: "rose" },
 ];
 
-const ROTATION_INTERVAL_MS = 60 * 1000; // 1 menit (60 detik)
+const ROTATION_INTERVAL_MS = 3 * 60 * 1000; // 3 menit (180 detik)
 
 
 // Scout Fleur-de-lis SVG Component (Gold Scout Emblem)
@@ -86,19 +86,11 @@ export default function Home() {
   const prevTab = useRef("SD");
   const prevGender = useRef("Laki-laki");
 
-  // Find next rotation item that has participants (skip empty categories)
+  // Find next rotation item (cycles sequentially through all 4 categories)
   const findNextRotationIndex = useCallback((fromIdx) => {
     const len = ROTATION_SEQUENCE.length;
-    for (let i = 1; i <= len; i++) {
-      const candidateIdx = (fromIdx + i) % len;
-      const candidate = ROTATION_SEQUENCE[candidateIdx];
-      const countKey = `${candidate.tab}_${candidate.gender}`;
-      if ((availableCounts[countKey] || 0) > 0) {
-        return candidateIdx;
-      }
-    }
-    return -1; // No categories have participants
-  }, [availableCounts]);
+    return (fromIdx + 1) % len;
+  }, []);
 
   // Execute the transition to next category
   const executeRotation = useCallback(() => {
