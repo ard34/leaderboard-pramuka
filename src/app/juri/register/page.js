@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
@@ -14,6 +14,12 @@ export default function JuriRegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [kategori, setKategori] = useState("SD");
+  const [gender, setGender] = useState("Laki-laki");
+  const [lombaId, setLombaId] = useState("");
+
+  // Data states
+  const [lombaList, setLombaList] = useState([]);
 
   // UI states
   const [loading, setLoading] = useState(false);
@@ -27,6 +33,33 @@ export default function JuriRegisterPage() {
     const hasNumber = /[0-9]/.test(pass);
     return minLength && hasUppercase && hasNumber;
   };
+
+  // Fetch all lomba on mount
+  useEffect(() => {
+    const fetchLomba = async () => {
+      const { data } = await supabase
+        .from("lomba")
+        .select("id, nama_lomba, kategori")
+        .order("nama_lomba", { ascending: true });
+      if (data) setLombaList(data);
+    };
+    fetchLomba();
+  }, []);
+
+  // Filtered lomba options based on selected kategori
+  const filteredLomba = lombaList.filter((l) => l.kategori === kategori);
+
+  // Set default selected lomba when kategori changes
+  useEffect(() => {
+    if (filteredLomba.length > 0) {
+      const exists = filteredLomba.some((l) => l.id === lombaId);
+      if (!exists) {
+        setLombaId(filteredLomba[0].id);
+      }
+    } else {
+      setLombaId("");
+    }
+  }, [kategori, lombaList]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,6 +98,9 @@ export default function JuriRegisterPage() {
         options: {
           data: {
             nama_lengkap: cleanNama,
+            assigned_kategori: kategori,
+            assigned_gender: gender,
+            assigned_lomba_id: lombaId || null,
           },
         },
       });
@@ -163,6 +199,60 @@ export default function JuriRegisterPage() {
                     placeholder="email@contoh.com"
                     className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
                   />
+                </div>
+
+                {/* Tugas Tingkatan & Tugas Gender */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                      Tugas Tingkatan
+                    </label>
+                    <select
+                      value={kategori}
+                      onChange={(e) => setKategori(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
+                    >
+                      <option value="SD">SD / MI</option>
+                      <option value="SMP">SMP / MTs</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                      Kategori Regu (Gender)
+                    </label>
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
+                    >
+                      <option value="Laki-laki">Putra (Laki-laki)</option>
+                      <option value="Perempuan">Putri (Perempuan)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Tugas Cabang Lomba */}
+                <div className="space-y-1.5">
+                  <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                    Tugas Cabang Lomba
+                  </label>
+                  <select
+                    value={lombaId}
+                    onChange={(e) => setLombaId(e.target.value)}
+                    required
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
+                  >
+                    {filteredLomba.length === 0 ? (
+                      <option value="">Belum ada cabang lomba di tingkat {kategori}</option>
+                    ) : (
+                      filteredLomba.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.nama_lomba}
+                        </option>
+                      ))
+                    )}
+                  </select>
                 </div>
 
                 {/* Password */}
