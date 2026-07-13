@@ -93,8 +93,8 @@ export default function JuriRegisterPage() {
     try {
       // Determine redirect URL dynamically based on environment
       const redirectUrl = typeof window !== "undefined" 
-        ? `${window.location.origin}/login` 
-        : "https://leaderboard-pramuka.vercel.app/login";
+        ? `${window.location.origin}/juri/verified` 
+        : "https://leaderboard-pramuka.vercel.app/juri/verified";
 
       // Sign up with Supabase auth (sends verification email automatically)
       const { data, error: signUpError } = await supabase.auth.signUp({
