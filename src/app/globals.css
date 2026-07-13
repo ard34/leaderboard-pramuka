@@ -974,11 +974,11 @@ input[type="number"] {
 
 .banner-title {
   font-family: var(--font-outfit, 'Outfit', sans-serif);
-  font-size: clamp(1.0rem, 1.45vw, 1.5rem);
+  font-size: clamp(1.1rem, 1.7vw, 1.85rem);
   font-weight: 850;
   text-transform: uppercase;
   color: #ffffff;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 15px rgba(6, 182, 212, 0.35);
 }
 
