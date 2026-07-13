@@ -157,7 +157,7 @@ export default function LoginPage() {
               MASUK PANEL PENILAIAN
             </h1>
             <p className="text-xs text-slate-500 uppercase tracking-wider">
-              Lomba Pramuka Kwaran Mekar Baru
+              Lomba Tingkat II Kwartir Ranting Mekar Baru
             </p>
           </div>
 

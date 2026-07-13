@@ -235,7 +235,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       <div className="scoreboard-container">
         {/* Banner Header */}
         <div className="scoreboard-banner-header">
-          <h1 className="banner-title">Lomba Pramuka Kwaran Mekar Baru</h1>
+          <h1 className="banner-title">Lomba Tingkat II Kwartir Ranting Mekar Baru</h1>
         </div>
 
         {/* Sidebar Image Overlay */}

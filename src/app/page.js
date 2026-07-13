@@ -516,7 +516,7 @@ export default function Home() {
   const displayTickerItems = tickerItems.length > 0
     ? tickerItems
     : [
-        { id: "t1", text: "Lomba Pramuka Kwaran Mekar Baru sedang berlangsung", time: "" },
+        { id: "t1", text: "Lomba Tingkat II Kwartir Ranting Mekar Baru sedang berlangsung", time: "" },
         { id: "t2", text: "Klasemen diperbarui secara real-time melalui sistem dewan juri", time: "" }
       ];
 
@@ -528,7 +528,7 @@ export default function Home() {
 
         {/* Banner Header */}
         <div className="scoreboard-banner-header">
-          <h1 className="banner-title">Lomba Pramuka Kwaran Mekar Baru</h1>
+          <h1 className="banner-title">Lomba Tingkat II Kwartir Ranting Mekar Baru</h1>
         </div>
 
         {/* Sidebar Image Overlay */}

@@ -163,7 +163,7 @@ export default function JuriRegisterPage() {
                   REGISTRASI DEWAN JURI
                 </h1>
                 <p className="text-xs text-cyan-400 font-bold uppercase tracking-wider">
-                  Lomba Pramuka Kwaran Mekar Baru
+                  Lomba Tingkat II Kwartir Ranting Mekar Baru
                 </p>
               </div>
 
