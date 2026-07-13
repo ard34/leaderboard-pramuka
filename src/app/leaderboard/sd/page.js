@@ -59,7 +59,7 @@ export default function LeaderboardSD() {
   const fetchData = async () => {
     const { data, error } = await supabase
       .from("peserta")
-      .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender")
+      .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender, no_gudep")
       .eq("kategori", "SD")
       .eq("gender", gender)
       .eq("is_verified", true)
