@@ -105,11 +105,11 @@ export default function RegisterPage() {
           {!success ? (
             <>
               <div className="text-center space-y-2 mb-6">
-                <h1 className="text-xl md:text-2xl font-black tracking-widest text-white uppercase">
-                  PENDAFTARAN REGU BARU
+                <h1 className="text-lg md:text-xl font-black tracking-widest text-white uppercase">
+                  PENDAFTARAN PESERTA LOMBA TINGKAT II
                 </h1>
                 <p className="text-xs text-amber-400 font-bold uppercase tracking-wider">
-                  Lomba Pramuka Kwaran Mekar Baru
+                  Kwartir Ranting Mekar Baru
                 </p>
               </div>
 
@@ -240,7 +240,7 @@ export default function RegisterPage() {
                   PENDAFTARAN BERHASIL!
                 </h2>
                 <p className="text-sm text-slate-300 max-w-sm mx-auto">
-                  Data Regu <strong className="text-amber-400">{namaRegu}</strong> telah terkirim. Harap tunggu verifikasi dari Admin Kwaran Mekar Baru sebelum regu Anda muncul di Leaderboard utama.
+                  Data Regu <strong className="text-amber-400">{namaRegu}</strong> telah terkirim. Harap tunggu verifikasi dari Admin Kwartir Ranting Mekar Baru sebelum regu Anda muncul di Leaderboard utama.
                 </p>
               </div>
               <button
