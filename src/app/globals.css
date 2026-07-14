@@ -1759,8 +1759,9 @@ input[type="number"] {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: 60%;
+  height: 260px;
   width: 100%;
+  margin-top: 10px;
 }
 
 .podium-title, .sponsors-title {
@@ -1780,7 +1781,7 @@ input[type="number"] {
   align-items: flex-end;
   justify-content: center;
   width: 100%;
-  height: calc(100% - 30px);
+  height: 180px;
   gap: 6px;
 }
 
@@ -1883,7 +1884,7 @@ input[type="number"] {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  height: 35%;
+  height: 90px;
   width: 100%;
 }
 
