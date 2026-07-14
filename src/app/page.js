@@ -19,6 +19,30 @@ const ROTATION_SEQUENCE = [
 const ROTATION_INTERVAL_MS = 3 * 60 * 1000; // 3 menit (180 detik)
 
 
+// Sponsor logo card component with automatic image load error fallback to clean text logo
+const SponsorLogo = ({ logo }) => {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <div className="sponsor-logo-card" title={logo.name}>
+      {!imgError ? (
+        <img
+          src={logo.src}
+          alt={logo.name}
+          onError={() => setImgError(true)}
+          className="sponsor-logo-img"
+        />
+      ) : (
+        <div className="sponsor-logo-fallback">
+          <span className="logo-fallback-icon">⚜️</span>
+          <span className="logo-fallback-text">{logo.name}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 // Scout Fleur-de-lis SVG Component (Gold Scout Emblem)
 const ScoutFleurDeLis = () => (
   <svg className="w-8 h-8 text-amber-500/60 hover:text-amber-400 transition-colors drop-shadow-[0_0_8px_rgba(245,166,35,0.3)]" viewBox="0 0 100 100" fill="currentColor">
@@ -644,6 +668,93 @@ export default function Home() {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* ===== RIGHT PANEL: TANGGA JUARA & LOGO SPONSOR ===== */}
+        <div className={`glass-panel-right ${tableTransitionClass}`}>
+          {/* Tangga Juara / Podium */}
+          <div className="podium-container">
+            <h2 className="podium-title">🏆 TANGGA JUARA ({activeTab} {activeGender === "Laki-laki" ? "PUTRA" : "PUTRI"})</h2>
+            
+            <div className="podium-steps">
+              {/* Juara 2 */}
+              <div className="podium-step">
+                <div className="podium-team-info">
+                  <div className="podium-school" title={peserta[1]?.pangkalan || "—"}>
+                    {peserta[1]?.pangkalan || "—"}
+                  </div>
+                  <div className="podium-regu" title={peserta[1]?.nama_regu ? `Regu: ${peserta[1].nama_regu}` : "—"}>
+                    {peserta[1]?.nama_regu || "—"}
+                  </div>
+                  <div className="podium-score">{peserta[1] ? `${peserta[1].total_nilai} Pts` : "—"}</div>
+                </div>
+                <div className="podium-bar bar-2">
+                  <span className="podium-rank">2</span>
+                </div>
+              </div>
+
+              {/* Juara 1 */}
+              <div className="podium-step">
+                <div className="podium-team-info">
+                  {peserta[0] && <div className="podium-crown">👑</div>}
+                  <div className="podium-school" title={peserta[0]?.pangkalan || "—"}>
+                    {peserta[0]?.pangkalan || "—"}
+                  </div>
+                  <div className="podium-regu" title={peserta[0]?.nama_regu ? `Regu: ${peserta[0].nama_regu}` : "—"}>
+                    {peserta[0]?.nama_regu || "—"}
+                  </div>
+                  <div className="podium-score">{peserta[0] ? `${peserta[0].total_nilai} Pts` : "—"}</div>
+                </div>
+                <div className="podium-bar bar-1">
+                  <span className="podium-rank">1</span>
+                </div>
+              </div>
+
+              {/* Juara 3 */}
+              <div className="podium-step">
+                <div className="podium-team-info">
+                  <div className="podium-school" title={peserta[2]?.pangkalan || "—"}>
+                    {peserta[2]?.pangkalan || "—"}
+                  </div>
+                  <div className="podium-regu" title={peserta[2]?.nama_regu ? `Regu: ${peserta[2].nama_regu}` : "—"}>
+                    {peserta[2]?.nama_regu || "—"}
+                  </div>
+                  <div className="podium-score">{peserta[2] ? `${peserta[2].total_nilai} Pts` : "—"}</div>
+                </div>
+                <div className="podium-bar bar-3">
+                  <span className="podium-rank">3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sponsor Logos */}
+          <div className="sponsors-container">
+            <h2 className="sponsors-title">🤝 SPONSOR & PARTNER</h2>
+            <div className="sponsors-grid">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => {
+                const sponsorNames = [
+                  "Kwarda Banten",
+                  "Kwarcab Tgr",
+                  "Kec. Mekar Baru",
+                  "Pramuka M.B",
+                  "Kemenpora",
+                  "Pramuka Banten",
+                  "DKR Mekar Baru",
+                  "Kwaran M.B"
+                ];
+                return (
+                  <SponsorLogo 
+                    key={num} 
+                    logo={{ 
+                      src: `/logos/logo${num}.png`, 
+                      name: sponsorNames[num - 1] 
+                    }} 
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
 
