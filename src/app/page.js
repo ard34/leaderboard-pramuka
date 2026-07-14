@@ -675,8 +675,6 @@ export default function Home() {
         <div className={`glass-panel-right ${tableTransitionClass}`}>
           {/* Tangga Juara / Podium */}
           <div className="podium-container">
-            <h2 className="podium-title">🏆 TANGGA JUARA ({activeTab} {activeGender === "Laki-laki" ? "PUTRA" : "PUTRI"})</h2>
-            
             <div className="podium-steps">
               {/* Juara 2 */}
               <div className="podium-step">
@@ -731,7 +729,6 @@ export default function Home() {
 
           {/* Sponsor Logos */}
           <div className="sponsors-container">
-            <h2 className="sponsors-title">🤝 SPONSOR & PARTNER</h2>
             <div className="sponsors-grid">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => {
                 const sponsorNames = [
