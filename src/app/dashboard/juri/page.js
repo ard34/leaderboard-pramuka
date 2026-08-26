@@ -485,9 +485,13 @@ export default function DashboardJuri() {
         backgroundRepeat: "no-repeat"
       }}>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center px-4 md:px-8 py-3 gap-3">
-          <div className="flex items-center gap-3">
-            <img src="/logo_65.png" alt="Logo LT-II" className="h-12 w-auto object-contain drop-shadow-[0_0_12px_rgba(245,166,35,0.5)]" />
+          <div className="flex items-center gap-2 md:gap-3">
+            <img src="/logo_wosm.png" alt="WOSM" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+            <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+            <img src="/logo_lt2.png" alt="LT-II 2026" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+            <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
             <div>
+
               <div className="flex items-center gap-2">
                 <span className="bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[0.6rem] px-2 py-0.5 rounded-full font-black tracking-widest uppercase">
                   LT-II MEKAR BARU 2026

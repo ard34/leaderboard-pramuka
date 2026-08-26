@@ -185,14 +185,14 @@ export default function JuriRegisterPage() {
       <div className="bg-grid absolute inset-0 pointer-events-none" />
 
       <div className="relative z-10 max-w-md w-full">
-        {/* Logo */}
-        <div className="text-center mb-6 flex justify-center">
-          <img 
-            src="/logo_65.png" 
-            alt="Logo 65 HUT Pramuka" 
-            className="h-24 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.45)]"
-          />
+        {/* Logos Header Cluster */}
+        <div className="text-center mb-6 flex justify-center items-center gap-3 md:gap-4 flex-wrap">
+          <img src="/logo_wosm.png" alt="WOSM" className="h-14 md:h-18 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+          <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-14 md:h-18 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+          <img src="/logo_lt2.png" alt="LT-II 2026" className="h-14 md:h-18 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]" />
+          <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-14 md:h-18 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]" />
         </div>
+
 
         {/* Form Card */}
         <div className="glass-card p-6 md:p-8 shadow-[0_0_60px_rgba(245,166,35,0.08)] border border-cyan-500/15">

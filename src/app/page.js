@@ -568,9 +568,22 @@ export default function Home() {
         <TransitionOverlay isActive={showTransition} nextItem={transitionTarget} />
 
         {/* Banner Header */}
-        <div className="scoreboard-banner-header">
-          <h1 className="banner-title">Lomba Tingkat II Kwartir Ranting Mekar Baru</h1>
+        <div className="scoreboard-banner-header flex items-center justify-between px-6 py-2">
+          {/* Left Logos: WOSM & Kwarran Mekar Baru */}
+          <div className="flex items-center gap-2 md:gap-3 z-10">
+            <img src="/logo_wosm.png" alt="WOSM" className="h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]" />
+            <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]" />
+          </div>
+
+          <h1 className="banner-title text-center flex-1">Lomba Tingkat II Kwartir Ranting Mekar Baru</h1>
+
+          {/* Right Logos: LT-II & HUT 65 */}
+          <div className="flex items-center gap-2 md:gap-3 z-10">
+            <img src="/logo_lt2.png" alt="LT-II 2026" className="h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_14px_rgba(245,166,35,0.5)]" />
+            <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_14px_rgba(245,166,35,0.5)]" />
+          </div>
         </div>
+
 
         {/* Sidebar Image Overlay */}
         <img src="/sidebar.png" className="scoreboard-sidebar-img" alt="Scout Sidebar" />

@@ -514,17 +514,20 @@ export default function DashboardAdmin() {
       }}>
         <div className="max-w-[1600px] mx-auto flex justify-between items-center px-4 md:px-8 py-3.5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
+            <div className="flex items-center gap-2">
+              <img src="/logo_wosm.png" alt="WOSM" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+              <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+              <img src="/logo_lt2.png" alt="LT-II 2026" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+              <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
             </div>
             <div>
               <h1 className="text-sm md:text-base font-black tracking-wider text-white">
                 PANEL <span className="text-emerald-400">ADMINISTRATOR</span>
               </h1>
+              <p className="text-[0.65rem] text-slate-400 tracking-wider">LT-II Kwartir Ranting Mekar Baru 2026</p>
             </div>
           </div>
+
           <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all">
             LOGOUT
           </button>

@@ -141,14 +141,14 @@ export default function LoginPage() {
       <div className="bg-grid absolute inset-0 pointer-events-none" />
 
       <div className="relative z-10 max-w-md w-full">
-        {/* Logo */}
-        <div className="text-center mb-6 flex justify-center">
-          <img 
-            src="/logo_65.png" 
-            alt="Logo 65 HUT Pramuka" 
-            className="h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.45)]"
-          />
+        {/* Logos Header Cluster */}
+        <div className="text-center mb-6 flex justify-center items-center gap-3 md:gap-4 flex-wrap">
+          <img src="/logo_wosm.png" alt="WOSM" className="h-16 md:h-20 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+          <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-16 md:h-20 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+          <img src="/logo_lt2.png" alt="LT-II 2026" className="h-16 md:h-20 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]" />
+          <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-16 md:h-20 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]" />
         </div>
+
 
         {/* Login Card */}
         <div className="glass-card p-6 md:p-10 shadow-[0_0_60px_rgba(245,166,35,0.08)] border border-amber-500/15">
