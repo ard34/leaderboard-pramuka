@@ -45,8 +45,8 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      // Insert new participant (nomor_dada: null, is_verified: false)
-      const { error: insertError } = await supabase.from("peserta").insert({
+      // Primary insert attempt (nomor_dada: null, is_verified: false)
+      let payload = {
         nama_regu: cleanNamaRegu,
         pangkalan: cleanPangkalan,
         kategori,
@@ -54,16 +54,25 @@ export default function RegisterPage() {
         no_gudep: cleanNoGudep,
         kontak_person: cleanKontak,
         is_verified: false,
-      });
+      };
+
+      let { error: insertError } = await supabase.from("peserta").insert(payload);
+
+      // Fallback if database enforces NOT NULL constraint on nomor_dada before admin verification
+      if (insertError && (insertError.message.includes("nomor_dada") || insertError.code === "23502")) {
+        payload.nomor_dada = 0;
+        const fallbackRes = await supabase.from("peserta").insert(payload);
+        insertError = fallbackRes.error;
+      }
 
       if (insertError) {
-        // If there's an error (e.g. duplicate check for Gudep/Regu combo if applicable, or database constraint issue)
         setError("Gagal mendaftar: " + insertError.message);
         setLoading(false);
         return;
       }
 
       setSuccess(true);
+
     } catch (err) {
       setError("Terjadi kesalahan sistem. Silakan coba lagi.");
     } finally {

@@ -34,17 +34,43 @@ export default function JuriRegisterPage() {
     return minLength && hasUppercase && hasNumber;
   };
 
-  // Fetch all lomba on mount
+  // Fetch all lomba on mount with fallback for 13 JUKLAK competitions
   useEffect(() => {
     const fetchLomba = async () => {
       const { data } = await supabase
         .from("lomba")
         .select("id, nama_lomba, kategori")
         .order("nama_lomba", { ascending: true });
-      if (data) setLombaList(data);
+
+      if (data && data.length > 0) {
+        setLombaList(data);
+      } else {
+        // Fallback default list from JUKLAK LT-II Mekar Baru 2026
+        const defaultNames = [
+          "Menyanyi Hymne & Mars Tangerang",
+          "Pentas Seni Budaya (Tari Kreasi)",
+          "Pionering & Tali-Temali",
+          "PPPK / PPGD",
+          "Sandi-Sandi",
+          "Orienteering Navigasi",
+          "Menaksir",
+          "Semaphore",
+          "Morse Pluit",
+          "Obat Tradisional & KIM",
+          "Karnaval",
+          "Administrasi Regu",
+          "Masak Nusantara",
+        ];
+        const fallbacks = defaultNames.flatMap((nama, idx) => [
+          { id: `fallback-sd-${idx}`, nama_lomba: nama, kategori: "SD" },
+          { id: `fallback-smp-${idx}`, nama_lomba: nama, kategori: "SMP" },
+        ]);
+        setLombaList(fallbacks);
+      }
     };
     fetchLomba();
   }, []);
+
 
   // Filtered lomba options based on selected kategori
   const filteredLomba = lombaList.filter((l) => l.kategori === kategori);
@@ -117,12 +143,26 @@ export default function JuriRegisterPage() {
         return;
       }
 
+      // Ensure profile record exists in public.profiles table
+      if (data?.user) {
+        const targetLombaId = lombaId && !String(lombaId).startsWith("fallback-") ? lombaId : null;
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          nama_lengkap: cleanNama,
+          role: "juri",
+          assigned_kategori: kategori,
+          assigned_gender: gender,
+          assigned_lomba_id: targetLombaId,
+        }, { onConflict: "id" });
+      }
+
       setSuccess(true);
     } catch (err) {
       setError("Terjadi kesalahan sistem. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
+
   };
 
   return (

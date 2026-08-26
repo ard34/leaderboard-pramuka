@@ -40,16 +40,18 @@ CREATE TABLE public.profiles (
 -- 4. Buat tabel PESERTA
 CREATE TABLE public.peserta (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nomor_dada INT NOT NULL,
+  nomor_dada INT NULL, -- NULL saat baru mendaftar mandiri via web, diisi oleh Admin saat verifikasi
   nama_regu TEXT NOT NULL,
   pangkalan TEXT NOT NULL,
+  no_gudep TEXT DEFAULT '',
+  kontak_person TEXT DEFAULT '',
+  is_verified BOOLEAN DEFAULT true, -- default true untuk seed data, false untuk pendaftaran mandiri
   kategori TEXT NOT NULL CHECK (kategori IN ('SD', 'SMP', 'SMK')),
   gender TEXT NOT NULL CHECK (gender IN ('Laki-laki', 'Perempuan')) DEFAULT 'Laki-laki',
   total_nilai NUMERIC DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  UNIQUE (nomor_dada, kategori, gender)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
 
 -- 5. Buat tabel PENILAIAN
 CREATE TABLE public.penilaian (
@@ -91,7 +93,9 @@ CREATE POLICY "Admin full access profiles" ON public.profiles FOR ALL USING (pub
 
 -- 10. Kebijakan RLS — PESERTA
 CREATE POLICY "Public can read peserta" ON public.peserta FOR SELECT USING (true);
+CREATE POLICY "Anyone can register unverified peserta" ON public.peserta FOR INSERT WITH CHECK (is_verified = false OR public.is_admin());
 CREATE POLICY "Admin full access peserta" ON public.peserta FOR ALL USING (public.is_admin());
+
 
 -- 11. Kebijakan RLS — PENILAIAN
 CREATE POLICY "Public can read penilaian" ON public.penilaian FOR SELECT USING (true);
@@ -164,6 +168,31 @@ CREATE TRIGGER trigger_update_total_nilai
   FOR EACH ROW
   EXECUTE FUNCTION public.update_total_nilai();
 
+-- Trigger: Otomatis Menambahkan Profil baru saat User Mendaftar (signUp)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'nama_lengkap', 'Dewan Juri'),
+    'juri',
+    NULLIF(NEW.raw_user_meta_data->>'assigned_lomba_id', '')::uuid,
+    COALESCE(NEW.raw_user_meta_data->>'assigned_kategori', 'SD'),
+    COALESCE(NEW.raw_user_meta_data->>'assigned_gender', 'Laki-laki')
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    nama_lengkap = EXCLUDED.nama_lengkap,
+    assigned_kategori = EXCLUDED.assigned_kategori,
+    assigned_gender = EXCLUDED.assigned_gender;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- Trigger: Otomatis Menghapus Akun Auth saat Profil Juri Dihapus oleh Admin
 CREATE OR REPLACE FUNCTION public.delete_auth_user_on_profile_delete()
 RETURNS TRIGGER AS $$
@@ -178,6 +207,7 @@ CREATE OR REPLACE TRIGGER trigger_delete_auth_user
   FOR EACH ROW
   EXECUTE FUNCTION public.delete_auth_user_on_profile_delete();
 
+
 -- 13. Berikan Hak Akses (GRANT) agar Website Bebas Akses
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON public.lomba TO anon, authenticated, service_role;
@@ -188,3 +218,36 @@ GRANT ALL ON public.penilaian TO anon, authenticated, service_role;
 -- 14. Aktifkan Realtime Live untuk Tabel
 DROP PUBLICATION IF EXISTS supabase_realtime;
 CREATE PUBLICATION supabase_realtime FOR TABLE public.lomba, public.peserta, public.penilaian, public.profiles;
+
+-- 15. Seed Data Cabang Lomba Resmi JUKLAK LT-II Mekar Baru 2026 (SD & SMP)
+INSERT INTO public.lomba (nama_lomba, kode_lomba, kategori) VALUES
+-- SD / MI
+('Menyanyi Hymne & Mars Tangerang', 'HMN', 'SD'),
+('Pentas Seni Budaya (Tari Kreasi)', 'TSB', 'SD'),
+('Pionering & Tali-Temali', 'PNR', 'SD'),
+('PPPK / PPGD', 'PGD', 'SD'),
+('Sandi-Sandi', 'SND', 'SD'),
+('Orienteering Navigasi', 'NAV', 'SD'),
+('Menaksir', 'TKS', 'SD'),
+('Semaphore', 'SMP', 'SD'),
+('Morse Pluit', 'MRS', 'SD'),
+('Obat Tradisional & KIM', 'KIM', 'SD'),
+('Karnaval', 'KRN', 'SD'),
+('Administrasi Regu', 'ADM', 'SD'),
+('Masak Nusantara', 'MSK', 'SD'),
+-- SMP / MTs
+('Menyanyi Hymne & Mars Tangerang', 'HMN', 'SMP'),
+('Pentas Seni Budaya (Tari Kreasi)', 'TSB', 'SMP'),
+('Pionering & Tali-Temali', 'PNR', 'SMP'),
+('PPPK / PPGD', 'PGD', 'SMP'),
+('Sandi-Sandi', 'SND', 'SMP'),
+('Orienteering Navigasi', 'NAV', 'SMP'),
+('Menaksir', 'TKS', 'SMP'),
+('Semaphore', 'SMP', 'SMP'),
+('Morse Pluit', 'MRS', 'SMP'),
+('Obat Tradisional & KIM', 'KIM', 'SMP'),
+('Karnaval', 'KRN', 'SMP'),
+('Administrasi Regu', 'ADM', 'SMP'),
+('Masak Nusantara', 'MSK', 'SMP')
+ON CONFLICT DO NOTHING;
+
