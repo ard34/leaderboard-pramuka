@@ -69,13 +69,14 @@ const TransitionOverlay = ({ isActive, nextItem }) => {
       {/* Center Shield Pop */}
       {isActive && (
         <div className="wipe-shield">
-            {/* Logo HUT 65 without any enclosing card/box */}
+            {/* Logo LT-II 2026 */}
             <img 
-              src="/logo_65.png" 
-              alt="Logo 65 HUT Pramuka" 
+              src="/logo_lt2.png" 
+              alt="Logo LT-II Kwartir Ranting Mekar Baru 2026" 
               className="h-64 md:h-80 w-auto object-contain drop-shadow-[0_0_35px_rgba(245,166,35,0.6)]" 
             />
         </div>
+
       )}
     </div>
   );
