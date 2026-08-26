@@ -45,33 +45,49 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      // Primary insert attempt (nomor_dada: null, is_verified: false)
-      let payload = {
+      const payload = {
         nama_regu: cleanNamaRegu,
         pangkalan: cleanPangkalan,
         kategori,
         gender,
         no_gudep: cleanNoGudep,
         kontak_person: cleanKontak,
-        is_verified: false,
       };
 
-      let { error: insertError } = await supabase.from("peserta").insert(payload);
+      // 1. Primary: Server API Route endpoint (bypasses RLS restrictions)
+      let isSuccess = false;
+      try {
+        const apiRes = await fetch("/api/peserta/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const apiData = await apiRes.json();
+        if (apiRes.ok && apiData.success) {
+          isSuccess = true;
+        }
+      } catch (_) { /* fallback to client insert */ }
 
-      // Fallback if database enforces NOT NULL constraint on nomor_dada before admin verification
-      if (insertError && (insertError.message.includes("nomor_dada") || insertError.code === "23502")) {
-        payload.nomor_dada = 0;
-        const fallbackRes = await supabase.from("peserta").insert(payload);
-        insertError = fallbackRes.error;
-      }
+      // 2. Fallback: Direct Supabase client insert
+      if (!isSuccess) {
+        let clientPayload = { ...payload, is_verified: false };
+        let { error: insertError } = await supabase.from("peserta").insert(clientPayload);
 
-      if (insertError) {
-        setError("Gagal mendaftar: " + insertError.message);
-        setLoading(false);
-        return;
+        if (insertError && (insertError.message.includes("nomor_dada") || insertError.code === "23502")) {
+          clientPayload.nomor_dada = 0;
+          const fallbackRes = await supabase.from("peserta").insert(clientPayload);
+          insertError = fallbackRes.error;
+        }
+
+        if (insertError) {
+          setError("Gagal mendaftar: " + insertError.message);
+          setLoading(false);
+          return;
+        }
       }
 
       setSuccess(true);
+
 
     } catch (err) {
       setError("Terjadi kesalahan sistem. Silakan coba lagi.");
