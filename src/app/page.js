@@ -18,6 +18,26 @@ const ROTATION_SEQUENCE = [
 
 const ROTATION_INTERVAL_MS = 3 * 60 * 1000; // 3 menit (180 detik)
 
+// Official 4 Groups of Competition Activities (Kelompok Kegiatan Lomba LT-II 2026)
+const OFFICIAL_GROUP_ORDER = {
+  HMN: { order: 1, group: "G1", groupName: "Agama & Patriotisme" },
+  TSB: { order: 2, group: "G1", groupName: "Agama & Patriotisme" },
+  PNR: { order: 3, group: "G2", groupName: "Kepramukaan" },
+  PGD: { order: 4, group: "G2", groupName: "Kepramukaan" },
+  SND: { order: 5, group: "G2", groupName: "Kepramukaan" },
+  NAV: { order: 6, group: "G2", groupName: "Kepramukaan" },
+  TKS: { order: 7, group: "G2", groupName: "Kepramukaan" },
+  SMP: { order: 8, group: "G2", groupName: "Kepramukaan" },
+  MRS: { order: 9, group: "G2", groupName: "Kepramukaan" },
+  KIM: { order: 10, group: "G2", groupName: "Kepramukaan" },
+  KRN: { order: 11, group: "G2", groupName: "Kepramukaan" },
+  PCK: { order: 12, group: "G2", groupName: "Kepramukaan" },
+  ADM: { order: 13, group: "G3", groupName: "Manajemen Regu" },
+  FRP: { order: 14, group: "G3", groupName: "Manajemen Regu" },
+  MSK: { order: 15, group: "G4", groupName: "Teknologi & Kuliner" },
+};
+
+
 
 // Sponsor logo card component with automatic image load error fallback to clean text logo
 const SponsorLogo = ({ logo }) => {
@@ -449,7 +469,18 @@ export default function Home() {
         .select("id, nama_lomba, kode_lomba, kategori")
         .order("nama_lomba", { ascending: true });
 
-      if (lombaData) setLombaList(lombaData);
+      if (lombaData) {
+        // Filter out non-lomba entries (keep only official 15 competition branches)
+        const filteredLomba = lombaData.filter((l) => OFFICIAL_GROUP_ORDER[l.kode_lomba?.toUpperCase()]);
+        // Sort by official group order (Group 1 -> 2 -> 3 -> 4)
+        filteredLomba.sort((a, b) => {
+          const orderA = OFFICIAL_GROUP_ORDER[a.kode_lomba?.toUpperCase()]?.order || 99;
+          const orderB = OFFICIAL_GROUP_ORDER[b.kode_lomba?.toUpperCase()]?.order || 99;
+          return orderA - orderB;
+        });
+        setLombaList(filteredLomba);
+      }
+
 
       const { data: pesertaData } = await supabase
         .from("peserta")
@@ -591,7 +622,6 @@ export default function Home() {
       ];
 
   const displayPeserta = useMemo(() => {
-
     if (!peserta) return [];
     if (showWinners) {
       return [...peserta].sort((a, b) => (b.total_nilai || 0) - (a.total_nilai || 0));
@@ -602,7 +632,28 @@ export default function Home() {
     });
   }, [peserta, showWinners]);
 
+  const groupedLombaHeaders = useMemo(() => {
+
+    const groups = [];
+    currentLombaCols.forEach((lomba) => {
+      const code = lomba.kode_lomba?.toUpperCase();
+      const meta = OFFICIAL_GROUP_ORDER[code] || { group: "G_OTHER", groupName: "Lainnya" };
+      const lastGroup = groups[groups.length - 1];
+      if (lastGroup && lastGroup.group === meta.group) {
+        lastGroup.span += 1;
+      } else {
+        groups.push({
+          group: meta.group,
+          name: meta.groupName,
+          span: 1,
+        });
+      }
+    });
+    return groups;
+  }, [currentLombaCols]);
+
   return (
+
 
     <div className={`scoreboard-layout theme-${accentColor}`}>
       <div className="scoreboard-container">
@@ -652,6 +703,30 @@ export default function Home() {
               <div className="scoreboard-table-scroll no-scrollbar">
                 <table className="scoreboard-table">
                   <thead>
+                    <tr className="sc-th-group-row">
+                      <th colSpan={2} className="sticky-col-rank sticky-col-name bg-slate-950/90 text-[0.42rem] font-black text-slate-400 uppercase tracking-widest border-b border-cyan-500/20 text-center py-1">
+                        INFO REGU
+                      </th>
+                      {groupedLombaHeaders.map((g, idx) => {
+                        const colorClass =
+                          g.group === "G1" ? "bg-amber-950/60 text-amber-300 border-amber-500/30" :
+                          g.group === "G2" ? "bg-cyan-950/60 text-cyan-300 border-cyan-500/30" :
+                          g.group === "G3" ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30" :
+                          "bg-purple-950/60 text-purple-300 border-purple-500/30";
+                        return (
+                          <th
+                            key={idx}
+                            colSpan={g.span}
+                            className={`${colorClass} text-[0.42rem] font-extrabold uppercase border-b text-center tracking-wider py-1 select-none`}
+                          >
+                            {g.name}
+                          </th>
+                        );
+                      })}
+                      <th className="sticky-col-total bg-slate-950/90 text-[0.42rem] font-black text-amber-400 uppercase tracking-widest border-b border-cyan-500/20 text-center py-1">
+                        TOTAL
+                      </th>
+                    </tr>
                     <tr>
                       <th className="sc-th-rank sticky-col-rank col-rank">
                         {showWinners ? "PERINGKAT" : "NO. URUT"}
@@ -665,6 +740,7 @@ export default function Home() {
                       <th className="sc-th-total sticky-col-total col-total">TOTAL<br />AKUMULASI</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {displayPeserta.length === 0 ? (
                       <tr>

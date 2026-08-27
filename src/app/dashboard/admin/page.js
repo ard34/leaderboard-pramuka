@@ -7,7 +7,27 @@ import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 
+// Official 4 Groups of Competition Activities (Kelompok Kegiatan Lomba LT-II 2026)
+const OFFICIAL_GROUP_ORDER = {
+  HMN: { order: 1, group: "G1", groupName: "1. Agama & Patriotisme", short: "Agama & Patriotisme", color: "amber" },
+  TSB: { order: 2, group: "G1", groupName: "1. Agama & Patriotisme", short: "Agama & Patriotisme", color: "amber" },
+  PNR: { order: 3, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  PGD: { order: 4, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  SND: { order: 5, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  NAV: { order: 6, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  TKS: { order: 7, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  SMP: { order: 8, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  MRS: { order: 9, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  KIM: { order: 10, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  KRN: { order: 11, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  PCK: { order: 12, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
+  ADM: { order: 13, group: "G3", groupName: "3. Manajemen Regu", short: "Manajemen Regu", color: "emerald" },
+  FRP: { order: 14, group: "G3", groupName: "3. Manajemen Regu", short: "Manajemen Regu", color: "emerald" },
+  MSK: { order: 15, group: "G4", groupName: "4. Keterampilan & Kuliner", short: "Teknologi & Kuliner", color: "purple" },
+};
+
 export default function DashboardAdmin() {
+
   const router = useRouter();
   const isOnline = useOnlineStatus();
 
@@ -161,7 +181,16 @@ export default function DashboardAdmin() {
     ]);
 
     // Apply all results
-    if (lombaRes.data) setLombaList(lombaRes.data);
+    if (lombaRes.data) {
+      const filtered = lombaRes.data.filter((l) => OFFICIAL_GROUP_ORDER[l.kode_lomba?.toUpperCase()]);
+      filtered.sort((a, b) => {
+        const orderA = OFFICIAL_GROUP_ORDER[a.kode_lomba?.toUpperCase()]?.order || 99;
+        const orderB = OFFICIAL_GROUP_ORDER[b.kode_lomba?.toUpperCase()]?.order || 99;
+        return orderA - orderB;
+      });
+      setLombaList(filtered);
+    }
+
     if (pesertaRes.data) setPesertaList(pesertaRes.data);
     if (jurisRes.data) setJuriList(jurisRes.data);
     if (logsRes.data) setLogEntries(logsRes.data);
@@ -1052,6 +1081,7 @@ export default function DashboardAdmin() {
                 <table className="w-full text-left border-collapse min-w-[550px]">
                   <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
                     <tr>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Kelompok Kegiatan</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Nama Cabang Lomba</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Kode Singkat</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Tingkatan</th>
@@ -1059,12 +1089,25 @@ export default function DashboardAdmin() {
                     </tr>
                   </thead>
                   <tbody>
-                    {lombaList.map((l) => (
-                      <tr key={l.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
-                        <td className="p-4 text-sm font-bold text-white">{l.nama_lomba}</td>
-                        <td className="p-4 text-sm font-mono text-purple-400">{l.kode_lomba}</td>
-                        <td className="p-4 text-xs font-black">{l.kategori}</td>
-                        <td className="p-4 text-right">
+                    {lombaList.map((l) => {
+                      const meta = OFFICIAL_GROUP_ORDER[l.kode_lomba?.toUpperCase()] || { groupName: "Lainnya", color: "slate" };
+                      const badgeColor =
+                        meta.color === "amber" ? "bg-amber-500/10 text-amber-300 border-amber-500/20" :
+                        meta.color === "cyan" ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/20" :
+                        meta.color === "emerald" ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" :
+                        "bg-purple-500/10 text-purple-300 border-purple-500/20";
+                      return (
+                        <tr key={l.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
+                          <td className="p-4 text-xs font-bold">
+                            <span className={`px-2.5 py-1 rounded-full border text-[0.65rem] ${badgeColor}`}>
+                              {meta.groupName}
+                            </span>
+                          </td>
+                          <td className="p-4 text-sm font-bold text-white">{l.nama_lomba}</td>
+                          <td className="p-4 text-sm font-mono text-purple-400">{l.kode_lomba}</td>
+                          <td className="p-4 text-xs font-black">{l.kategori}</td>
+                          <td className="p-4 text-right">
+
                           {confirmDeleteId === l.id ? (
                             <div className="flex justify-end gap-1.5">
                               <button onClick={() => handleHapusLomba(l.id, l.nama_lomba)} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
@@ -1081,10 +1124,13 @@ export default function DashboardAdmin() {
                           )}
                         </td>
                       </tr>
-                    ))}
+                    );
+                  })}
+
                     {lombaList.length === 0 && (
-                      <tr><td colSpan="4" className="p-8 text-center text-slate-500 italic">Belum ada cabang lomba diinput.</td></tr>
+                      <tr><td colSpan="5" className="p-8 text-center text-slate-500 italic">Belum ada cabang lomba diinput.</td></tr>
                     )}
+
                   </tbody>
                 </table>
               </div>
