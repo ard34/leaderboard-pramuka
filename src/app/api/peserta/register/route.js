@@ -4,12 +4,13 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { nama_regu, pangkalan, kategori, gender, no_gudep, kontak_person } = body;
+    const { nama_regu, pangkalan, kategori, gender, no_gudep, kontak_person, email } = body;
 
     const cleanNamaRegu = nama_regu?.trim();
     const cleanPangkalan = pangkalan?.trim();
     const cleanNoGudep = no_gudep?.trim();
     const cleanKontak = kontak_person?.trim();
+    const cleanEmail = email?.trim();
 
     if (!cleanNamaRegu || !cleanPangkalan || !cleanNoGudep || !cleanKontak) {
       return NextResponse.json(
@@ -41,8 +42,10 @@ export async function POST(request) {
       gender,
       no_gudep: cleanNoGudep,
       kontak_person: cleanKontak,
+      email: cleanEmail || "",
       is_verified: false,
     };
+
 
     // Primary insert attempt
     let { error: insertError } = await supabaseAdmin.from("peserta").insert(payload);

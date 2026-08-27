@@ -724,8 +724,9 @@ export default function DashboardJuri() {
                     .filter((p) => p.kategori === selectedKategori && p.gender === selectedGender)
                     .map((p) => (
                       <option key={p.id} value={p.id}>
-                        No. Dada {p.nomor_dada} — {p.nama_regu} ({p.pangkalan})
+                        Kapling {p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"} — {p.nama_regu} ({p.pangkalan})
                       </option>
+
                     ))}
                 </select>
               </div>

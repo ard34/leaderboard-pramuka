@@ -341,31 +341,43 @@ export default function DashboardAdmin() {
     setSaving(false);
   };
 
+  const handleStartVerifikasi = (peserta) => {
+    // Auto calculate next sequential Kapling Number (count of verified + 1) e.g., "001", "002"
+    const countVerified = pesertaList.filter((p) => p.is_verified).length;
+    const nextKapling = (countVerified + 1).toString().padStart(3, "0");
+    setVerifyingId(peserta.id);
+    setNoDadaInput(nextKapling);
+  };
+
   const handleVerifikasiPeserta = async (id) => {
-    const cleanNoDada = noDadaInput.trim();
-    if (!cleanNoDada) {
-      showPesan("error", "Masukkan nomor dada terlebih dahulu.");
+    const cleanKapling = noDadaInput.trim();
+    if (!cleanKapling) {
+      showPesan("error", "Masukkan nomor kapling terlebih dahulu.");
       return;
     }
     setSaving(true);
-    const { error } = await supabase
-      .from("peserta")
-      .update({
-        nomor_dada: Number(cleanNoDada),
-        is_verified: true
-      })
-      .eq("id", id);
-
-    if (error) {
-      showPesan("error", "Gagal melakukan verifikasi: " + error.message);
-    } else {
-      showPesan("success", "Regu berhasil diverifikasi!");
-      setVerifyingId(null);
-      setNoDadaInput("");
-      await fetchAllData();
+    try {
+      const res = await fetch("/api/peserta/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ peserta_id: id, nomor_kapling: Number(cleanKapling) }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPesan("success", `🎉 Regu berhasil diverifikasi! Nomor Kapling: ${data.nomor_kapling_formatted}. ${data.emailMessage || ""}`);
+        setVerifyingId(null);
+        setNoDadaInput("");
+        await fetchAllData();
+      } else {
+        showPesan("error", "Gagal melakukan verifikasi: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Gagal memproses verifikasi: " + err.message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
+
 
   // --- HANDLERS: JURI ---
   const handleTambahJuri = async (e) => {
@@ -790,8 +802,8 @@ export default function DashboardAdmin() {
                     <option value="Laki-laki">Laki-laki (Putra)</option><option value="Perempuan">Perempuan (Putri)</option>
                   </select>
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nomor Dada</label>
-                  <input type="number" required value={formPeserta.nomor_dada} onChange={(e) => setFormPeserta({...formPeserta, nomor_dada: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="101" />
+                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nomor Kapling (Urut Tenda)</label>
+                  <input type="number" required value={formPeserta.nomor_dada} onChange={(e) => setFormPeserta({...formPeserta, nomor_dada: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="001" />
                 </div>
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nama Regu</label>
                   <input type="text" required value={formPeserta.nama_regu} onChange={(e) => setFormPeserta({...formPeserta, nama_regu: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="Regu Rajawali" />
@@ -843,11 +855,11 @@ export default function DashboardAdmin() {
                 <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
                     <tr>
-                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">No. Dada</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">NO. KAPLING</th>
                       <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Nama Regu</th>
                       <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Pangkalan & Gudep</th>
                       <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Kategori</th>
-                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Kontak CP</th>
+                      <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Email & Kontak</th>
                       <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase">Status</th>
                       <th className="p-3 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
                     </tr>
@@ -865,17 +877,17 @@ export default function DashboardAdmin() {
                       const isVerifying = verifyingId === p.id;
                       return (
                         <tr key={p.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
-                          <td className="p-3 text-sm font-mono text-emerald-400">
+                          <td className="p-3 text-sm font-mono font-bold text-amber-400">
                             {isVerifying ? (
                               <input 
-                                type="number" 
-                                placeholder="No" 
+                                type="text" 
+                                placeholder="001" 
                                 value={noDadaInput} 
                                 onChange={(e) => setNoDadaInput(e.target.value)} 
-                                className="w-16 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-white text-xs outline-none focus:border-amber-500"
+                                className="w-20 bg-slate-950 border border-amber-500 rounded px-2 py-1 text-amber-300 text-xs font-mono font-bold outline-none"
                               />
                             ) : (
-                              p.nomor_dada || "—"
+                              p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"
                             )}
                           </td>
                           <td className="p-3 text-sm font-bold text-white">{p.nama_regu}</td>
@@ -887,7 +899,10 @@ export default function DashboardAdmin() {
                             <div>{p.kategori}</div>
                             <div className="text-slate-500 text-[0.65rem] font-normal">{p.gender === 'Laki-laki' ? '👦 Putra' : '👧 Putri'}</div>
                           </td>
-                          <td className="p-3 text-xs font-mono text-slate-300">{p.kontak_person || "—"}</td>
+                          <td className="p-3 text-xs font-mono text-slate-300">
+                            <div>{p.kontak_person || "—"}</div>
+                            {p.email && <div className="text-[0.6rem] text-amber-400 font-sans font-medium">{p.email}</div>}
+                          </td>
                           <td className="p-3 text-xs">
                             {p.is_verified ? (
                               <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
@@ -906,7 +921,7 @@ export default function DashboardAdmin() {
                                   onClick={() => handleVerifikasiPeserta(p.id)} 
                                   className="text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-1 rounded text-xs font-bold transition-all"
                                 >
-                                  Simpan
+                                  Simpan & Kirim Email
                                 </button>
                                 <button 
                                   onClick={() => { setVerifyingId(null); setNoDadaInput(""); }} 
@@ -919,12 +934,13 @@ export default function DashboardAdmin() {
                               <div className="flex justify-end gap-1.5 text-right items-center">
                                 {!p.is_verified && (
                                   <button 
-                                    onClick={() => { setVerifyingId(p.id); setNoDadaInput(""); }} 
+                                    onClick={() => handleStartVerifikasi(p)} 
                                     className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors"
                                   >
-                                    Verifikasi
+                                    ⚡ Verifikasi & Email
                                   </button>
                                 )}
+
                                 
                                 {confirmDeleteId === p.id ? (
                                   <div className="flex justify-end gap-1">
@@ -1206,7 +1222,7 @@ export default function DashboardAdmin() {
                     <thead>
                       <tr className="bg-slate-900/60 text-slate-400 font-bold text-xs uppercase print-text-dark">
                         <th className="p-3 w-16 text-center">Peringkat</th>
-                        <th className="p-3 w-20 text-center">No. Dada</th>
+                        <th className="p-3 w-24 text-center">No. Kapling</th>
                         <th className="p-3">Asal Sekolah / Pangkalan</th>
                         <th className="p-3 w-32 text-center">No. Gudep</th>
                         <th className="p-3 w-32 text-right">Total Nilai</th>
@@ -1219,7 +1235,8 @@ export default function DashboardAdmin() {
                         .map((regu, index) => (
                           <tr key={regu.id} className="border-t border-slate-800/40 text-sm hover:bg-slate-800/10 print-text-dark">
                             <td className="p-3 font-bold text-center">{index + 1}</td>
-                            <td className="p-3 font-mono text-center font-bold text-amber-400 print-text-dark">{regu.nomor_dada}</td>
+                            <td className="p-3 font-mono text-center font-bold text-amber-400 print-text-dark">{regu.nomor_dada ? String(regu.nomor_dada).padStart(3, "0") : "—"}</td>
+
                             <td className="p-3 font-bold text-white print-text-dark">
                               <div>{regu.pangkalan}</div>
                               <span className="text-[0.65rem] text-slate-500 font-normal print-text-dark">Regu: {regu.nama_regu}</span>

@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [kategori, setKategori] = useState("SD");
   const [gender, setGender] = useState("Laki-laki");
   const [kontakPerson, setKontakPerson] = useState("");
+  const [email, setEmail] = useState("");
 
   // UI states
   const [loading, setLoading] = useState(false);
@@ -35,9 +36,10 @@ export default function RegisterPage() {
     const cleanNoGudep = noGudep.trim();
     const cleanNamaRegu = namaRegu.trim();
     const cleanKontak = kontakPerson.trim();
+    const cleanEmail = email.trim();
 
-    if (!cleanPangkalan || !cleanNoGudep || !cleanNamaRegu || !cleanKontak) {
-      setError("Harap lengkapi semua bidang form pendaftaran.");
+    if (!cleanPangkalan || !cleanNoGudep || !cleanNamaRegu || !cleanKontak || !cleanEmail) {
+      setError("Harap lengkapi semua bidang form pendaftaran termasuk email aktif.");
       return;
     }
 
@@ -52,7 +54,9 @@ export default function RegisterPage() {
         gender,
         no_gudep: cleanNoGudep,
         kontak_person: cleanKontak,
+        email: cleanEmail,
       };
+
 
       // 1. Primary: Server API Route endpoint (bypasses RLS restrictions)
       let isSuccess = false;
@@ -212,7 +216,24 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {/* Email Aktif Pembina */}
+                <div className="space-y-1.5">
+                  <label className="text-[0.65rem] font-bold text-amber-400 uppercase tracking-[0.1em] flex items-center justify-between">
+                    <span>Email Aktif Pembina / Regu</span>
+                    <span className="text-[0.58rem] text-slate-500 font-normal lowercase">(untuk notifikasi no. kapling & verifikasi)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="Contoh: regu.rajawali@gmail.com"
+                    className="w-full bg-slate-950/80 border border-amber-500/30 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all text-sm font-medium"
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                   {/* Kategori Tingkat */}
                   <div className="space-y-1.5">
                     <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
