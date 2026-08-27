@@ -77,10 +77,11 @@ export async function POST(request) {
 
     if (targetEmail) {
       try {
-        const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
-        const smtpPort = Number(process.env.SMTP_PORT) || 587;
-        const smtpUser = process.env.SMTP_USER;
-        const smtpPass = process.env.SMTP_PASS;
+        const smtpHost = process.env.SMTP_HOST || process.env.smtp_host || "smtp.gmail.com";
+        const smtpPort = Number(process.env.SMTP_PORT || process.env.smtp_port) || 587;
+        const smtpUser = process.env.SMTP_USER || process.env.smtp_user || process.env.EMAIL_USER || process.env.GMAIL_USER;
+        const smtpPass = process.env.SMTP_PASS || process.env.smtp_pass || process.env.smtp_pss || process.env.SMTP_PSS || process.env.EMAIL_PASS || process.env.GMAIL_PASS;
+
 
         const htmlBody = `
           <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #0b1329; color: #f8fafc; padding: 30px; border-radius: 16px; max-width: 600px; margin: 0 auto; border: 1px solid rgba(245, 166, 35, 0.3);">
