@@ -22,6 +22,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [nomorKapling, setNomorKapling] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,6 +71,8 @@ export default function RegisterPage() {
         const apiData = await apiRes.json();
         if (apiRes.ok && apiData.success) {
           isSuccess = true;
+          setNomorKapling(apiData.nomor_kapling);
+          setEmailSent(apiData.emailSent);
         }
       } catch (_) { /* fallback to client insert */ }
 
@@ -286,8 +290,8 @@ export default function RegisterPage() {
             </>
           ) : (
             <div className="text-center py-6 space-y-6 animate-fade-in">
-              <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto text-amber-400">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto text-emerald-400">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -296,21 +300,42 @@ export default function RegisterPage() {
                   PENDAFTARAN BERHASIL!
                 </h2>
                 <p className="text-sm text-slate-300 max-w-sm mx-auto">
-                  Data Regu <strong className="text-amber-400">{namaRegu}</strong> telah terkirim. Harap tunggu verifikasi dari Admin Kwartir Ranting Mekar Baru sebelum regu Anda muncul di Leaderboard utama.
+                  Data Regu <strong className="text-emerald-400">{namaRegu}</strong> telah tersimpan dan <strong className="text-emerald-400">OTOMATIS DIVERIFIKASI</strong>.
                 </p>
+                
+                {nomorKapling && (
+                  <div className="mt-6 mb-4 p-5 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-2xl shadow-[0_0_30px_rgba(245,166,35,0.1)]">
+                    <div className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                      NOMOR KAPLING TENDA RESMI
+                    </div>
+                    <div className="text-5xl font-black text-amber-400 font-mono tracking-widest drop-shadow-md">
+                      {nomorKapling}
+                    </div>
+                  </div>
+                )}
+                
+                {emailSent && (
+                  <p className="text-xs text-slate-400 bg-slate-900/50 py-2 px-3 rounded-lg border border-slate-800">
+                    📩 Bukti verifikasi & No. Kapling telah dikirim ke email <strong>{email}</strong>
+                  </p>
+                )}
               </div>
-              <button
-                onClick={() => {
-                  setSuccess(false);
-                  setPangkalan("");
-                  setNoGudep("");
-                  setNamaRegu("");
-                  setKontakPerson("");
-                }}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2.5 px-6 rounded-lg text-xs tracking-wider uppercase transition-colors"
-              >
-                Daftar Regu Lain
-              </button>
+              <div className="pt-4">
+                <button
+                  onClick={() => {
+                    setSuccess(false);
+                    setPangkalan("");
+                    setNoGudep("");
+                    setNamaRegu("");
+                    setKontakPerson("");
+                    setNomorKapling("");
+                    setEmailSent(false);
+                  }}
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2.5 px-6 rounded-lg text-xs tracking-wider uppercase transition-colors"
+                >
+                  Daftar Regu Lain
+                </button>
+              </div>
             </div>
           )}
 
