@@ -148,14 +148,32 @@ export async function POST(request) {
         `;
 
         if (smtpUser && smtpPass) {
-          const transporter = nodemailer.createTransport({
-            host: smtpHost,
-            port: smtpPort,
-            secure: smtpPort === 465,
-            auth: { user: smtpUser, pass: smtpPass },
-          });
+          const cleanPass = smtpPass.trim().replace(/\s+/g, ""); // Strip any spaces from Google App Password
+
+          let transporter;
+          if (smtpHost.includes("gmail") || smtpUser.includes("@gmail.com")) {
+            transporter = nodemailer.createTransport({
+              service: "gmail",
+              auth: { user: smtpUser.trim(), pass: cleanPass },
+              connectionTimeout: 10000,
+              greetingTimeout: 10000,
+              socketTimeout: 10000,
+            });
+          } else {
+            transporter = nodemailer.createTransport({
+              host: smtpHost.trim(),
+              port: smtpPort,
+              secure: smtpPort === 465,
+              auth: { user: smtpUser.trim(), pass: cleanPass },
+              tls: { rejectUnauthorized: false },
+              connectionTimeout: 10000,
+              greetingTimeout: 10000,
+              socketTimeout: 10000,
+            });
+          }
+
           await transporter.sendMail({
-            from: `"Panitia LT-II Mekar Baru" <${smtpUser}>`,
+            from: `"Panitia LT-II Mekar Baru" <${smtpUser.trim()}>`,
             to: targetEmail,
             subject: mailSubject,
             html: htmlBody,
@@ -166,12 +184,14 @@ export async function POST(request) {
           // Dev / fallback info
           console.log(`[VERIFICATION EMAIL DISPATCH LOG] To: ${targetEmail} | Kapling: ${kaplingFormatted}`);
           emailSent = false;
-          emailStatusMessage = `ℹ️ Email disiapkan untuk ${targetEmail}. (Belum ada SMTP di Server Vercel)`;
+          emailStatusMessage = `ℹ️ Email disiapkan untuk ${targetEmail}. (Kirim via Mail Client dibuka)`;
         }
       } catch (mailErr) {
         console.error("Gagal mengirim email verifikasi:", mailErr);
-        emailStatusMessage = "Verifikasi sukses, pengiriman email otomatis: " + mailErr.message;
+        emailSent = false;
+        emailStatusMessage = `⚠️ Email gagal terkirim otomatis (${mailErr.message}). Mail Client telah dibuka untuk pengiriman manual.`;
       }
+
     } else {
       emailStatusMessage = "⚠️ Regu ini tidak mencantumkan alamat email (@). Verifikasi berhasil tanpa pengiriman email.";
     }
