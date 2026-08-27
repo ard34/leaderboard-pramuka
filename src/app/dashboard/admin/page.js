@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
@@ -32,6 +33,12 @@ export default function DashboardAdmin() {
   const [filterTingkat, setFilterTingkat] = useState("SD"); // Default to SD to show clean columns
   const [filterGender, setFilterGender] = useState("Laki-laki");
   const [filterStatus, setFilterStatus] = useState("SEMUA");
+
+  // Filter & Search state (Manajemen Peserta)
+  const [pesertaSearch, setPesertaSearch] = useState("");
+  const [pesertaFilterStatus, setPesertaFilterStatus] = useState("SEMUA");
+  const [pesertaFilterTingkat, setPesertaFilterTingkat] = useState("SEMUA");
+
 
   // Forms state
   const [formPeserta, setFormPeserta] = useState({ nomor_dada: "", nama_regu: "", pangkalan: "", kategori: "SD", gender: "Laki-laki" });
@@ -500,6 +507,25 @@ export default function DashboardAdmin() {
     return dynamicLombaCols.filter((l) => nilaiMap[`${pesertaId}_${l.id}`] !== undefined).length;
   };
 
+  const filteredPesertaList = useMemo(() => {
+    return pesertaList.filter((p) => {
+      if (pesertaSearch.trim()) {
+        const q = pesertaSearch.toLowerCase();
+        const matchName = p.nama_regu?.toLowerCase().includes(q);
+        const matchSchool = p.pangkalan?.toLowerCase().includes(q);
+        const matchGudep = p.no_gudep?.toLowerCase().includes(q);
+        const matchNo = p.nomor_dada?.toString().includes(q);
+        const matchKontak = p.kontak_person?.toLowerCase().includes(q);
+        if (!matchName && !matchSchool && !matchGudep && !matchNo && !matchKontak) return false;
+      }
+      if (pesertaFilterTingkat !== "SEMUA" && p.kategori !== pesertaFilterTingkat) return false;
+      if (pesertaFilterStatus === "VERIFIED" && !p.is_verified) return false;
+      if (pesertaFilterStatus === "PENDING" && p.is_verified) return false;
+      return true;
+    });
+  }, [pesertaList, pesertaSearch, pesertaFilterTingkat, pesertaFilterStatus]);
+
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pl-[7.3%]" style={{
@@ -750,8 +776,41 @@ export default function DashboardAdmin() {
               </form>
             </div>
             
-            <div className="lg:col-span-2 glass-card overflow-hidden">
-              <div className="overflow-x-auto max-h-[600px] mobile-table-scroll">
+            <div className="lg:col-span-2 glass-card overflow-hidden flex flex-col">
+              {/* Search & Filter Bar */}
+              <div className="p-4 border-b border-slate-800/80 bg-slate-900/50 flex flex-wrap gap-3 items-center justify-between">
+                <div className="flex-1 min-w-[200px]">
+                  <input
+                    type="text"
+                    value={pesertaSearch}
+                    onChange={(e) => setPesertaSearch(e.target.value)}
+                    placeholder="🔍 Cari regu, pangkalan, gudep..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-600 outline-none focus:border-amber-500/50"
+                  />
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <select
+                    value={pesertaFilterTingkat}
+                    onChange={(e) => setPesertaFilterTingkat(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none"
+                  >
+                    <option value="SEMUA">Semua Tingkat</option>
+                    <option value="SD">SD / MI</option>
+                    <option value="SMP">SMP / MTs</option>
+                  </select>
+                  <select
+                    value={pesertaFilterStatus}
+                    onChange={(e) => setPesertaFilterStatus(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none"
+                  >
+                    <option value="SEMUA">Semua Status</option>
+                    <option value="VERIFIED">✅ Aktif (Verified)</option>
+                    <option value="PENDING">⏳ Menunggu Verifikasi</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto max-h-[600px] mobile-table-scroll flex-1">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
                     <tr>
@@ -765,7 +824,15 @@ export default function DashboardAdmin() {
                     </tr>
                   </thead>
                   <tbody>
-                    {pesertaList.map((p) => {
+                    {filteredPesertaList.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-6 text-center text-xs text-slate-500 italic">
+                          Tidak ada data peserta yang cocok dengan kriteria pencarian/filter.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredPesertaList.map((p) => {
+
                       const isVerifying = verifyingId === p.id;
                       return (
                         <tr key={p.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
@@ -849,8 +916,13 @@ export default function DashboardAdmin() {
                           </td>
                         </tr>
                       );
-                    })}
+                    })
+
+                  )}
                   </tbody>
+
+
+
                 </table>
               </div>
             </div>
