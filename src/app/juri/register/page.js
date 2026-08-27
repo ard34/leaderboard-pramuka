@@ -54,13 +54,16 @@ export default function JuriRegisterPage() {
           "Sandi-Sandi",
           "Orienteering Navigasi",
           "Menaksir",
+          "Packing Perlengkapan",
           "Semaphore",
           "Morse Pluit",
           "Obat Tradisional & KIM",
           "Karnaval",
           "Administrasi Regu",
+          "Forum Penggalang",
           "Masak Nusantara",
         ];
+
         const fallbacks = defaultNames.flatMap((nama, idx) => [
           { id: `fallback-sd-${idx}`, nama_lomba: nama, kategori: "SD" },
           { id: `fallback-smp-${idx}`, nama_lomba: nama, kategori: "SMP" },

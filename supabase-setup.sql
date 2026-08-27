@@ -229,11 +229,13 @@ INSERT INTO public.lomba (nama_lomba, kode_lomba, kategori) VALUES
 ('Sandi-Sandi', 'SND', 'SD'),
 ('Orienteering Navigasi', 'NAV', 'SD'),
 ('Menaksir', 'TKS', 'SD'),
+('Packing Perlengkapan', 'PCK', 'SD'),
 ('Semaphore', 'SMP', 'SD'),
 ('Morse Pluit', 'MRS', 'SD'),
 ('Obat Tradisional & KIM', 'KIM', 'SD'),
 ('Karnaval', 'KRN', 'SD'),
 ('Administrasi Regu', 'ADM', 'SD'),
+('Forum Penggalang', 'FRP', 'SD'),
 ('Masak Nusantara', 'MSK', 'SD'),
 -- SMP / MTs
 ('Menyanyi Hymne & Mars Tangerang', 'HMN', 'SMP'),
@@ -243,11 +245,14 @@ INSERT INTO public.lomba (nama_lomba, kode_lomba, kategori) VALUES
 ('Sandi-Sandi', 'SND', 'SMP'),
 ('Orienteering Navigasi', 'NAV', 'SMP'),
 ('Menaksir', 'TKS', 'SMP'),
+('Packing Perlengkapan', 'PCK', 'SMP'),
 ('Semaphore', 'SMP', 'SMP'),
 ('Morse Pluit', 'MRS', 'SMP'),
 ('Obat Tradisional & KIM', 'KIM', 'SMP'),
 ('Karnaval', 'KRN', 'SMP'),
 ('Administrasi Regu', 'ADM', 'SMP'),
+('Forum Penggalang', 'FRP', 'SMP'),
 ('Masak Nusantara', 'MSK', 'SMP')
 ON CONFLICT DO NOTHING;
+
 

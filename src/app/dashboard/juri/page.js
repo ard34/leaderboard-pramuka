@@ -162,6 +162,20 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     ],
   },
   {
+    kode: "PCK",
+    nama_lomba: "Packing Perlengkapan",
+    kategori_kelompok: "Keterampilan Kepramukaan",
+    rules: {
+      SD: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
+      SMP: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
+    },
+    rubrik: [
+      { id: "kelengkapan", name: "Kelengkapan Barang Ransel", min: 0, max: 40, weight: 40, hint: "Kelengkapan perlengkapan wajib perorangan/regu (0-40)" },
+      { id: "kerapihan", name: "Kerapihan & Kepadatan Packing", min: 0, max: 30, weight: 30, hint: "Kepadatan bentuk ransel & kerapihan lipatan (0-30)" },
+      { id: "keseimbangan", name: "Keseimbangan & Proteksi Kedap Air", min: 0, max: 30, weight: 30, hint: "Keseimbangan beban kiri-kanan & kantong plastik (0-30)" },
+    ],
+  },
+  {
     kode: "ADM",
     nama_lomba: "Administrasi Regu",
     kategori_kelompok: "Manajemen Regu",
@@ -172,6 +186,20 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     rubrik: [
       { id: "kelengkapan", name: "Kelengkapan Berkas & Map", min: 0, max: 60, weight: 60, hint: "Kesesuaian warna map & kelengkapan isi (0-60)" },
       { id: "ketepatan", name: "Ketepatan & Kerapihan Pembukuan", min: 0, max: 40, weight: 40, hint: "Kerapihan notulen, logbook, & iuran (0-40)" },
+    ],
+  },
+  {
+    kode: "FRP",
+    nama_lomba: "Forum Penggalang",
+    kategori_kelompok: "Manajemen Regu",
+    rules: {
+      SD: "Musyawarah/Diskusi Penggalang mengenai kepemimpinan regu, evaluasi kegiatan, dan penyampaian gagasan.",
+      SMP: "Musyawarah/Diskusi Penggalang mengenai kepemimpinan regu, evaluasi kegiatan, dan penyampaian gagasan.",
+    },
+    rubrik: [
+      { id: "partisipasi", name: "Keaktifan & Partisipasi Regu", min: 0, max: 40, weight: 40, hint: "Keaktifan anggota dalam diskusi (0-40)" },
+      { id: "etika", name: "Etika & Ketaatan Tata Tertib", min: 0, max: 30, weight: 30, hint: "Sikap saling menghargai & sopan santun (0-30)" },
+      { id: "gagasan", name: "Bobot Gagasan & Solusi", min: 0, max: 30, weight: 30, hint: "Kualitas usulan & pemecahan masalah (0-30)" },
     ],
   },
   {
@@ -190,6 +218,7 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     ],
   },
 ];
+
 
 export default function DashboardJuri() {
   const router = useRouter();
