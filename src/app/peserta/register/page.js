@@ -73,6 +73,10 @@ export default function RegisterPage() {
           isSuccess = true;
           setNomorKapling(apiData.nomor_kapling);
           setEmailSent(apiData.emailSent);
+          if (!apiData.emailSent && apiData.emailError) {
+             console.error("Vercel Email Error:", apiData.emailError);
+             setError(`Pendaftaran SUKSES, tetapi email otomatis GAGAL dikirim: ${apiData.emailError}`);
+          }
         }
       } catch (_) { /* fallback to client insert */ }
 

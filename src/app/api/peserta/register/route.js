@@ -92,6 +92,7 @@ export async function POST(request) {
 
     // 2. Auto-Send Email
     let emailSent = false;
+    let emailError = null;
     const kaplingFormatted = nextKapling.toString().padStart(3, "0");
     const rawTarget = `${insertedData?.email || ""} ${insertedData?.kontak_person || ""}`;
     const emailMatch = rawTarget.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
@@ -105,7 +106,9 @@ export async function POST(request) {
         const smtpUser = process.env.SMTP_USER || process.env.smtp_user || process.env.EMAIL_USER || process.env.GMAIL_USER;
         const smtpPass = process.env.SMTP_PASS || process.env.smtp_pass || process.env.smtp_pss || process.env.SMTP_PSS || process.env.EMAIL_PASS || process.env.GMAIL_PASS;
 
-        if (smtpUser && smtpPass) {
+        if (!smtpUser || !smtpPass) {
+           emailError = "Konfigurasi SMTP_USER atau SMTP_PASS belum diset di Vercel Environment Variables.";
+        } else {
           const cleanPass = smtpPass.trim().replace(/\s+/g, "");
           let transporter;
           if (smtpHost.includes("gmail") || smtpUser.includes("@gmail.com")) {
@@ -187,13 +190,17 @@ export async function POST(request) {
         }
       } catch (e) {
         console.error("Auto email failed:", e);
+        emailError = e.message;
       }
+    } else {
+       emailError = "Pendaftar tidak menyertakan alamat email yang valid (contoh: @gmail.com)";
     }
 
     return NextResponse.json({ 
       success: true,
       nomor_kapling: kaplingFormatted,
-      emailSent
+      emailSent,
+      emailError
     });
   } catch (err) {
     return NextResponse.json(
