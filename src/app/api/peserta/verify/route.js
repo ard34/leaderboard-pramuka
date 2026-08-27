@@ -63,19 +63,25 @@ export async function POST(request) {
       );
     }
 
-    // 4. Send email notification if participant has email
+    // 4. Extract valid email address from email field or kontak_person
     let emailSent = false;
     let emailStatusMessage = "";
 
-    const targetEmail = peserta.email || peserta.kontak_person;
-    if (targetEmail && targetEmail.includes("@")) {
+    const rawTarget = `${peserta.email || ""} ${peserta.kontak_person || ""}`;
+    const emailMatch = rawTarget.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    const targetEmail = emailMatch ? emailMatch[0] : null;
+
+    const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} - NO. KAPLING: ${kaplingFormatted} | LT-II Kwarran Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nNOMOR KAPLING TENDA RESMI: ${kaplingFormatted}\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
+    const mailtoUrl = targetEmail ? `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}` : null;
+
+    if (targetEmail) {
       try {
         const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
         const smtpPort = Number(process.env.SMTP_PORT) || 587;
         const smtpUser = process.env.SMTP_USER;
         const smtpPass = process.env.SMTP_PASS;
 
-        const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} - NO. KAPLING: ${kaplingFormatted} | LT-II Kwarran Mekar Baru 2026`;
         const htmlBody = `
           <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #0b1329; color: #f8fafc; padding: 30px; border-radius: 16px; max-width: 600px; margin: 0 auto; border: 1px solid rgba(245, 166, 35, 0.3);">
             <div style="text-align: center; margin-bottom: 24px;">
@@ -155,28 +161,31 @@ export async function POST(request) {
             html: htmlBody,
           });
           emailSent = true;
-          emailStatusMessage = `Email notifikasi terkirim ke ${targetEmail}`;
+          emailStatusMessage = `✅ Email notifikasi terkirim otomatis ke ${targetEmail}`;
         } else {
-          // Dev / fallback logging
-          console.log(`[VERIFICATION EMAIL DISPATCH LOG] To: ${targetEmail} | Kapling: ${kaplingFormatted} | Subject: ${mailSubject}`);
-          emailSent = true;
-          emailStatusMessage = `Notifikasi tersimpan & email disiap terkirim ke ${targetEmail}`;
+          // Dev / fallback info
+          console.log(`[VERIFICATION EMAIL DISPATCH LOG] To: ${targetEmail} | Kapling: ${kaplingFormatted}`);
+          emailSent = false;
+          emailStatusMessage = `ℹ️ Email disiapkan untuk ${targetEmail}. (Belum ada SMTP di Server Vercel)`;
         }
       } catch (mailErr) {
         console.error("Gagal mengirim email verifikasi:", mailErr);
-        emailStatusMessage = "Verifikasi sukses, namun email gagal terkirim: " + mailErr.message;
+        emailStatusMessage = "Verifikasi sukses, pengiriman email otomatis: " + mailErr.message;
       }
     } else {
-      emailStatusMessage = "Verifikasi sukses. Email peserta tidak diisi.";
+      emailStatusMessage = "⚠️ Regu ini tidak mencantumkan alamat email (@). Verifikasi berhasil tanpa pengiriman email.";
     }
 
     return NextResponse.json({
       success: true,
       nomor_kapling: kaplingNum,
       nomor_kapling_formatted: kaplingFormatted,
+      targetEmail,
+      mailtoUrl,
       emailSent,
       emailMessage: emailStatusMessage,
     });
+
   } catch (err) {
     return NextResponse.json(
       { error: "Terjadi kesalahan server: " + err.message },

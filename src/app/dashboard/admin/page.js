@@ -365,10 +365,14 @@ export default function DashboardAdmin() {
       const data = await res.json();
       if (res.ok && data.success) {
         showPesan("success", `🎉 Regu berhasil diverifikasi! Nomor Kapling: ${data.nomor_kapling_formatted}. ${data.emailMessage || ""}`);
+        if (data.mailtoUrl && !data.emailSent) {
+          window.open(data.mailtoUrl, "_blank");
+        }
         setVerifyingId(null);
         setNoDadaInput("");
         await fetchAllData();
       } else {
+
         showPesan("error", "Gagal melakukan verifikasi: " + (data.error || "Terjadi kesalahan"));
       }
     } catch (err) {
