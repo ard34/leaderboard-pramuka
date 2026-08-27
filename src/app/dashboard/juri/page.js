@@ -397,14 +397,13 @@ export default function DashboardJuri() {
 
     // If using simulated/fallback ID that is not yet real UUID in DB
     let targetLombaId = selectedLombaId;
-    if (String(selectedLombaId).startsWith("def-")) {
-      const lombaDef = lombaList.find((l) => l.id === selectedLombaId);
+    if (String(selectedLombaId).startsWith("def-") || String(selectedLombaId).startsWith("fallback-")) {
+      const lombaDef = lombaList.find((l) => l.id === selectedLombaId) || currentLombaObj;
       if (lombaDef) {
-        // Try inserting real lomba row dynamically or finding match
         const { data: insertedLomba } = await supabase
           .from("lomba")
           .upsert(
-            { nama_lomba: lombaDef.nama_lomba, kode_lomba: lombaDef.kode_lomba, kategori: lombaDef.kategori },
+            { nama_lomba: lombaDef.nama_lomba, kode_lomba: lombaDef.kode_lomba || "LMB", kategori: lombaDef.kategori || selectedKategori },
             { onConflict: "nama_lomba, kategori" }
           )
           .select("id")
@@ -412,6 +411,7 @@ export default function DashboardJuri() {
         if (insertedLomba) targetLombaId = insertedLomba.id;
       }
     }
+
 
     // Upsert score in Supabase
     const { error } = await supabase

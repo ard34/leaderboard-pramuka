@@ -171,12 +171,34 @@ export default function JuriRegisterPage() {
     setError(null);
 
     try {
-      // Determine redirect URL dynamically based on environment
+      // Primary attempt: send data via Server API route
+      const apiRes = await fetch("/api/juri/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama_lengkap: cleanNama,
+          email: cleanEmail,
+          password,
+          kategori,
+          gender,
+          lombaId,
+        }),
+      });
+
+      const apiData = await apiRes.json();
+
+      if (apiRes.ok && apiData.success) {
+        setSuccess(true);
+        return;
+      }
+
+      // Fallback: Direct client sign up
       const redirectUrl = typeof window !== "undefined" 
         ? `${window.location.origin}/juri/verified` 
         : "https://leaderboard-pramuka.vercel.app/juri/verified";
 
-      // Sign up with Supabase auth (sends verification email automatically)
+      const targetLombaId = lombaId && !String(lombaId).startsWith("fallback-") ? lombaId : null;
+
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -186,20 +208,17 @@ export default function JuriRegisterPage() {
             nama_lengkap: cleanNama,
             assigned_kategori: kategori,
             assigned_gender: gender,
-            assigned_lomba_id: lombaId || null,
+            assigned_lomba_id: targetLombaId,
           },
         },
       });
 
       if (signUpError) {
-        setError("Gagal mendaftar: " + signUpError.message);
-        setLoading(false);
+        setError(apiData?.error || "Gagal mendaftar: " + signUpError.message);
         return;
       }
 
-      // Ensure profile record exists in public.profiles table
       if (data?.user) {
-        const targetLombaId = lombaId && !String(lombaId).startsWith("fallback-") ? lombaId : null;
         await supabase.from("profiles").upsert({
           id: data.user.id,
           nama_lengkap: cleanNama,
@@ -207,6 +226,7 @@ export default function JuriRegisterPage() {
           assigned_kategori: kategori,
           assigned_gender: gender,
           assigned_lomba_id: targetLombaId,
+          is_verified: false,
         }, { onConflict: "id" });
       }
 
@@ -216,8 +236,8 @@ export default function JuriRegisterPage() {
     } finally {
       setLoading(false);
     }
-
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-200 relative overflow-hidden" style={{

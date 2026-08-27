@@ -171,23 +171,34 @@ CREATE TRIGGER trigger_update_total_nilai
 -- Trigger: Otomatis Menambahkan Profil baru saat User Mendaftar (signUp)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  l_id UUID := NULL;
+  raw_lomba TEXT;
 BEGIN
-  INSERT INTO public.profiles (id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender)
+  raw_lomba := NEW.raw_user_meta_data->>'assigned_lomba_id';
+  IF raw_lomba IS NOT NULL AND raw_lomba ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+    l_id := raw_lomba::uuid;
+  END IF;
+
+  INSERT INTO public.profiles (id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender, is_verified)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'nama_lengkap', 'Dewan Juri'),
-    'juri',
-    NULLIF(NEW.raw_user_meta_data->>'assigned_lomba_id', '')::uuid,
+    COALESCE(NEW.raw_user_meta_data->>'role', 'juri'),
+    l_id,
     COALESCE(NEW.raw_user_meta_data->>'assigned_kategori', 'SD'),
-    COALESCE(NEW.raw_user_meta_data->>'assigned_gender', 'Laki-laki')
+    COALESCE(NEW.raw_user_meta_data->>'assigned_gender', 'Laki-laki'),
+    false
   )
   ON CONFLICT (id) DO UPDATE SET
     nama_lengkap = EXCLUDED.nama_lengkap,
+    assigned_lomba_id = COALESCE(EXCLUDED.assigned_lomba_id, public.profiles.assigned_lomba_id),
     assigned_kategori = EXCLUDED.assigned_kategori,
     assigned_gender = EXCLUDED.assigned_gender;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
