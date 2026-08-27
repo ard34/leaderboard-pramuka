@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
@@ -34,49 +34,100 @@ export default function JuriRegisterPage() {
     return minLength && hasUppercase && hasNumber;
   };
 
-  // Fetch all lomba on mount with fallback for 13 JUKLAK competitions
+  // Official JUKLAK LT-II Mekar Baru 2026 List
+  const OFFICIAL_JUKLAK_LOMBA = [
+    { nama_lomba: "Menyanyi Hymne & Mars Tangerang", kode_lomba: "HMN" },
+    { nama_lomba: "Pentas Seni Budaya (Tari Kreasi)", kode_lomba: "TSB" },
+    { nama_lomba: "Pionering & Tali-Temali", kode_lomba: "PNR" },
+    { nama_lomba: "PPPK / PPGD", kode_lomba: "PGD" },
+    { nama_lomba: "Sandi-Sandi", kode_lomba: "SND" },
+    { nama_lomba: "Orienteering Navigasi", kode_lomba: "NAV" },
+    { nama_lomba: "Menaksir", kode_lomba: "TKS" },
+    { nama_lomba: "Packing Perlengkapan", kode_lomba: "PCK" },
+    { nama_lomba: "Semaphore", kode_lomba: "SMP" },
+    { nama_lomba: "Morse Pluit", kode_lomba: "MRS" },
+    { nama_lomba: "Obat Tradisional & KIM", kode_lomba: "KIM" },
+    { nama_lomba: "Karnaval", kode_lomba: "KRN" },
+    { nama_lomba: "Administrasi Regu", kode_lomba: "ADM" },
+    { nama_lomba: "Forum Penggalang", kode_lomba: "FRP" },
+    { nama_lomba: "Masak Nusantara", kode_lomba: "MSK" },
+  ];
+
+  // Fetch and auto-sync all 15 official JUKLAK competitions
   useEffect(() => {
     const fetchLomba = async () => {
-      const { data } = await supabase
-        .from("lomba")
-        .select("id, nama_lomba, kategori")
-        .order("nama_lomba", { ascending: true });
+      let currentData = [];
+      try {
+        const { data } = await supabase
+          .from("lomba")
+          .select("id, nama_lomba, kode_lomba, kategori")
+          .order("nama_lomba", { ascending: true });
 
-      if (data && data.length > 0) {
-        setLombaList(data);
-      } else {
-        // Fallback default list from JUKLAK LT-II Mekar Baru 2026
-        const defaultNames = [
-          "Menyanyi Hymne & Mars Tangerang",
-          "Pentas Seni Budaya (Tari Kreasi)",
-          "Pionering & Tali-Temali",
-          "PPPK / PPGD",
-          "Sandi-Sandi",
-          "Orienteering Navigasi",
-          "Menaksir",
-          "Packing Perlengkapan",
-          "Semaphore",
-          "Morse Pluit",
-          "Obat Tradisional & KIM",
-          "Karnaval",
-          "Administrasi Regu",
-          "Forum Penggalang",
-          "Masak Nusantara",
-        ];
+        if (data) currentData = data;
+      } catch (_) {}
 
-        const fallbacks = defaultNames.flatMap((nama, idx) => [
-          { id: `fallback-sd-${idx}`, nama_lomba: nama, kategori: "SD" },
-          { id: `fallback-smp-${idx}`, nama_lomba: nama, kategori: "SMP" },
-        ]);
+      // Check missing entries for SD and SMP
+      const categories = ["SD", "SMP"];
+      const missingToInsert = [];
+
+      categories.forEach((kat) => {
+        OFFICIAL_JUKLAK_LOMBA.forEach((off) => {
+          const exists = currentData.some(
+            (l) => l.kategori === kat && (l.kode_lomba === off.kode_lomba || l.nama_lomba.toLowerCase().includes(off.kode_lomba.toLowerCase()))
+          );
+          if (!exists) {
+            missingToInsert.push({
+              nama_lomba: off.nama_lomba,
+              kode_lomba: off.kode_lomba,
+              kategori: kat,
+            });
+          }
+        });
+      });
+
+      if (missingToInsert.length > 0) {
+        try {
+          const { data: insertedData } = await supabase
+            .from("lomba")
+            .insert(missingToInsert)
+            .select();
+          if (insertedData) {
+            currentData = [...currentData, ...insertedData];
+          }
+        } catch (_) {}
+      }
+
+      // If DB fails or is empty, generate complete fallbacks
+      if (currentData.length === 0) {
+        const fallbacks = categories.flatMap((kat) =>
+          OFFICIAL_JUKLAK_LOMBA.map((off, idx) => ({
+            id: `fallback-${kat}-${idx}`,
+            nama_lomba: off.nama_lomba,
+            kode_lomba: off.kode_lomba,
+            kategori: kat,
+          }))
+        );
         setLombaList(fallbacks);
+      } else {
+        setLombaList(currentData);
       }
     };
     fetchLomba();
   }, []);
 
+  // Filtered lomba options based on selected kategori (with fallback to all if no exact match)
+  const filteredLomba = useMemo(() => {
+    const matched = lombaList.filter((l) => !l.kategori || l.kategori === kategori);
+    if (matched.length > 0) return matched;
+    // Fallback: return official 15 list for the selected category
+    return OFFICIAL_JUKLAK_LOMBA.map((off, idx) => ({
+      id: `fallback-${kategori}-${idx}`,
+      nama_lomba: off.nama_lomba,
+      kode_lomba: off.kode_lomba,
+      kategori,
+    }));
+  }, [lombaList, kategori]);
 
-  // Filtered lomba options based on selected kategori
-  const filteredLomba = lombaList.filter((l) => l.kategori === kategori);
 
   // Set default selected lomba when kategori changes
   useEffect(() => {
