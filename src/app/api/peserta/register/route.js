@@ -50,12 +50,21 @@ export async function POST(request) {
     // Primary insert attempt
     let { error: insertError } = await supabaseAdmin.from("peserta").insert(payload);
 
-    // Fallback if nomor_dada NOT NULL constraint exists in DB
+    // Fallback 1: if 'email' column does not exist in DB schema yet
+    if (insertError && (insertError.message.includes("email") || insertError.code === "PGRST204" || insertError.code === "42703")) {
+      delete payload.email;
+      payload.kontak_person = `${cleanKontak} (Email: ${cleanEmail})`;
+      const retryRes = await supabaseAdmin.from("peserta").insert(payload);
+      insertError = retryRes.error;
+    }
+
+    // Fallback 2: if nomor_dada NOT NULL constraint exists in DB
     if (insertError && (insertError.message.includes("nomor_dada") || insertError.code === "23502")) {
       payload.nomor_dada = 0;
       const fallbackRes = await supabaseAdmin.from("peserta").insert(payload);
       insertError = fallbackRes.error;
     }
+
 
     if (insertError) {
       return NextResponse.json(

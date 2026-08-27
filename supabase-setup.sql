@@ -40,17 +40,22 @@ CREATE TABLE public.profiles (
 -- 4. Buat tabel PESERTA
 CREATE TABLE public.peserta (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nomor_dada INT NULL, -- NULL saat baru mendaftar mandiri via web, diisi oleh Admin saat verifikasi
+  nomor_dada INT NULL, -- Nomor Kapling Tenda (NULL saat pendaftaran mandiri, diisi Admin saat verifikasi)
   nama_regu TEXT NOT NULL,
   pangkalan TEXT NOT NULL,
   no_gudep TEXT DEFAULT '',
   kontak_person TEXT DEFAULT '',
+  email TEXT DEFAULT '', -- Email Aktif Pembina / Regu untuk notifikasi kapling & verifikasi
   is_verified BOOLEAN DEFAULT true, -- default true untuk seed data, false untuk pendaftaran mandiri
   kategori TEXT NOT NULL CHECK (kategori IN ('SD', 'SMP', 'SMK')),
   gender TEXT NOT NULL CHECK (gender IN ('Laki-laki', 'Perempuan')) DEFAULT 'Laki-laki',
   total_nilai NUMERIC DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- JIKA TABEL PESERTA SUDAH ADA, JALANKAN QUERY INI DI SQL EDITOR SUPABASE:
+-- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS email TEXT DEFAULT '';
+
 
 
 -- 5. Buat tabel PENILAIAN

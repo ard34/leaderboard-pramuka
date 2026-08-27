@@ -77,6 +77,15 @@ export default function RegisterPage() {
         let clientPayload = { ...payload, is_verified: false };
         let { error: insertError } = await supabase.from("peserta").insert(clientPayload);
 
+        // Fallback for missing 'email' column
+        if (insertError && (insertError.message.includes("email") || insertError.code === "PGRST204" || insertError.code === "42703")) {
+          delete clientPayload.email;
+          clientPayload.kontak_person = `${cleanKontak} (Email: ${cleanEmail})`;
+          const retryRes = await supabase.from("peserta").insert(clientPayload);
+          insertError = retryRes.error;
+        }
+
+        // Fallback for NOT NULL nomor_dada
         if (insertError && (insertError.message.includes("nomor_dada") || insertError.code === "23502")) {
           clientPayload.nomor_dada = 0;
           const fallbackRes = await supabase.from("peserta").insert(clientPayload);
@@ -89,6 +98,7 @@ export default function RegisterPage() {
           return;
         }
       }
+
 
       setSuccess(true);
 
