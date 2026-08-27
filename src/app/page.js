@@ -97,6 +97,8 @@ export default function Home() {
   const [isLocked, setIsLocked] = useState(false);
   const [availableCounts, setAvailableCounts] = useState({});
   const [announcements, setAnnouncements] = useState([]);
+  const [showWinners, setShowWinners] = useState(false);
+
 
 
   // Auto-rotation state
@@ -354,13 +356,35 @@ export default function Home() {
           }
         }
       )
+    const channelInfo = supabase
+      .channel("realtime-informasi-broadcast")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "informasi" },
+        async () => {
+          const { data: freshInfo } = await supabase
+            .from("informasi")
+            .select("id, text, created_at")
+            .order("created_at", { ascending: false })
+            .limit(10);
+
+          if (freshInfo) {
+            const cleanInfo = freshInfo.filter((i) => !i.text.startsWith("__CONFIG_"));
+            setAnnouncements(cleanInfo);
+            const isAnnounced = freshInfo.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
+            setShowWinners(isAnnounced);
+          }
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channelPeserta);
       supabase.removeChannel(channelNilai);
+      supabase.removeChannel(channelInfo);
     };
   }, [activeTab, activeGender]);
+
 
   useLayoutEffect(() => {
     if (prevTab.current !== activeTab || prevGender.current !== activeGender) {
@@ -496,8 +520,12 @@ export default function Home() {
         .limit(5);
  
       if (infoData) {
-        setAnnouncements(infoData);
+        const cleanInfo = infoData.filter((i) => !i.text.startsWith("__CONFIG_"));
+        setAnnouncements(cleanInfo);
+        const isAnnounced = infoData.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
+        setShowWinners(isAnnounced);
       }
+
  
       if (recentScores) {
         const items = recentScores.map((s) => {
@@ -562,7 +590,20 @@ export default function Home() {
         { id: "t2", text: "Klasemen diperbarui secara real-time melalui sistem dewan juri", time: "" }
       ];
 
+  const displayPeserta = useMemo(() => {
+
+    if (!peserta) return [];
+    if (showWinners) {
+      return [...peserta].sort((a, b) => (b.total_nilai || 0) - (a.total_nilai || 0));
+    }
+    return [...peserta].sort((a, b) => {
+      if (a.nomor_dada && b.nomor_dada) return a.nomor_dada - b.nomor_dada;
+      return (a.no_gudep || "").localeCompare(b.no_gudep || "");
+    });
+  }, [peserta, showWinners]);
+
   return (
+
     <div className={`scoreboard-layout theme-${accentColor}`}>
       <div className="scoreboard-container">
         {/* Transition Overlay */}
@@ -612,7 +653,9 @@ export default function Home() {
                 <table className="scoreboard-table">
                   <thead>
                     <tr>
-                      <th className="sc-th-rank sticky-col-rank col-rank">Peringkat</th>
+                      <th className="sc-th-rank sticky-col-rank col-rank">
+                        {showWinners ? "PERINGKAT" : "NO. URUT"}
+                      </th>
                       <th className="sc-th-name sticky-col-name col-name">NO. GUDEP</th>
                       {currentLombaCols.map((lomba) => (
                         <th key={lomba.id} title={lomba.nama_lomba} className="col-lomba">
@@ -623,14 +666,14 @@ export default function Home() {
                     </tr>
                   </thead>
                   <tbody>
-                    {peserta.length === 0 ? (
+                    {displayPeserta.length === 0 ? (
                       <tr>
                         <td colSpan={currentLombaCols.length + 3} className="scoreboard-empty">
                           Belum ada regu terdaftar untuk tingkat {activeTab} {activeGender === "Laki-laki" ? "Putra" : "Putri"}.
                         </td>
                       </tr>
                     ) : (
-                      peserta.map((regu, index) => {
+                      displayPeserta.map((regu, index) => {
                         const isChanged = changedIds.has(regu.id);
                         return (
                           <tr
@@ -659,9 +702,15 @@ export default function Home() {
                               );
                             })}
                             <td className="sticky-col-total col-total">
-                              <span className={`total-score ${getTotalClass(regu.total_nilai)} ${isChanged ? "score-updated" : ""}`}>
-                                {regu.total_nilai ?? 0}
-                              </span>
+                              {showWinners ? (
+                                <span className={`total-score ${getTotalClass(regu.total_nilai)} ${isChanged ? "score-updated" : ""}`}>
+                                  {regu.total_nilai ?? 0}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600 text-[0.6rem] font-mono select-none" title="Nilai akumulasi diumumkan saat akhir acara oleh Admin">
+                                  —
+                                </span>
+                              )}
                             </td>
                           </tr>
                         );
@@ -682,13 +731,15 @@ export default function Home() {
               {/* Juara 2 */}
               <div className="podium-step">
                 <div className="podium-team-info">
-                  <div className="podium-school" title={peserta[1]?.pangkalan || "—"}>
-                    {peserta[1]?.pangkalan || "—"}
+                  <div className="podium-school" title={showWinners ? (displayPeserta[1]?.pangkalan || "—") : "—"}>
+                    {showWinners ? (displayPeserta[1]?.pangkalan || "—") : "—"}
                   </div>
-                  <div className="podium-regu" title={peserta[1]?.nama_regu ? `Regu: ${peserta[1].nama_regu}` : "—"}>
-                    {peserta[1]?.nama_regu || "—"}
+                  <div className="podium-regu" title={showWinners && displayPeserta[1]?.nama_regu ? `Regu: ${displayPeserta[1].nama_regu}` : "—"}>
+                    {showWinners ? (displayPeserta[1]?.nama_regu || "—") : "—"}
                   </div>
-                  <div className="podium-score">{peserta[1] ? `${peserta[1].total_nilai} Pts` : "—"}</div>
+                  <div className="podium-score">
+                    {showWinners && displayPeserta[1] ? `${displayPeserta[1].total_nilai} Pts` : "—"}
+                  </div>
                 </div>
                 <div className="podium-bar bar-2">
                   <span className="podium-rank">2</span>
@@ -698,14 +749,16 @@ export default function Home() {
               {/* Juara 1 */}
               <div className="podium-step">
                 <div className="podium-team-info">
-                  {peserta[0] && <div className="podium-crown">👑</div>}
-                  <div className="podium-school" title={peserta[0]?.pangkalan || "—"}>
-                    {peserta[0]?.pangkalan || "—"}
+                  {showWinners && displayPeserta[0] && <div className="podium-crown">👑</div>}
+                  <div className="podium-school" title={showWinners ? (displayPeserta[0]?.pangkalan || "—") : "—"}>
+                    {showWinners ? (displayPeserta[0]?.pangkalan || "—") : "—"}
                   </div>
-                  <div className="podium-regu" title={peserta[0]?.nama_regu ? `Regu: ${peserta[0].nama_regu}` : "—"}>
-                    {peserta[0]?.nama_regu || "—"}
+                  <div className="podium-regu" title={showWinners && displayPeserta[0]?.nama_regu ? `Regu: ${displayPeserta[0].nama_regu}` : "—"}>
+                    {showWinners ? (displayPeserta[0]?.nama_regu || "—") : "—"}
                   </div>
-                  <div className="podium-score">{peserta[0] ? `${peserta[0].total_nilai} Pts` : "—"}</div>
+                  <div className="podium-score">
+                    {showWinners && displayPeserta[0] ? `${displayPeserta[0].total_nilai} Pts` : "—"}
+                  </div>
                 </div>
                 <div className="podium-bar bar-1">
                   <span className="podium-rank">1</span>
@@ -715,13 +768,15 @@ export default function Home() {
               {/* Juara 3 */}
               <div className="podium-step">
                 <div className="podium-team-info">
-                  <div className="podium-school" title={peserta[2]?.pangkalan || "—"}>
-                    {peserta[2]?.pangkalan || "—"}
+                  <div className="podium-school" title={showWinners ? (displayPeserta[2]?.pangkalan || "—") : "—"}>
+                    {showWinners ? (displayPeserta[2]?.pangkalan || "—") : "—"}
                   </div>
-                  <div className="podium-regu" title={peserta[2]?.nama_regu ? `Regu: ${peserta[2].nama_regu}` : "—"}>
-                    {peserta[2]?.nama_regu || "—"}
+                  <div className="podium-regu" title={showWinners && displayPeserta[2]?.nama_regu ? `Regu: ${displayPeserta[2].nama_regu}` : "—"}>
+                    {showWinners ? (displayPeserta[2]?.nama_regu || "—") : "—"}
                   </div>
-                  <div className="podium-score">{peserta[2] ? `${peserta[2].total_nilai} Pts` : "—"}</div>
+                  <div className="podium-score">
+                    {showWinners && displayPeserta[2] ? `${displayPeserta[2].total_nilai} Pts` : "—"}
+                  </div>
                 </div>
                 <div className="podium-bar bar-3">
                   <span className="podium-rank">3</span>
@@ -729,6 +784,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+
 
           {/* Sponsor Logos */}
           <div className="sponsors-container">

@@ -45,6 +45,24 @@ export default function DashboardAdmin() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [verifyingId, setVerifyingId] = useState(null);
   const [noDadaInput, setNoDadaInput] = useState("");
+  const [showWinners, setShowWinners] = useState(false);
+
+  const handleToggleShowWinners = async () => {
+    const nextState = !showWinners;
+    setShowWinners(nextState);
+    if (nextState) {
+      await supabase.from("informasi").delete().eq("text", "__CONFIG_SHOW_WINNERS:false");
+      await supabase.from("informasi").insert({ text: "__CONFIG_SHOW_WINNERS:true" });
+      showPesan("success", "🏆 MODUS PENGUMUMAN JUARA AKTIF! Total Akumulasi Nilai & Tangga Juara Top 3 kini tampil di layar broadcast.");
+    } else {
+      await supabase.from("informasi").delete().eq("text", "__CONFIG_SHOW_WINNERS:true");
+      await supabase.from("informasi").delete().eq("text", "__SHOW_WINNERS__");
+      showPesan("info", "🔒 Modus Pengumuman Juara Non-Aktif. Tampilan broadcast kembali ke No. Urut.");
+    }
+    const { data: freshInfo } = await supabase.from("informasi").select("id, text, created_at").order("created_at", { ascending: false });
+    if (freshInfo) setInformasiList(freshInfo);
+  };
+
 
   // Auth check
   useEffect(() => {
@@ -140,7 +158,12 @@ export default function DashboardAdmin() {
     if (pesertaRes.data) setPesertaList(pesertaRes.data);
     if (jurisRes.data) setJuriList(jurisRes.data);
     if (logsRes.data) setLogEntries(logsRes.data);
-    if (informasiRes.data) setInformasiList(informasiRes.data);
+    if (informasiRes.data) {
+      setInformasiList(informasiRes.data);
+      const active = informasiRes.data.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
+      setShowWinners(active);
+    }
+
 
     // Process penilaian map
     if (penilaianRes.data) {
@@ -528,9 +551,24 @@ export default function DashboardAdmin() {
             </div>
           </div>
 
-          <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all">
-            LOGOUT
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleToggleShowWinners}
+              className={`text-[0.68rem] md:text-xs font-black tracking-wider px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-2 ${
+                showWinners
+                  ? "bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-amber-500/30 animate-pulse"
+                  : "bg-slate-800/90 text-slate-300 border border-slate-700 hover:bg-slate-700"
+              }`}
+              title="Klik untuk mengaktifkan/menonaktifkan pengumuman juara & total akumulasi di layar utama broadcast"
+            >
+              <span>{showWinners ? "🏆 MODE JUARA: AKTIF" : "🔒 MODE JUARA: NON-AKTIF (NO. URUT)"}</span>
+            </button>
+
+            <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all">
+              LOGOUT
+            </button>
+          </div>
+
         </div>
       </nav>
 
