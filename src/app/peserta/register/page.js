@@ -61,7 +61,6 @@ export default function RegisterPage() {
 
 
       // 1. Primary: Server API Route endpoint (bypasses RLS restrictions)
-      let isSuccess = false;
       try {
         const apiRes = await fetch("/api/peserta/register", {
           method: "POST",
@@ -69,46 +68,21 @@ export default function RegisterPage() {
           body: JSON.stringify(payload),
         });
         const apiData = await apiRes.json();
+        
         if (apiRes.ok && apiData.success) {
-          isSuccess = true;
           setNomorKapling(apiData.nomor_kapling);
           setEmailSent(apiData.emailSent);
           if (!apiData.emailSent && apiData.emailError) {
              console.error("Vercel Email Error:", apiData.emailError);
              setError(`Pendaftaran SUKSES, tetapi email otomatis GAGAL dikirim: ${apiData.emailError}`);
           }
+          setSuccess(true);
+        } else {
+          setError("Gagal mendaftar: " + (apiData.error || "Terjadi kesalahan pada server."));
         }
-      } catch (_) { /* fallback to client insert */ }
-
-      // 2. Fallback: Direct Supabase client insert
-      if (!isSuccess) {
-        let clientPayload = { ...payload, is_verified: false };
-        let { error: insertError } = await supabase.from("peserta").insert(clientPayload);
-
-        // Fallback for missing 'email' column
-        if (insertError && (insertError.message.includes("email") || insertError.code === "PGRST204" || insertError.code === "42703")) {
-          delete clientPayload.email;
-          clientPayload.kontak_person = `${cleanKontak} (Email: ${cleanEmail})`;
-          const retryRes = await supabase.from("peserta").insert(clientPayload);
-          insertError = retryRes.error;
-        }
-
-        // Fallback for NOT NULL nomor_dada
-        if (insertError && (insertError.message.includes("nomor_dada") || insertError.code === "23502")) {
-          clientPayload.nomor_dada = 0;
-          const fallbackRes = await supabase.from("peserta").insert(clientPayload);
-          insertError = fallbackRes.error;
-        }
-
-        if (insertError) {
-          setError("Gagal mendaftar: " + insertError.message);
-          setLoading(false);
-          return;
-        }
+      } catch (err) {
+        setError("Gagal menghubungi server pendaftaran: " + err.message);
       }
-
-
-      setSuccess(true);
 
 
     } catch (err) {
