@@ -292,10 +292,15 @@ export default function RegisterPage() {
                   </div>
                 )}
                 
-                {emailSent && (
-                  <p className="text-xs text-slate-400 bg-slate-900/50 py-2 px-3 rounded-lg border border-slate-800">
+                {emailSent ? (
+                  <p className="text-xs text-emerald-400 bg-emerald-500/10 py-2 px-3 rounded-lg border border-emerald-500/20 mt-4">
                     📩 Bukti verifikasi & No. Kapling telah dikirim ke email <strong>{email}</strong>
                   </p>
+                ) : (
+                  <div className="text-xs text-red-400 bg-red-500/10 py-3 px-4 rounded-lg border border-red-500/20 mt-4 text-left">
+                    <strong className="block mb-1">⚠️ GAGAL MENGIRIM EMAIL OTOMATIS:</strong>
+                    {error || "Konfigurasi SMTP Vercel bermasalah atau email tidak valid."}
+                  </div>
                 )}
               </div>
               <div className="pt-4">
