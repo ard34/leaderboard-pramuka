@@ -341,10 +341,21 @@ export default function DashboardAdmin() {
     setSaving(false);
   };
 
+  const getNextKapling = (gender) => {
+    const isPutra = gender?.toLowerCase().includes("laki") || gender?.toLowerCase().includes("putra");
+    const validKaplings = pesertaList.map((p) => p.nomor_dada).filter((n) => n > 0);
+    if (isPutra) {
+      const oddNumbers = validKaplings.filter((n) => n % 2 !== 0);
+      return oddNumbers.length > 0 ? Math.max(...oddNumbers) + 2 : 1;
+    } else {
+      const evenNumbers = validKaplings.filter((n) => n % 2 === 0);
+      return evenNumbers.length > 0 ? Math.max(...evenNumbers) + 2 : 2;
+    }
+  };
+
   const handleStartVerifikasi = (peserta) => {
-    // Auto calculate next sequential Kapling Number (count of verified + 1) e.g., "001", "002"
-    const countVerified = pesertaList.filter((p) => p.is_verified).length;
-    const nextKapling = (countVerified + 1).toString().padStart(3, "0");
+    // Auto calculate Kapling based on gender (Odd/Even)
+    const nextKapling = getNextKapling(peserta.gender).toString().padStart(3, "0");
     setVerifyingId(peserta.id);
     setNoDadaInput(nextKapling);
   };
@@ -802,7 +813,10 @@ export default function DashboardAdmin() {
                   </select>
                 </div>
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Gender</label>
-                  <select value={formPeserta.gender} onChange={(e) => setFormPeserta({...formPeserta, gender: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
+                  <select value={formPeserta.gender} onChange={(e) => {
+                      const newGender = e.target.value;
+                      setFormPeserta({...formPeserta, gender: newGender, nomor_dada: getNextKapling(newGender)});
+                  }} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
                     <option value="Laki-laki">Laki-laki (Putra)</option><option value="Perempuan">Perempuan (Putri)</option>
                   </select>
                 </div>
