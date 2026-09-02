@@ -165,7 +165,7 @@ export default function CetakBuktiPendaftaran() {
           </div>
           <div className="w-1/2 flex flex-col items-center text-center">
             <p className="mb-1">Mekar Baru, {tglDaftar}</p>
-            <p>Panitia Pendaftaran</p>
+            <p>Panitia/ Admin</p>
             <p>LT-II Kwarran Mekar Baru</p>
             {/* Tanda tangan dibiarkan kosong sesuai template */}
             <div className="h-24"></div>
