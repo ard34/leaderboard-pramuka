@@ -62,7 +62,7 @@ export default function CetakBuktiPendaftaran() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center py-10 font-sans print:py-0 print:bg-white text-black">
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center py-6 print:py-0 print:bg-white text-black" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
       
       {/* Tombol Cetak (Sembunyi saat di-print) */}
       <div className="mb-6 print:hidden flex gap-4">
@@ -78,65 +78,63 @@ export default function CetakBuktiPendaftaran() {
       <div className="bg-white w-full max-w-[210mm] min-h-[297mm] shadow-2xl print:shadow-none p-[20mm] relative">
         
         {/* KOP SURAT */}
-        <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-8">
-          <div className="flex gap-2">
-            <img src="/logo_wosm.png" alt="WOSM" className="w-16 h-16 object-contain" />
-            <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran" className="w-16 h-16 object-contain" />
+        <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-6">
+          <div className="flex-shrink-0">
+            <img src="/logo_wosm.png" alt="WOSM" className="w-20 h-20 object-contain" />
           </div>
           <div className="flex-1 text-center px-4">
-            <h1 className="text-xl font-black uppercase">Kwartir Ranting Mekar Baru</h1>
-            <h2 className="text-md font-bold uppercase mt-1">Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II)</h2>
-            <p className="text-sm mt-1 text-gray-700">Tahun 2026</p>
+            <h1 className="text-2xl font-black uppercase tracking-wide">Kwartir Ranting Mekar Baru</h1>
+            <h2 className="text-lg font-bold uppercase mt-1">Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II)</h2>
+            <p className="text-md mt-1 text-gray-800">Tahun 2026</p>
           </div>
-          <div className="flex gap-2">
-            <img src="/logo_lt2.png" alt="LT2" className="w-16 h-16 object-contain" />
-            <img src="/logo_65.png" alt="HUT Pramuka" className="w-16 h-16 object-contain" />
+          <div className="flex-shrink-0">
+            <img src="/logo_lt2.png" alt="LT2" className="w-20 h-20 object-contain" />
           </div>
         </div>
 
         {/* JUDUL SURAT */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h3 className="text-xl font-black underline uppercase">Tanda Bukti Verifikasi Pendaftaran</h3>
-          <p className="text-sm mt-2 text-gray-600">No. Registrasi: {peserta.id.split("-")[0].toUpperCase()}</p>
+          <p className="text-sm mt-1 text-gray-800">No. Registrasi: {peserta.id.split("-")[0].toUpperCase()}</p>
         </div>
 
         {/* ISI SURAT */}
-        <div className="space-y-4 text-justify leading-relaxed">
+        <div className="space-y-3 text-justify leading-relaxed text-[15px]">
           <p>
             Panitia Pelaksana Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II) Kwartir Ranting Mekar Baru Tahun 2026 menerangkan bahwa:
           </p>
           
-          <table className="w-full ml-4 mb-4 mt-4">
+          <table className="w-full ml-4 mb-3 mt-3">
             <tbody>
               <tr>
-                <td className="py-2 w-48 font-semibold">Nama Regu</td>
-                <td className="py-2 w-4">:</td>
-                <td className="py-2 font-bold text-lg">{peserta.nama_regu}</td>
+                <td className="py-1.5 w-48 font-semibold">Nama Regu</td>
+                <td className="py-1.5 w-4">:</td>
+                <td className="py-1.5 font-bold text-lg">{peserta.nama_regu}</td>
               </tr>
               <tr>
-                <td className="py-2 font-semibold">Pangkalan / Sekolah</td>
-                <td className="py-2">:</td>
-                <td className="py-2">{peserta.pangkalan}</td>
+                <td className="py-1.5 font-semibold">Pangkalan / Sekolah</td>
+                <td className="py-1.5">:</td>
+                <td className="py-1.5">{peserta.pangkalan}</td>
               </tr>
               <tr>
-                <td className="py-2 font-semibold">No. Gugus Depan</td>
-                <td className="py-2">:</td>
-                <td className="py-2">{peserta.no_gudep || "-"}</td>
+                <td className="py-1.5 font-semibold">No. Gugus Depan</td>
+                <td className="py-1.5">:</td>
+                <td className="py-1.5">{peserta.no_gudep || "-"}</td>
               </tr>
               <tr>
-                <td className="py-2 font-semibold">Kategori Peserta</td>
-                <td className="py-2">:</td>
-                <td className="py-2">{peserta.kategori}</td>
+                <td className="py-1.5 font-semibold">Kategori Peserta</td>
+                <td className="py-1.5">:</td>
+                <td className="py-1.5">{peserta.kategori}</td>
               </tr>
               <tr>
-                <td className="py-2 font-semibold">Jenis Kelamin</td>
-                <td className="py-2">:</td>
-                <td className="py-2">{peserta.gender}</td>
+                <td className="py-1.5 font-semibold">Jenis Kelamin</td>
+                <td className="py-1.5">:</td>
+                <td className="py-1.5">{peserta.gender}</td>
               </tr>
               <tr>
-                <td className="py-2 font-semibold">Tanggal Daftar</td>
-                <td className="py-2">:</td>
-                <td className="py-2">{tglDaftar}</td>
+                <td className="py-1.5 font-semibold">Tanggal Daftar</td>
+                <td className="py-1.5">:</td>
+                <td className="py-1.5">{tglDaftar}</td>
               </tr>
             </tbody>
           </table>
@@ -147,9 +145,9 @@ export default function CetakBuktiPendaftaran() {
         </div>
 
         {/* INSTRUKSI */}
-        <div className="mt-10 p-4 border-2 border-dashed border-gray-400 rounded bg-gray-50 print:border-solid">
+        <div className="mt-8 p-4 border-2 border-dashed border-gray-400 rounded bg-gray-50 print:border-solid text-[15px]">
           <h4 className="font-bold mb-2">Instruksi untuk Peserta:</h4>
-          <ol className="list-decimal ml-5 space-y-1 text-sm">
+          <ol className="list-decimal ml-5 space-y-1">
             <li>Surat ini adalah <strong>bukti sah</strong> pendaftaran regu.</li>
             <li>Silakan <strong>cetak (print) / Download PDF</strong> surat ini.</li>
             <li>Bawa surat fisik/PDF ini pada saat registrasi ulang di lokasi perkemahan (Bumi Perkemahan) untuk ditukarkan dengan <strong>Nomor Kapling Tenda</strong> dan ID Card.</li>
@@ -157,9 +155,9 @@ export default function CetakBuktiPendaftaran() {
         </div>
 
         {/* TTD */}
-        <div className="mt-16 flex justify-end">
-          <div className="text-center w-64">
-            <p className="mb-16">Mekar Baru, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+        <div className="mt-12 flex justify-end">
+          <div className="text-center w-64 text-[15px]">
+            <p className="mb-20">Mekar Baru, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
             <p className="font-bold underline">Panitia Pendaftaran</p>
             <p className="text-sm mt-1">LT-II Kwarran Mekar Baru</p>
           </div>
