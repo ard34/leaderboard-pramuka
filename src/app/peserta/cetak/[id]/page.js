@@ -86,9 +86,9 @@ export default function CetakBuktiPendaftaran() {
         <div className="flex items-center justify-between pb-3 mb-1" style={{ borderBottom: "5px double black" }}>
           <div className="flex-shrink-0 ml-4">
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/4/41/Gerakan_Pramuka_Indonesia_Logo.svg" 
+              src="/tunas_kelapa.png" 
               alt="Tunas Kelapa" 
-              className="w-[70px] h-[70px] object-contain" 
+              className="w-[60px] h-[85px] object-contain mix-blend-multiply" 
             />
           </div>
           <div className="flex-1 text-center px-2" style={{ fontFamily: "Arial, sans-serif" }}>
