@@ -12,7 +12,6 @@ export default function RegisterPage() {
   // Form states
   const [pangkalan, setPangkalan] = useState("");
   const [kwartirRanting, setKwartirRanting] = useState("Mekar Baru");
-  const [alamatGudep, setAlamatGudep] = useState("");
   const [noGudep, setNoGudep] = useState("");
   const [namaRegu, setNamaRegu] = useState("");
   const [kategori, setKategori] = useState("SD");
@@ -46,15 +45,14 @@ export default function RegisterPage() {
 
     // Input validations
     const cleanKwartir = kwartirRanting.trim();
-    const cleanAlamat = alamatGudep.trim();
     const cleanNamaPembina = namaPembina.trim();
-    const cleanPangkalan = `${pangkalan.trim()} - ${cleanAlamat} (Kwarran ${cleanKwartir})`;
+    const cleanPangkalan = `${pangkalan.trim()} (Kwarran ${cleanKwartir})`;
     const cleanNoGudep = noGudep.trim();
     const cleanNamaRegu = namaRegu.trim();
     const cleanKontak = `${cleanNamaPembina} (${kontakPerson.trim()})`;
     const cleanEmail = email.trim();
 
-    if (!pangkalan.trim() || !cleanAlamat || !cleanKwartir || !cleanNamaPembina || !cleanNoGudep || !cleanNamaRegu || !kontakPerson.trim() || !cleanEmail) {
+    if (!pangkalan.trim() || !cleanKwartir || !cleanNamaPembina || !cleanNoGudep || !cleanNamaRegu || !kontakPerson.trim() || !cleanEmail) {
       setError("Harap lengkapi semua bidang form pendaftaran termasuk email aktif.");
       return;
     }
@@ -253,20 +251,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Alamat Gudep */}
-                  <div className="space-y-1.5">
-                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                      Alamat Lengkap Pangkalan / Gudep
-                    </label>
-                    <input
-                      type="text"
-                      value={alamatGudep}
-                      onChange={(e) => setAlamatGudep(e.target.value)}
-                      required
-                      placeholder="Contoh: Jl. Raya Mekar Baru No 12, Kode Pos 15550"
-                      className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
-                    />
-                  </div>
+
 
                   {/* Kwartir Ranting */}
                   <div className="space-y-1.5">
