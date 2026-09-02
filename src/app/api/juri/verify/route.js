@@ -70,7 +70,7 @@ export async function POST(request) {
       ? "SEMUA GENDER (Putra & Putri)" 
       : (profileData.assigned_gender === "Laki-laki" ? "KHUSUS PUTRA (Laki-laki)" : "KHUSUS PUTRI (Perempuan)");
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://leaderboard-pramuka.vercel.app";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.siloti-kwaranmekarbaru.my.id";
     const loginUrl = `${baseUrl}/login`;
 
     // 4. Send email notification

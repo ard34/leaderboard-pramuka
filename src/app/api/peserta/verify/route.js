@@ -68,7 +68,7 @@ export async function POST(request) {
     const emailMatch = rawTarget.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const targetEmail = emailMatch ? emailMatch[0] : null;
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://leaderboard-pramuka.vercel.app";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.siloti-kwaranmekarbaru.my.id";
     const cetakUrl = `${baseUrl}/peserta/cetak/${peserta.id}`;
 
     const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} | LT-II Kwarran Mekar Baru 2026`;
