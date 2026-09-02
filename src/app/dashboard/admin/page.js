@@ -452,6 +452,7 @@ export default function DashboardAdmin() {
       showPesan("error", "Gagal memproses verifikasi: " + err.message);
     } finally {
       setSaving(false);
+    }
   };
 
   const handleStartReject = (peserta) => {
