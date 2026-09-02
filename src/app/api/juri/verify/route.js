@@ -38,11 +38,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "Gagal update password auth: " + updateAuthError.message }, { status: 400 });
     }
 
-    // 2. Update profiles table to set is_verified = true
-    const { error: profileError } = await supabaseAdmin
+    // 2. Update profiles table to set is_verified = true and fetch assignment details
+    const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
       .update({ is_verified: true })
-      .eq("id", userId);
+      .eq("id", userId)
+      .select(`
+        assigned_kategori,
+        assigned_gender,
+        lomba (nama_lomba)
+      `)
+      .single();
 
     if (profileError) {
       return NextResponse.json({ error: "Gagal update status verifikasi: " + profileError.message }, { status: 500 });
@@ -57,12 +63,22 @@ export async function POST(request) {
       return NextResponse.json({ success: true, warning: "Juri diverifikasi, tetapi gagal mendapatkan email." });
     }
 
+    // Extract Assignment Details
+    const tingkatName = profileData?.assigned_kategori || "SEMUA TINGKATAN (Bebas Akses)";
+    const lombaName = profileData?.lomba?.nama_lomba || "SEMUA POS LOMBA (Bebas Akses)";
+    const genderName = profileData?.assigned_gender === "SEMUA" || !profileData?.assigned_gender 
+      ? "SEMUA GENDER (Putra & Putri)" 
+      : (profileData.assigned_gender === "Laki-laki" ? "KHUSUS PUTRA (Laki-laki)" : "KHUSUS PUTRI (Perempuan)");
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://leaderboard-pramuka.vercel.app";
+    const loginUrl = `${baseUrl}/login`;
+
     // 4. Send email notification
     let emailSent = false;
     let emailStatusMessage = "";
 
     const mailSubject = `[AKUN JURI AKTIF] Akses Login LT-II Kwarran Mekar Baru 2026`;
-    const plainTextBody = `Salam Pramuka, Kak ${juriName}!\n\nAkun Dewan Juri Anda telah DIVERIFIKASI dan AKTIF.\nBerikut adalah detail akses login Anda:\n\nEmail / Username: ${targetEmail}\nPassword: ${password}\n\nSilakan login ke sistem penilaian.\nTerima kasih,\nPanitia LT-II Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka, Kak ${juriName}!\n\nAkun Dewan Juri Anda telah DIVERIFIKASI dan AKTIF.\nAnda ditugaskan sebagai Juri dengan rincian berikut:\n- Pos Lomba: ${lombaName}\n- Tingkat: ${tingkatName}\n- Kategori: ${genderName}\n\nBerikut adalah detail akses login Anda:\nEmail / Username: ${targetEmail}\nPassword: ${password}\n\nSilakan login melalui tautan berikut: ${loginUrl}\n\nTerima kasih,\nPanitia LT-II Mekar Baru 2026`;
     const mailtoUrl = `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}`;
 
     try {
@@ -84,8 +100,25 @@ export async function POST(request) {
           <div style="background-color: rgba(255, 255, 255, 0.02); border-radius: 12px; padding: 24px; border: 1px solid rgba(255,255,255,0.05);">
             <p style="font-size: 15px; line-height: 1.6; margin-top: 0;">
               Salam Pramuka, Kak <strong>${juriName}</strong>!<br/><br/>
-              Akun Dewan Juri Anda telah berhasil <strong>DIVERIFIKASI</strong> oleh Admin. Anda sekarang memiliki akses ke sistem penilaian.
+              Akun Dewan Juri Anda telah berhasil <strong>DIVERIFIKASI</strong> oleh Admin. Anda kini secara resmi ditugaskan sebagai Juri dengan rincian tugas berikut:
             </p>
+            
+            <div style="background: rgba(245, 166, 35, 0.1); border-left: 4px solid #fbbf24; padding: 16px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; color: #fbbf24; font-size: 12px; text-transform: uppercase; font-weight: bold;">Tugas Penilaian Anda</p>
+              <div style="margin-bottom: 6px;">
+                <span style="color: #cbd5e1; font-size: 13px;">Pos Lomba:</span> 
+                <strong style="color: #ffffff; font-size: 14px;">${lombaName}</strong>
+              </div>
+              <div style="margin-bottom: 6px;">
+                <span style="color: #cbd5e1; font-size: 13px;">Tingkatan:</span> 
+                <strong style="color: #ffffff; font-size: 14px;">${tingkatName}</strong>
+              </div>
+              <div>
+                <span style="color: #cbd5e1; font-size: 13px;">Kategori Regu:</span> 
+                <strong style="color: #ffffff; font-size: 14px;">${genderName}</strong>
+              </div>
+            </div>
+
             <div style="background: rgba(0,0,0,0.3); border-left: 4px solid #10b981; padding: 16px; margin: 20px 0; border-radius: 4px;">
               <p style="margin: 0 0 8px 0; color: #94a3b8; font-size: 12px; text-transform: uppercase;">Akses Login Akun Anda</p>
               <div style="margin-bottom: 8px;">
@@ -97,7 +130,14 @@ export async function POST(request) {
                 <strong style="color: #fbbf24; font-size: 18px; letter-spacing: 1px;">${password}</strong>
               </div>
             </div>
-            <p style="font-size: 13px; color: #94a3b8; font-style: italic;">
+            
+            <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+              <a href="${loginUrl}" target="_blank" style="display: inline-block; background-color: #0ea5e9; color: #ffffff; font-weight: bold; font-size: 15px; text-decoration: none; padding: 14px 28px; border-radius: 8px; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4);">
+                🔒 Login ke Sistem Penilaian
+              </a>
+            </div>
+
+            <p style="font-size: 13px; color: #94a3b8; font-style: italic; text-align: center;">
               * Harap simpan informasi login ini dengan baik dan jangan bagikan kepada siapa pun.
             </p>
           </div>
