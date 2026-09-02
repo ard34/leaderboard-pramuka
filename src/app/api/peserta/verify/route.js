@@ -45,15 +45,13 @@ export async function POST(request) {
 
     // 2. Format Kapling number e.g. 001, 002, 003
     const kaplingNum = Number(nomor_kapling);
-    const kaplingFormatted = kaplingNum.toString().padStart(3, "0");
-
-    // 3. Update participant to verified with kapling number
+    // 2. Update participant to verified
+    const payload = {
+      is_verified: true
+    };
     const { error: updateError } = await supabaseAdmin
       .from("peserta")
-      .update({
-        nomor_dada: kaplingNum,
-        is_verified: true,
-      })
+      .update(payload)
       .eq("id", peserta_id);
 
     if (updateError) {
@@ -71,8 +69,8 @@ export async function POST(request) {
     const emailMatch = rawTarget.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const targetEmail = emailMatch ? emailMatch[0] : null;
 
-    const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} - NO. KAPLING: ${kaplingFormatted} | LT-II Kwarran Mekar Baru 2026`;
-    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nNOMOR KAPLING TENDA RESMI: ${kaplingFormatted}\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
+    const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} | LT-II Kwarran Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nSTATUS: TERVERIFIKASI\nTunjukkan bukti pendaftaran ini kepada Panitia untuk mengambil Nomor Kapling Tenda Anda.\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
     const mailtoUrl = targetEmail ? `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}` : null;
 
     if (targetEmail) {
@@ -104,16 +102,13 @@ export async function POST(request) {
               Salam Pramuka! Panitia LT-II Kwartir Ranting Mekar Baru menerangkan bahwa regu Anda telah resmi terdaftar dan dokumen pendaftaran telah <strong>DIVERIFIKASI LENGKAP</strong> oleh Admin.
             </p>
 
-            <!-- KAPLING BADGE -->
+            <!-- STATUS BUKTI -->
             <div style="text-align: center; margin: 28px 0; background: linear-gradient(135deg, rgba(245, 166, 35, 0.2) 0%, rgba(245, 166, 35, 0.05) 100%); border: 2px solid #fbbf24; padding: 20px; border-radius: 16px; box-shadow: 0 0 25px rgba(251, 191, 36, 0.15);">
-              <div style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">
-                NOMOR KAPLING TENDA RESMI
+              <div style="font-size: 16px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">
+                STATUS: TERVERIFIKASI
               </div>
-              <div style="font-size: 42px; font-weight: 900; color: #fbbf24; font-family: monospace; letter-spacing: 4px;">
-                ${kaplingFormatted}
-              </div>
-              <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px;">
-                (Gunakan nomor kapling ini untuk penempatan lokasi tenda di Bumi Perkemahan)
+              <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">
+                Tunjukkan bukti pendaftaran ini kepada Panitia untuk mengambil <strong>Nomor Kapling Tenda</strong> Anda.
               </div>
             </div>
 

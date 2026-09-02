@@ -381,17 +381,9 @@ export default function DashboardAdmin() {
     setSaving(false);
   };
 
-  const getNextKapling = (gender) => {
-    const isPutra = gender?.toLowerCase().includes("laki") || gender?.toLowerCase().includes("putra");
-    const validKaplings = pesertaList.map((p) => p.nomor_dada).filter((n) => n > 0);
-    if (isPutra) {
-      const oddNumbers = validKaplings.filter((n) => n % 2 !== 0);
-      return oddNumbers.length > 0 ? Math.max(...oddNumbers) + 2 : 1;
-    } else {
-      const evenNumbers = validKaplings.filter((n) => n % 2 === 0);
-      return evenNumbers.length > 0 ? Math.max(...evenNumbers) + 2 : 2;
-    }
-  };
+  // Kapling auto-assignment removed.
+
+
 
   // --- HANDLERS: CEK BERKAS PESERTA ---
   const handleStartCekBerkas = (p) => {
@@ -431,36 +423,27 @@ export default function DashboardAdmin() {
   };
 
   const handleStartVerifikasi = (peserta) => {
-    // Auto calculate Kapling based on gender (Odd/Even)
-    const nextKapling = getNextKapling(peserta.gender).toString().padStart(3, "0");
     setVerifyingId(peserta.id);
-    setNoDadaInput(nextKapling);
   };
 
   const handleVerifikasiPeserta = async (id) => {
-    const cleanKapling = noDadaInput.trim();
-    if (!cleanKapling) {
-      showPesan("error", "Masukkan nomor kapling terlebih dahulu.");
-      return;
-    }
     setSaving(true);
     try {
       const res = await fetch("/api/peserta/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ peserta_id: id, nomor_kapling: Number(cleanKapling) }),
+        body: JSON.stringify({ peserta_id: id }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showPesan("success", `🎉 Regu berhasil diverifikasi! Nomor Kapling: ${data.nomor_kapling_formatted}. ${data.emailMessage || ""}`);
+        showPesan("success", `🎉 Regu berhasil diverifikasi! ${data.emailMessage || ""}`);
         if (data.mailtoUrl && !data.emailSent) {
           window.open(data.mailtoUrl, "_blank");
         }
         setVerifyingId(null);
-        setNoDadaInput("");
+        setNoDadaInput(""); // Legacy state reset
         await fetchAllData();
       } else {
-
         showPesan("error", "Gagal melakukan verifikasi: " + (data.error || "Terjadi kesalahan"));
       }
     } catch (err) {
@@ -1002,17 +985,7 @@ export default function DashboardAdmin() {
                         <React.Fragment key={p.id}>
                         <tr className={`border-t border-slate-800/30 hover:bg-slate-800/20 ${checkingBerkasId === p.id ? 'bg-slate-800/40' : ''}`}>
                           <td className="p-3 text-sm font-mono font-bold text-amber-400">
-                            {isVerifying ? (
-                              <input 
-                                type="text" 
-                                placeholder="001" 
-                                value={noDadaInput} 
-                                onChange={(e) => setNoDadaInput(e.target.value)} 
-                                className="w-20 bg-slate-950 border border-amber-500 rounded px-2 py-1 text-amber-300 text-xs font-mono font-bold outline-none"
-                              />
-                            ) : (
-                              p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"
-                            )}
+                            {p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"}
                           </td>
                           <td className="p-3 text-sm font-bold text-white">{p.nama_regu}</td>
                           <td className="p-3 text-sm text-slate-400">
@@ -1040,15 +1013,16 @@ export default function DashboardAdmin() {
                           </td>
                           <td className="p-3 text-right">
                             {isVerifying ? (
-                              <div className="flex justify-end gap-1">
+                              <div className="flex justify-end gap-1 items-center">
+                                <span className="text-[0.65rem] text-slate-400 mr-2">Verifikasi?</span>
                                 <button 
                                   onClick={() => handleVerifikasiPeserta(p.id)} 
                                   className="text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-1 rounded text-xs font-bold transition-all"
                                 >
-                                  Simpan & Kirim Email
+                                  Ya, Kirim Email
                                 </button>
                                 <button 
-                                  onClick={() => { setVerifyingId(null); setNoDadaInput(""); }} 
+                                  onClick={() => setVerifyingId(null)} 
                                   className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-xs font-bold transition-all"
                                 >
                                   Batal
