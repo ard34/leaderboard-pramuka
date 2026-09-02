@@ -89,22 +89,24 @@ export default function CetakBuktiPendaftaran() {
       </div>
 
       {/* Kertas A4 */}
-      <div className="bg-white w-full max-w-[210mm] shadow-2xl print:shadow-none p-[15mm] relative overflow-hidden">
+      <div className="bg-white w-full max-w-[210mm] shadow-2xl print:shadow-none p-[15mm] relative overflow-hidden text-black font-serif text-[12pt]">
         
         {/* KOP SURAT */}
         <div className="flex items-center justify-between pb-3 mb-1" style={{ borderBottom: "5px double black" }}>
           <div className="flex-shrink-0 ml-4">
             <img 
-              src="/tunas_kelapa.png" 
-              alt="Tunas Kelapa" 
-              className="w-[60px] h-[85px] object-contain mix-blend-multiply" 
+              src="/logo_kwarran_mekarbaru.png" 
+              alt="Logo Kiri" 
+              className="w-[85px] h-[85px] object-contain" 
             />
           </div>
           <div className="flex-1 text-center px-2" style={{ fontFamily: "Arial, sans-serif" }}>
-            <h1 className="text-[26px] font-black uppercase tracking-widest leading-tight">Gerakan Pramuka</h1>
-            <h2 className="text-[22px] font-black uppercase tracking-wider leading-tight mt-1">Kwartir Ranting Mekar Baru</h2>
-            <p className="text-[13px] mt-1 text-black font-medium leading-tight">Jl.KH Suhaemi Ds. Mekar Baru Kec. Mekar Baru Kabupaten Tangerang Banten 15550</p>
-            <p className="text-[12px] font-bold italic text-black leading-tight">Website : mekarbaru.kwarcabtangerang.or.id //Email: kwarran.mekarbaru@gmail.com</p>
+            <h1 className="text-[22px] font-bold uppercase tracking-[0.2em] leading-tight">G E R A K A N  P R A M U K A</h1>
+            <h2 className="text-[20px] font-bold uppercase tracking-wider leading-tight mt-1">KWARTIR RANTING MEKAR BARU</h2>
+            <p className="text-[12px] mt-1 font-medium leading-tight">Jl.KH Suhaemi Ds. Mekar Baru Kec. Mekar Baru Kabupaten Tangerang Banten 15550</p>
+            <p className="text-[11px] font-bold italic leading-tight text-blue-800">
+              <span className="text-black">Website :</span> mekarbaru.kwarcabtangerang.or.id <span className="text-black">//Email:</span> kwarran.mekarbaru@gmail.com
+            </p>
           </div>
           <div className="flex-shrink-0 mr-4">
             <img 
@@ -118,85 +120,59 @@ export default function CetakBuktiPendaftaran() {
         {/* Jarak setelah kop */}
         <div className="mb-6"></div>
 
-        {/* SURAT INFORMATION */}
-        <div className="flex flex-col md:flex-row justify-between mb-6 text-[15px] font-sans text-black">
-          <div>
-            <table className="leading-snug">
-              <tbody>
-                <tr><td className="pr-4 py-0.5 align-top">Nomor</td><td className="pr-2 py-0.5 align-top">:</td><td className="py-0.5 font-bold">0 5 1 /28.04.13-A</td></tr>
-                <tr><td className="pr-4 py-0.5 align-top">Lampiran</td><td className="pr-2 py-0.5 align-top">:</td><td className="py-0.5">-</td></tr>
-                <tr>
-                  <td className="pr-4 py-0.5 align-top">Perihal</td>
-                  <td className="pr-2 py-0.5 align-top">:</td>
-                  <td className="py-0.5 font-bold">
-                    Tanda Bukti Pendaftaran<br/>
-                    Lomba Tingkat (LT-II) Tahun 2026<br/>
-                    Kwartir Ranting Mekar Baru
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div className="text-right mt-4 md:mt-0">
-            <p>Mekar Baru, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
-          </div>
-        </div>
-
-        {/* KEPADA YTH */}
-        <div className="mb-6 text-[15px] font-sans text-black leading-snug">
-          <p>Kepada Yth.</p>
-          <p className="font-bold">Pembina Pasukan {peserta.pangkalan}</p>
-          <p className="font-bold">Gerakan Pramuka Mekar Baru</p>
-          <p>di-</p>
-          <p className="ml-6">Tempat</p>
+        {/* JUDUL SURAT */}
+        <div className="text-center mb-8">
+          <h3 className="font-bold text-[14pt] underline mb-1">TANDA BUKTI VERIFIKASI PENDAFTARAN</h3>
+          <p className="text-[11pt]">No. Registrasi: {id.slice(0, 8).toUpperCase()}</p>
         </div>
 
         {/* ISI SURAT */}
-        <div className="text-[15px] font-sans text-black text-justify leading-relaxed">
-          <p className="font-bold italic mb-4">Assalamu'alaikum Wr. Wb.</p>
-          <p className="font-bold italic mb-4">Salam Pramuka,</p>
-          
+        <div className="text-[12pt] text-justify leading-relaxed">
           <p className="mb-4">
-            Disampaikan dengan hormat, Panitia Pelaksana Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II) Kwartir Ranting Gerakan Pramuka Mekar Baru menerangkan bahwa:
+            Panitia Pelaksana Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II) Kwartir Ranting Mekar Baru Tahun 2026 menerangkan bahwa:
           </p>
           
-          <table className="w-full ml-4 mb-4">
+          <table className="w-full ml-10 mb-6 font-bold">
             <tbody>
-              <tr><td className="py-1 w-48 font-semibold">Nama Regu</td><td className="py-1 w-4">:</td><td className="py-1 font-bold">{peserta.nama_regu}</td></tr>
-              <tr><td className="py-1 font-semibold">Pangkalan / Sekolah</td><td className="py-1">:</td><td className="py-1">{peserta.pangkalan}</td></tr>
-              <tr><td className="py-1 font-semibold">No. Gugus Depan</td><td className="py-1">:</td><td className="py-1">{peserta.no_gudep || "-"}</td></tr>
-              <tr><td className="py-1 font-semibold">Kategori & Gender</td><td className="py-1">:</td><td className="py-1">{peserta.kategori} - {peserta.gender}</td></tr>
-              <tr><td className="py-1 font-semibold">Status Pendaftaran</td><td className="py-1">:</td><td className="py-1 font-bold">{isVerified ? "TERVERIFIKASI" : "MENUNGGU VERIFIKASI"}</td></tr>
+              <tr><td className="py-1.5 w-48">Nama Regu</td><td className="py-1.5 w-4">:</td><td className="py-1.5">{peserta.nama_regu}</td></tr>
+              <tr><td className="py-1.5">Pangkalan / Sekolah</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.pangkalan}</td></tr>
+              <tr><td className="py-1.5">No. Gugus Depan</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.no_gudep || "-"}</td></tr>
+              <tr><td className="py-1.5">Kategori Peserta</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.kategori}</td></tr>
+              <tr><td className="py-1.5">Jenis Kelamin</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.gender}</td></tr>
+              <tr><td className="py-1.5">Tanggal Daftar</td><td className="py-1.5">:</td><td className="py-1.5">{tglDaftar}</td></tr>
             </tbody>
           </table>
 
-          <p className="mb-4">
-            Telah menyerahkan kelengkapan dokumen persyaratan dan dinyatakan resmi terdaftar sebagai Peserta pada kegiatan Lomba Tingkat (LT-II) Kwartir Ranting Mekar Baru Tahun 2026.
+          <p className="mb-8">
+            Telah menyerahkan kelengkapan dokumen persyaratan dan dinyatakan <strong>SAH & TERVERIFIKASI</strong> sebagai Peserta LT-II Kwartir Ranting Mekar Baru Tahun 2026.
           </p>
 
-          <p className="mb-6">
-            Demikian tanda bukti pendaftaran ini kami sampaikan, atas perhatian dan kerjasamanya diucapkan terima kasih.
-          </p>
-
-          <p className="font-bold italic mb-1">Wassalamu'alaikum Wr. Wb.</p>
-          <p className="font-bold italic mb-8">Salam Pramuka,</p>
+          {/* BOX INSTRUKSI */}
+          <div className="border border-black p-4 mb-8 bg-gray-50">
+            <p className="font-bold mb-2">Instruksi untuk Peserta:</p>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>Surat ini adalah bukti sah pendaftaran regu.</li>
+              <li>Silakan cetak (print) / Download PDF surat ini.</li>
+              <li>Bawa surat fisik/PDF ini pada saat registrasi ulang di lokasi perkemahan (Bumi Perkemahan) untuk ditukarkan dengan Nomor Kapling Tenda dan ID Card.</li>
+            </ol>
+          </div>
         </div>
 
         {/* TTD */}
-        <div className="flex justify-between font-sans text-black text-[15px] mt-4">
-          <div className="w-64">
+        <div className="flex justify-between text-[12pt] mt-8">
+          <div className="w-1/2">
             {/* Kiri Kosong */}
           </div>
-          <div className="w-72">
+          <div className="w-1/2 flex flex-col items-center text-center">
+            <p className="mb-1">Mekar Baru, {tglDaftar}</p>
             <p>Panitia Pendaftaran</p>
-            <p>Gerakan Pramuka Mekar Baru</p>
-            <p className="mb-20">Ketua,</p>
-            <p className="font-bold underline uppercase">TUTI ALWIYAH, S.Pd.</p>
-            <p className="text-sm">NTA. 28.04.13.090282.0001</p>
+            <p>LT-II Kwarran Mekar Baru</p>
+            {/* Tanda tangan dibiarkan kosong sesuai template */}
+            <div className="h-24"></div>
           </div>
         </div>
 
-        {/* WATERMARK */}
+        {/* WATERMARK JIKA BELUM VERIFIKASI */}
         {!isVerified && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
             <span className="text-8xl font-black text-red-500 transform -rotate-45">BELUM VERIFIKASI</span>
