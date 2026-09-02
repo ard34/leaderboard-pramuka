@@ -121,14 +121,14 @@ export async function POST(request) {
         });
         
         emailSent = true;
-        emailStatusMessage = \`✅ Email login terkirim otomatis ke \${targetEmail}\`;
+        emailStatusMessage = `✅ Email login terkirim otomatis ke ${targetEmail}`;
       } else {
         emailSent = false;
-        emailStatusMessage = \`ℹ️ Email disiapkan untuk \${targetEmail}. (Kirim via Mail Client dibuka)\`;
+        emailStatusMessage = `ℹ️ Email disiapkan untuk ${targetEmail}. (Kirim via Mail Client dibuka)`;
       }
     } catch (emailErr) {
       emailSent = false;
-      emailStatusMessage = \`⚠️ Pengiriman email otomatis gagal, mengalihkan ke Mail Client...\`;
+      emailStatusMessage = `⚠️ Pengiriman email otomatis gagal, mengalihkan ke Mail Client...`;
     }
 
     return NextResponse.json({ 
