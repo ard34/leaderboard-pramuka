@@ -67,8 +67,11 @@ export async function POST(request) {
     const emailMatch = rawTarget.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const targetEmail = emailMatch ? emailMatch[0] : null;
 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://leaderboard-pramuka.vercel.app";
+    const cetakUrl = `${baseUrl}/peserta/cetak/${peserta.id}`;
+
     const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} | LT-II Kwarran Mekar Baru 2026`;
-    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nSTATUS: TERVERIFIKASI\nTunjukkan bukti pendaftaran ini kepada Panitia untuk mengambil Nomor Kapling Tenda Anda.\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nSTATUS: TERVERIFIKASI\nSilakan unduh dan cetak Bukti Pendaftaran Resmi Anda pada tautan berikut:\n${cetakUrl}\n\nTunjukkan bukti cetak tersebut kepada Panitia untuk mengambil Nomor Kapling Tenda Anda.\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
     const mailtoUrl = targetEmail ? `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}` : null;
 
     if (targetEmail) {
@@ -105,9 +108,12 @@ export async function POST(request) {
               <div style="font-size: 16px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">
                 STATUS: TERVERIFIKASI
               </div>
-              <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">
-                Tunjukkan bukti pendaftaran ini kepada Panitia untuk mengambil <strong>Nomor Kapling Tenda</strong> Anda.
+              <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px; margin-bottom: 20px;">
+                Tunjukkan bukti pendaftaran cetak fisik kepada Panitia untuk mengambil <strong>Nomor Kapling Tenda</strong> Anda.
               </div>
+              <a href="${cetakUrl}" target="_blank" style="display: inline-block; background-color: #fbbf24; color: #000; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(251, 191, 36, 0.3);">
+                🖨️ Unduh & Cetak Bukti Pendaftaran
+              </a>
             </div>
 
             <!-- DETAIL REGU -->
