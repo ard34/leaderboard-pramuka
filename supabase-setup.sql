@@ -34,6 +34,7 @@ CREATE TABLE public.profiles (
   assigned_lomba_id UUID REFERENCES public.lomba(id) ON DELETE SET NULL, -- Cabang lomba yang ditugaskan
   assigned_kategori TEXT DEFAULT NULL, -- Tingkatan yang ditugaskan (SD/SMP/SMK)
   assigned_gender TEXT DEFAULT 'SEMUA' CHECK (assigned_gender IN ('Laki-laki', 'Perempuan', 'SEMUA')), -- Gender yang ditugaskan
+  is_verified BOOLEAN DEFAULT false, -- Status verifikasi dari Admin
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
