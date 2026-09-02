@@ -467,7 +467,10 @@ export default function DashboardAdmin() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showPesan("success", "Juri berhasil diverifikasi dan password diupdate.");
+        showPesan("success", `Juri berhasil diverifikasi dan password diupdate. ${data.emailMessage || ""}`);
+        if (data.mailtoUrl && !data.emailSent) {
+          window.open(data.mailtoUrl, "_blank");
+        }
         setVerifyingJuriId(null);
         setJuriPasswordInput("");
         await fetchAllData();
