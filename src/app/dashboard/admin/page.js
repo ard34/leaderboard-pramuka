@@ -338,13 +338,46 @@ export default function DashboardAdmin() {
 
   const handleHapusPeserta = async (id, nama) => {
     setSaving(true);
-    const { error } = await supabase.from("peserta").delete().eq("id", id);
-    if (error) showPesan("error", "Gagal menghapus: " + error.message);
-    else {
-      showPesan("success", `Regu ${nama} berhasil dihapus.`);
+
+    try {
+      // 1. Dapatkan data peserta untuk mengambil URL berkasnya
+      const peserta = pesertaList.find(p => p.id === id);
+      if (peserta) {
+        const pathsToDelete = [];
+        const extractPath = (url) => {
+          if (url && url.includes("/berkas_peserta/")) {
+            return url.split("/berkas_peserta/")[1];
+          }
+          return null;
+        };
+        
+        const p1 = extractPath(peserta.berkas_ketersediaan);
+        const p2 = extractPath(peserta.berkas_pendaftaran);
+        const p3 = extractPath(peserta.berkas_biodata_peserta);
+        const p4 = extractPath(peserta.berkas_biodata_pembina);
+        
+        if (p1) pathsToDelete.push(p1);
+        if (p2) pathsToDelete.push(p2);
+        if (p3) pathsToDelete.push(p3);
+        if (p4) pathsToDelete.push(p4);
+        
+        if (pathsToDelete.length > 0) {
+          // 2. Hapus file-file dari storage
+          await supabase.storage.from("berkas_peserta").remove(pathsToDelete);
+        }
+      }
+
+      // 3. Hapus data dari database
+      const { error } = await supabase.from("peserta").delete().eq("id", id);
+      if (error) throw error;
+      
+      showPesan("success", `Regu ${nama} dan berkasnya berhasil dihapus.`);
       setConfirmDeleteId(null);
       await fetchAllData();
+    } catch (err) {
+      showPesan("error", "Gagal menghapus: " + err.message);
     }
+    
     setSaving(false);
   };
 
