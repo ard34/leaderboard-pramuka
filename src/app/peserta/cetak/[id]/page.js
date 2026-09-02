@@ -63,7 +63,12 @@ export default function CetakBuktiPendaftaran() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center py-6 print:py-0 print:bg-white text-black" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
-      
+      <style>{`
+        @media print {
+          @page { size: A4 portrait; margin: 0; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+      `}</style>
       {/* Tombol Cetak (Sembunyi saat di-print) */}
       <div className="mb-6 print:hidden flex gap-4">
         <button 
@@ -75,7 +80,7 @@ export default function CetakBuktiPendaftaran() {
       </div>
 
       {/* Kertas A4 */}
-      <div className="bg-white w-full max-w-[210mm] min-h-[297mm] shadow-2xl print:shadow-none p-[20mm] relative">
+      <div className="bg-white w-full max-w-[210mm] shadow-2xl print:shadow-none p-[15mm] relative overflow-hidden">
         
         {/* KOP SURAT */}
         <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-6">
@@ -155,9 +160,9 @@ export default function CetakBuktiPendaftaran() {
         </div>
 
         {/* TTD */}
-        <div className="mt-12 flex justify-end">
+        <div className="mt-8 flex justify-end">
           <div className="text-center w-64 text-[15px]">
-            <p className="mb-20">Mekar Baru, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+            <p className="mb-14">Mekar Baru, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
             <p className="font-bold underline">Panitia Pendaftaran</p>
             <p className="text-sm mt-1">LT-II Kwarran Mekar Baru</p>
           </div>
