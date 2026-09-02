@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
-
+import fs from "fs";
+import path from "path";
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -198,12 +199,52 @@ export async function POST(request) {
             });
           }
 
-          await transporter.sendMail({
+          let docBuffer = null;
+          let filename = "Bukti_Pendaftaran.doc";
+          try {
+            const templatePath = path.join(process.cwd(), 'Template_Bukti_Pendaftaran.doc');
+            let docContent = fs.readFileSync(templatePath, 'utf16le');
+            
+            const namaRegu = peserta.nama_regu || "—";
+            const pangkalan = peserta.pangkalan || "—";
+            const noGudep = peserta.no_gudep || "—";
+            const kategoriPeserta = peserta.kategori || "—";
+            const jenisKelamin = peserta.gender || "—";
+            const tglDaftar = new Date(peserta.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            docContent = docContent.replace(/(No\.\s*(?:<[^>]+>\s*)*Registrasi\s*(?:<[^>]+>\s*)*\:)/i, `$1 ${peserta_id.slice(0, 8).toUpperCase()}`);
+            docContent = docContent.replace(/(…………….)/g, tglDaftar);
+            docContent = docContent.replace(/(Nama\s*(?:<[^>]+>\s*)*Regu(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${namaRegu}`);
+            docContent = docContent.replace(/(Pangkalan\s*(?:<[^>]+>\s*)*\/\s*(?:<[^>]+>\s*)*Sekolah(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${pangkalan}`);
+            docContent = docContent.replace(/(No\.\s*(?:<[^>]+>\s*)*Gugus\s*(?:<[^>]+>\s*)*Depan(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${noGudep}`);
+            docContent = docContent.replace(/(Kategori\s*(?:<[^>]+>\s*)*Peserta(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${kategoriPeserta}`);
+            docContent = docContent.replace(/(Jenis\s*(?:<[^>]+>\s*)*Kelamin(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${jenisKelamin}`);
+            docContent = docContent.replace(/(Tanggal\s*(?:<[^>]+>\s*)*Daftar(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${tglDaftar}`);
+
+            docBuffer = Buffer.from(docContent, 'utf16le');
+            const safeFilenameName = namaRegu.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            filename = `Bukti_Pendaftaran_${safeFilenameName}.doc`;
+          } catch (e) {
+            console.error("Gagal melampirkan file DOC: ", e);
+          }
+
+          const mailOptions = {
             from: `"Panitia LT-II Mekar Baru" <${smtpUser.trim()}>`,
             to: targetEmail,
             subject: mailSubject,
             html: htmlBody,
-          });
+          };
+
+          if (docBuffer) {
+            mailOptions.attachments = [
+              {
+                filename: filename,
+                content: docBuffer
+              }
+            ];
+          }
+
+          await transporter.sendMail(mailOptions);
           emailSent = true;
           emailStatusMessage = `✅ Email notifikasi terkirim otomatis ke ${targetEmail}`;
         } else {

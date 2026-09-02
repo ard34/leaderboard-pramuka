@@ -75,8 +75,17 @@ export default function CetakBuktiPendaftaran() {
           onClick={() => window.print()}
           className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all"
         >
-          ??? Cetak / Simpan sebagai PDF
+          🖨️ Cetak / Simpan sebagai PDF
         </button>
+        {isVerified && (
+          <a
+            href={`/api/peserta/cetak-doc/${id}`}
+            download
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all"
+          >
+            📄 Unduh Bukti (Word/DOC)
+          </a>
+        )}
       </div>
 
       {/* Kertas A4 */}
