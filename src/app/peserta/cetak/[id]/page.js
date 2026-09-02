@@ -83,19 +83,31 @@ export default function CetakBuktiPendaftaran() {
       <div className="bg-white w-full max-w-[210mm] shadow-2xl print:shadow-none p-[15mm] relative overflow-hidden">
         
         {/* KOP SURAT */}
-        <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-6">
-          <div className="flex-shrink-0">
-            <img src="/logo_wosm.png" alt="WOSM" className="w-20 h-20 object-contain" />
+        <div className="flex items-center justify-between pb-3 mb-1" style={{ borderBottom: "5px double black" }}>
+          <div className="flex-shrink-0 ml-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/4/41/Gerakan_Pramuka_Indonesia_Logo.svg" 
+              alt="Tunas Kelapa" 
+              className="w-[70px] h-[70px] object-contain" 
+            />
           </div>
-          <div className="flex-1 text-center px-4">
-            <h1 className="text-2xl font-black uppercase tracking-wide">Kwartir Ranting Mekar Baru</h1>
-            <h2 className="text-lg font-bold uppercase mt-1">Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II)</h2>
-            <p className="text-md mt-1 text-gray-800">Tahun 2026</p>
+          <div className="flex-1 text-center px-2" style={{ fontFamily: "Arial, sans-serif" }}>
+            <h1 className="text-[26px] font-black uppercase tracking-widest leading-tight">Gerakan Pramuka</h1>
+            <h2 className="text-[22px] font-black uppercase tracking-wider leading-tight mt-1">Kwartir Ranting Mekar Baru</h2>
+            <p className="text-[13px] mt-1 text-black font-medium leading-tight">Jl.KH Suhaemi Ds. Mekar Baru Kec. Mekar Baru Kabupaten Tangerang Banten 15550</p>
+            <p className="text-[12px] font-bold italic text-black leading-tight">Website : mekarbaru.kwarcabtangerang.or.id //Email: kwarran.mekarbaru@gmail.com</p>
           </div>
-          <div className="flex-shrink-0">
-            <img src="/logo_lt2.png" alt="LT2" className="w-20 h-20 object-contain" />
+          <div className="flex-shrink-0 mr-4">
+            <img 
+              src="/logo_wosm.png" 
+              alt="WOSM" 
+              className="w-[85px] h-[85px] object-contain" 
+            />
           </div>
         </div>
+        
+        {/* Jarak setelah kop */}
+        <div className="mb-6"></div>
 
         {/* JUDUL SURAT */}
         <div className="text-center mb-6">
