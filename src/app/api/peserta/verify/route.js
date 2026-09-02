@@ -202,7 +202,7 @@ export async function POST(request) {
           emailStatusMessage = `✅ Email notifikasi terkirim otomatis ke ${targetEmail}`;
         } else {
           // Dev / fallback info
-          console.log(`[VERIFICATION EMAIL DISPATCH LOG] To: ${targetEmail} | Kapling: ${kaplingFormatted}`);
+          console.log(`[VERIFICATION EMAIL DISPATCH LOG] To: ${targetEmail}`);
           emailSent = false;
           emailStatusMessage = `ℹ️ Email disiapkan untuk ${targetEmail}. (Kirim via Mail Client dibuka)`;
         }
@@ -218,8 +218,6 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      nomor_kapling: kaplingNum,
-      nomor_kapling_formatted: kaplingFormatted,
       targetEmail,
       mailtoUrl,
       emailSent,
