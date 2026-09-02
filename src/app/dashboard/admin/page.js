@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, Fragment } from "react";
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
@@ -75,6 +75,11 @@ export default function DashboardAdmin() {
   const [showWinners, setShowWinners] = useState(false);
   const [verifyingJuriId, setVerifyingJuriId] = useState(null);
   const [juriPasswordInput, setJuriPasswordInput] = useState("");
+
+  // States for checking berkas
+  const [checkingBerkasId, setCheckingBerkasId] = useState(null);
+  const [berkasStatus, setBerkasStatus] = useState({});
+  const [catatanBerkas, setCatatanBerkas] = useState("");
 
   const handleToggleShowWinners = async () => {
     const nextState = !showWinners;
@@ -352,6 +357,43 @@ export default function DashboardAdmin() {
     } else {
       const evenNumbers = validKaplings.filter((n) => n % 2 === 0);
       return evenNumbers.length > 0 ? Math.max(...evenNumbers) + 2 : 2;
+    }
+  };
+
+  // --- HANDLERS: CEK BERKAS PESERTA ---
+  const handleStartCekBerkas = (p) => {
+    setCheckingBerkasId(p.id);
+    setBerkasStatus(p.status_berkas || {
+      ketersediaan: false,
+      pendaftaran: false,
+      biodata_peserta: false,
+      biodata_pembina: false,
+    });
+    setCatatanBerkas(p.catatan_berkas || "");
+  };
+
+  const handleSimpanBerkas = async (id) => {
+    setSaving(true);
+    try {
+      // Direct update using supabase admin since we're in client side and have RLS "Admin full access" 
+      // Wait, client side has session, so RLS applies. Let's use supabase client directly.
+      const { error } = await supabase
+        .from("peserta")
+        .update({
+          status_berkas: berkasStatus,
+          catatan_berkas: catatanBerkas
+        })
+        .eq("id", id);
+      
+      if (error) throw error;
+      
+      showPesan("success", "Status berkas berhasil disimpan.");
+      setCheckingBerkasId(null);
+      await fetchAllData();
+    } catch (err) {
+      showPesan("error", "Gagal menyimpan berkas: " + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -924,7 +966,8 @@ export default function DashboardAdmin() {
 
                       const isVerifying = verifyingId === p.id;
                       return (
-                        <tr key={p.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
+                        <React.Fragment key={p.id}>
+                        <tr className={`border-t border-slate-800/30 hover:bg-slate-800/20 ${checkingBerkasId === p.id ? 'bg-slate-800/40' : ''}`}>
                           <td className="p-3 text-sm font-mono font-bold text-amber-400">
                             {isVerifying ? (
                               <input 
@@ -981,12 +1024,22 @@ export default function DashboardAdmin() {
                             ) : (
                               <div className="flex justify-end gap-1.5 text-right items-center">
                                 {!p.is_verified && (
-                                  <button 
-                                    onClick={() => handleStartVerifikasi(p)} 
-                                    className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors"
-                                  >
-                                    ⚡ Verifikasi & Email
-                                  </button>
+                                  <>
+                                    <button 
+                                      onClick={() => handleStartCekBerkas(p)} 
+                                      className="text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors"
+                                    >
+                                      📄 Cek Berkas
+                                    </button>
+                                    <button 
+                                      onClick={() => handleStartVerifikasi(p)} 
+                                      disabled={!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina}
+                                      title={(!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina) ? "Periksa dan centang semua berkas terlebih dahulu" : "Verifikasi Peserta"}
+                                      className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                      ⚡ Verifikasi & Email
+                                    </button>
+                                  </>
                                 )}
 
                                 
@@ -1008,14 +1061,79 @@ export default function DashboardAdmin() {
                             )}
                           </td>
                         </tr>
+
+                        {checkingBerkasId === p.id && (
+                          <tr className="bg-slate-900 border-b border-slate-800">
+                            <td colSpan={7} className="p-4">
+                              <div className="bg-slate-950/80 p-5 rounded-xl border border-cyan-500/30">
+                                <h4 className="text-cyan-400 font-bold text-sm mb-4">PENGECEKAN BERKAS PERSYARATAN: {p.nama_regu}</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  
+                                  {[
+                                    { key: "ketersediaan", label: "Form Ketersediaan", url: p.berkas_ketersediaan },
+                                    { key: "pendaftaran", label: "Form Pendaftaran", url: p.berkas_pendaftaran },
+                                    { key: "biodata_peserta", label: "Biodata Peserta", url: p.berkas_biodata_peserta },
+                                    { key: "biodata_pembina", label: "Biodata Pembina", url: p.berkas_biodata_pembina }
+                                  ].map((berkas) => (
+                                    <div key={berkas.key} className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-800">
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-semibold text-slate-300">{berkas.label}</span>
+                                        {berkas.url ? (
+                                          <a href={berkas.url} target="_blank" rel="noopener noreferrer" className="text-[0.65rem] text-amber-400 hover:underline">
+                                            Lihat Dokumen ↗
+                                          </a>
+                                        ) : (
+                                          <span className="text-[0.65rem] text-red-400">Tidak dilampirkan</span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <label className="text-[0.65rem] text-slate-400">Sesuai?</label>
+                                        <input 
+                                          type="checkbox" 
+                                          checked={berkasStatus[berkas.key] || false}
+                                          onChange={(e) => setBerkasStatus({...berkasStatus, [berkas.key]: e.target.checked})}
+                                          className="w-4 h-4 rounded accent-cyan-500"
+                                        />
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                                <div className="space-y-2 mb-4">
+                                  <label className="text-xs font-semibold text-slate-400">Catatan Penolakan/Kekurangan (opsional)</label>
+                                  <textarea 
+                                    value={catatanBerkas}
+                                    onChange={(e) => setCatatanBerkas(e.target.value)}
+                                    placeholder="Contoh: Form pendaftaran tidak ditandatangani..."
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-white outline-none focus:border-cyan-500/50"
+                                    rows={2}
+                                  />
+                                </div>
+
+                                <div className="flex justify-end gap-2">
+                                  <button 
+                                    onClick={() => setCheckingBerkasId(null)}
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-bold transition-all"
+                                  >
+                                    Tutup
+                                  </button>
+                                  <button 
+                                    onClick={() => handleSimpanBerkas(p.id)}
+                                    disabled={saving}
+                                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-bold transition-all disabled:opacity-50"
+                                  >
+                                    {saving ? "Menyimpan..." : "Simpan Status Berkas"}
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        </React.Fragment>
                       );
                     })
-
                   )}
                   </tbody>
-
-
-
                 </table>
               </div>
             </div>

@@ -51,15 +51,29 @@ CREATE TABLE public.peserta (
   kategori TEXT NOT NULL CHECK (kategori IN ('SD', 'SMP', 'SMK')),
   gender TEXT NOT NULL CHECK (gender IN ('Laki-laki', 'Perempuan')) DEFAULT 'Laki-laki',
   total_nilai NUMERIC DEFAULT 0,
+  
+  -- Berkas Dokumen (Menyimpan URL File)
+  berkas_ketersediaan TEXT DEFAULT '',
+  berkas_pendaftaran TEXT DEFAULT '',
+  berkas_biodata_peserta TEXT DEFAULT '',
+  berkas_biodata_pembina TEXT DEFAULT '',
+  
+  -- Status Pengecekan Berkas (JSONB: {ketersediaan: bool, pendaftaran: bool, biodata_peserta: bool, biodata_pembina: bool})
+  status_berkas JSONB DEFAULT '{"ketersediaan": false, "pendaftaran": false, "biodata_peserta": false, "biodata_pembina": false}'::jsonb,
+  catatan_berkas TEXT DEFAULT '',
+
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- JIKA TABEL PESERTA SUDAH ADA, JALANKAN QUERY INI DI SQL EDITOR SUPABASE:
--- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS email TEXT DEFAULT '';
+-- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS berkas_ketersediaan TEXT DEFAULT '';
+-- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS berkas_pendaftaran TEXT DEFAULT '';
+-- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS berkas_biodata_peserta TEXT DEFAULT '';
+-- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS berkas_biodata_pembina TEXT DEFAULT '';
+-- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS status_berkas JSONB DEFAULT '{"ketersediaan": false, "pendaftaran": false, "biodata_peserta": false, "biodata_pembina": false}'::jsonb;
+-- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS catatan_berkas TEXT DEFAULT '';
 
-
-
--- 5. Buat tabel PENILAIAN
+-- CATATAN: ANDA JUGA PERLU MEMBUAT BUCKET STORAGE BERNAMA 'berkas_peserta' DI SUPABASE.-- 5. Buat tabel PENILAIAN
 CREATE TABLE public.penilaian (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   peserta_id UUID NOT NULL REFERENCES public.peserta(id) ON DELETE CASCADE,

@@ -101,7 +101,7 @@ export async function POST(request) {
             </div>
 
             <p style="font-size: 14px; line-height: 1.6; color: #e2e8f0;">
-              Salam Pramuka! Panitia LT-II Kwartir Ranting Mekar Baru memberitahukan bahwa pendaftaran regu Anda telah <strong>DIVERIFIKASI RESMI</strong> oleh Panitia/Admin.
+              Salam Pramuka! Panitia LT-II Kwartir Ranting Mekar Baru menerangkan bahwa regu Anda telah resmi terdaftar dan dokumen pendaftaran telah <strong>DIVERIFIKASI LENGKAP</strong> oleh Admin.
             </p>
 
             <!-- KAPLING BADGE -->
@@ -118,24 +118,50 @@ export async function POST(request) {
             </div>
 
             <!-- DETAIL REGU -->
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px;">
-              <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                <td style="padding: 10px 0; color: #94a3b8; font-weight: 600;">Nama Regu</td>
-                <td style="padding: 10px 0; color: #ffffff; font-weight: 800; text-align: right;">${peserta.nama_regu}</td>
-              </tr>
-              <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                <td style="padding: 10px 0; color: #94a3b8; font-weight: 600;">Asal Pangkalan / Sekolah</td>
-                <td style="padding: 10px 0; color: #ffffff; font-weight: 800; text-align: right;">${peserta.pangkalan}</td>
-              </tr>
-              <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                <td style="padding: 10px 0; color: #94a3b8; font-weight: 600;">Gugus Depan (Gudep)</td>
-                <td style="padding: 10px 0; color: #67e8f9; font-weight: 700; font-family: monospace; text-align: right;">${peserta.no_gudep || "—"}</td>
-              </tr>
-              <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                <td style="padding: 10px 0; color: #94a3b8; font-weight: 600;">Tingkat & Gender</td>
-                <td style="padding: 10px 0; color: #ffffff; font-weight: 700; text-align: right;">${peserta.kategori} - ${peserta.gender === 'Laki-laki' ? '👦 Putra' : '👧 Putri'}</td>
-              </tr>
-            </table>
+            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+              <h3 style="color: #67e8f9; font-size: 14px; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid rgba(103, 232, 249, 0.2); padding-bottom: 8px;">KETERANGAN PESERTA</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                  <td style="padding: 8px 0; color: #94a3b8;">Nama Regu</td>
+                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; text-align: right;">${peserta.nama_regu}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                  <td style="padding: 8px 0; color: #94a3b8;">Sekolah / Pangkalan</td>
+                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; text-align: right;">${peserta.pangkalan}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                  <td style="padding: 8px 0; color: #94a3b8;">No. Gugus Depan</td>
+                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; font-family: monospace; text-align: right;">${peserta.no_gudep || "—"}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                  <td style="padding: 8px 0; color: #94a3b8;">Tingkat & Gender</td>
+                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; text-align: right;">${peserta.kategori} - ${peserta.gender}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #94a3b8;">Tanggal Pendaftaran</td>
+                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; text-align: right;">${new Date(peserta.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- CHECKLIST DOKUMEN -->
+            <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+              <h3 style="color: #34d399; font-size: 14px; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid rgba(52, 211, 153, 0.2); padding-bottom: 8px;">KELENGKAPAN DOKUMEN (DIVERIFIKASI)</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <tr>
+                  <td style="padding: 6px 0; color: #e2e8f0;">✅ Form Ketersediaan Gudep</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #e2e8f0;">✅ Form Pendaftaran Peserta</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #e2e8f0;">✅ Biodata Peserta (Regu)</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #e2e8f0;">✅ Biodata Pembina Pendamping</td>
+                </tr>
+              </table>
+            </div>
 
             <div style="text-align: center; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
               <p style="font-size: 12px; color: #fbbf24; font-style: italic; font-weight: 700;">

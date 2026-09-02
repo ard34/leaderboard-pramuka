@@ -4,7 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { nama_regu, pangkalan, kategori, gender, no_gudep, kontak_person, email } = body;
+    const { 
+      nama_regu, pangkalan, kategori, gender, no_gudep, kontak_person, email,
+      berkas_ketersediaan, berkas_pendaftaran, berkas_biodata_peserta, berkas_biodata_pembina
+    } = body;
 
     const cleanNamaRegu = nama_regu?.trim();
     const cleanPangkalan = pangkalan?.trim();
@@ -47,6 +50,17 @@ export async function POST(request) {
       email: cleanEmail || "",
       is_verified: false,
       nomor_dada: null,
+      berkas_ketersediaan: berkas_ketersediaan || "",
+      berkas_pendaftaran: berkas_pendaftaran || "",
+      berkas_biodata_peserta: berkas_biodata_peserta || "",
+      berkas_biodata_pembina: berkas_biodata_pembina || "",
+      status_berkas: {
+        ketersediaan: false,
+        pendaftaran: false,
+        biodata_peserta: false,
+        biodata_pembina: false
+      },
+      catatan_berkas: ""
     };
 
     // Primary insert attempt

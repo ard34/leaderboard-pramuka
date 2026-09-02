@@ -18,6 +18,13 @@ export default function RegisterPage() {
   const [kontakPerson, setKontakPerson] = useState("");
   const [email, setEmail] = useState("");
 
+  // File Upload states
+  const [fileKetersediaan, setFileKetersediaan] = useState(null);
+  const [filePendaftaran, setFilePendaftaran] = useState(null);
+  const [fileBiodataPeserta, setFileBiodataPeserta] = useState(null);
+  const [fileBiodataPembina, setFileBiodataPembina] = useState(null);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+
   // UI states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -45,10 +52,48 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!fileKetersediaan || !filePendaftaran || !fileBiodataPeserta || !fileBiodataPembina) {
+      setError("Harap unggah keempat berkas persyaratan yang diminta.");
+      return;
+    }
+
     setLoading(true);
+    setUploadingFiles(true);
     setError(null);
 
     try {
+      // 1. Upload files to Supabase Storage
+      const uploadFile = async (file, folder) => {
+        if (!file) return "";
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { data, error } = await supabase.storage
+          .from("berkas_peserta")
+          .upload(fileName, file, { cacheControl: "3600", upsert: false });
+        
+        if (error) throw error;
+        
+        const { data: publicUrlData } = supabase.storage.from("berkas_peserta").getPublicUrl(fileName);
+        return publicUrlData.publicUrl;
+      };
+
+      let urlKetersediaan = "";
+      let urlPendaftaran = "";
+      let urlBiodataPeserta = "";
+      let urlBiodataPembina = "";
+
+      try {
+        urlKetersediaan = await uploadFile(fileKetersediaan, "ketersediaan");
+        urlPendaftaran = await uploadFile(filePendaftaran, "pendaftaran");
+        urlBiodataPeserta = await uploadFile(fileBiodataPeserta, "biodata_peserta");
+        urlBiodataPembina = await uploadFile(fileBiodataPembina, "biodata_pembina");
+      } catch (uploadErr) {
+        setError("Gagal mengunggah berkas. Pastikan ukuran file max 2MB dan koneksi stabil. " + uploadErr.message);
+        setLoading(false);
+        setUploadingFiles(false);
+        return;
+      }
+
       const payload = {
         nama_regu: cleanNamaRegu,
         pangkalan: cleanPangkalan,
@@ -57,6 +102,10 @@ export default function RegisterPage() {
         no_gudep: cleanNoGudep,
         kontak_person: cleanKontak,
         email: cleanEmail,
+        berkas_ketersediaan: urlKetersediaan,
+        berkas_pendaftaran: urlPendaftaran,
+        berkas_biodata_peserta: urlBiodataPeserta,
+        berkas_biodata_pembina: urlBiodataPembina,
       };
 
 
@@ -83,7 +132,30 @@ export default function RegisterPage() {
       setError("Terjadi kesalahan sistem. Silakan coba lagi.");
     } finally {
       setLoading(false);
+      setUploadingFiles(false);
     }
+  };
+
+  const handleFileChange = (e, setter) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Ukuran file maksimal 2MB!");
+      e.target.value = "";
+      return;
+    }
+    
+    // Validate type
+    const validTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
+    if (!validTypes.includes(file.type)) {
+      alert("Hanya file PDF, JPG, atau PNG yang diperbolehkan!");
+      e.target.value = "";
+      return;
+    }
+    
+    setter(file);
   };
 
   return (
@@ -251,12 +323,73 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {/* File Uploads Section */}
+                <div className="mt-6 pt-4 border-t border-slate-800">
+                  <h3 className="text-[0.7rem] font-black text-amber-400 mb-4 uppercase tracking-[0.1em]">
+                    Upload Berkas Persyaratan (Max 2MB per file | PDF/JPG/PNG)
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                        1. Form Ketersediaan Gudep Mengikuti LT-II
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => handleFileChange(e, setFileKetersediaan)}
+                        required
+                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                        2. Form Pendaftaran Peserta LT-II
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => handleFileChange(e, setFilePendaftaran)}
+                        required
+                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                        3. Biodata Peserta (Anggota Regu)
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => handleFileChange(e, setFileBiodataPeserta)}
+                        required
+                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                        4. Biodata Pembina Pendamping
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => handleFileChange(e, setFileBiodataPembina)}
+                        required
+                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={loading || !isOnline}
                   className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white font-black py-3.5 px-4 rounded-xl mt-4 transition-all duration-300 shadow-[0_8px_25px_rgba(245,166,35,0.2)] hover:shadow-[0_12px_35px_rgba(245,166,35,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_8px_25px_rgba(245,166,35,0.2)] tracking-wider text-sm"
                 >
-                  {loading ? "MENGIRIM PENDAFTARAN..." : "DAFTAR SEKARANG"}
+                  {uploadingFiles ? "MENGUNGGAH BERKAS..." : loading ? "MENGIRIM PENDAFTARAN..." : "DAFTAR SEKARANG"}
                 </button>
               </form>
             </>
