@@ -109,74 +109,81 @@ export default function CetakBuktiPendaftaran() {
         {/* Jarak setelah kop */}
         <div className="mb-6"></div>
 
-        {/* JUDUL SURAT */}
-        <div className="text-center mb-6">
-          <h3 className="text-xl font-black underline uppercase">Tanda Bukti Verifikasi Pendaftaran</h3>
-          <p className="text-sm mt-1 text-gray-800">No. Registrasi: {peserta.id.split("-")[0].toUpperCase()}</p>
+        {/* SURAT INFORMATION */}
+        <div className="flex flex-col md:flex-row justify-between mb-6 text-[15px] font-sans text-black">
+          <div>
+            <table className="leading-snug">
+              <tbody>
+                <tr><td className="pr-4 py-0.5 align-top">Nomor</td><td className="pr-2 py-0.5 align-top">:</td><td className="py-0.5 font-bold">0 5 1 /28.04.13-A</td></tr>
+                <tr><td className="pr-4 py-0.5 align-top">Lampiran</td><td className="pr-2 py-0.5 align-top">:</td><td className="py-0.5">-</td></tr>
+                <tr>
+                  <td className="pr-4 py-0.5 align-top">Perihal</td>
+                  <td className="pr-2 py-0.5 align-top">:</td>
+                  <td className="py-0.5 font-bold">
+                    Tanda Bukti Pendaftaran<br/>
+                    Lomba Tingkat (LT-II) Tahun 2026<br/>
+                    Kwartir Ranting Mekar Baru
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="text-right mt-4 md:mt-0">
+            <p>Mekar Baru, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+          </div>
+        </div>
+
+        {/* KEPADA YTH */}
+        <div className="mb-6 text-[15px] font-sans text-black leading-snug">
+          <p>Kepada Yth.</p>
+          <p className="font-bold">Pembina Pasukan {peserta.pangkalan}</p>
+          <p className="font-bold">Gerakan Pramuka Mekar Baru</p>
+          <p>di-</p>
+          <p className="ml-6">Tempat</p>
         </div>
 
         {/* ISI SURAT */}
-        <div className="space-y-3 text-justify leading-relaxed text-[15px]">
-          <p>
-            Panitia Pelaksana Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II) Kwartir Ranting Mekar Baru Tahun 2026 menerangkan bahwa:
+        <div className="text-[15px] font-sans text-black text-justify leading-relaxed">
+          <p className="font-bold italic mb-4">Assalamu'alaikum Wr. Wb.</p>
+          <p className="font-bold italic mb-4">Salam Pramuka,</p>
+          
+          <p className="mb-4">
+            Disampaikan dengan hormat, Panitia Pelaksana Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II) Kwartir Ranting Gerakan Pramuka Mekar Baru menerangkan bahwa:
           </p>
           
-          <table className="w-full ml-4 mb-3 mt-3">
+          <table className="w-full ml-4 mb-4">
             <tbody>
-              <tr>
-                <td className="py-1.5 w-48 font-semibold">Nama Regu</td>
-                <td className="py-1.5 w-4">:</td>
-                <td className="py-1.5 font-bold text-lg">{peserta.nama_regu}</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 font-semibold">Pangkalan / Sekolah</td>
-                <td className="py-1.5">:</td>
-                <td className="py-1.5">{peserta.pangkalan}</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 font-semibold">No. Gugus Depan</td>
-                <td className="py-1.5">:</td>
-                <td className="py-1.5">{peserta.no_gudep || "-"}</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 font-semibold">Kategori Peserta</td>
-                <td className="py-1.5">:</td>
-                <td className="py-1.5">{peserta.kategori}</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 font-semibold">Jenis Kelamin</td>
-                <td className="py-1.5">:</td>
-                <td className="py-1.5">{peserta.gender}</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 font-semibold">Tanggal Daftar</td>
-                <td className="py-1.5">:</td>
-                <td className="py-1.5">{tglDaftar}</td>
-              </tr>
+              <tr><td className="py-1 w-48 font-semibold">Nama Regu</td><td className="py-1 w-4">:</td><td className="py-1 font-bold">{peserta.nama_regu}</td></tr>
+              <tr><td className="py-1 font-semibold">Pangkalan / Sekolah</td><td className="py-1">:</td><td className="py-1">{peserta.pangkalan}</td></tr>
+              <tr><td className="py-1 font-semibold">No. Gugus Depan</td><td className="py-1">:</td><td className="py-1">{peserta.no_gudep || "-"}</td></tr>
+              <tr><td className="py-1 font-semibold">Kategori & Gender</td><td className="py-1">:</td><td className="py-1">{peserta.kategori} - {peserta.gender}</td></tr>
+              <tr><td className="py-1 font-semibold">Status Pendaftaran</td><td className="py-1">:</td><td className="py-1 font-bold">{isVerified ? "TERVERIFIKASI" : "MENUNGGU VERIFIKASI"}</td></tr>
             </tbody>
           </table>
 
-          <p>
-            Telah menyerahkan kelengkapan dokumen persyaratan dan dinyatakan <strong>{isVerified ? "SAH & TERVERIFIKASI" : "BELUM DIVERIFIKASI"}</strong> sebagai Peserta LT-II Kwartir Ranting Mekar Baru Tahun 2026.
+          <p className="mb-4">
+            Telah menyerahkan kelengkapan dokumen persyaratan dan dinyatakan resmi terdaftar sebagai Peserta pada kegiatan Lomba Tingkat (LT-II) Kwartir Ranting Mekar Baru Tahun 2026.
           </p>
-        </div>
 
-        {/* INSTRUKSI */}
-        <div className="mt-8 p-4 border-2 border-dashed border-gray-400 rounded bg-gray-50 print:border-solid text-[15px]">
-          <h4 className="font-bold mb-2">Instruksi untuk Peserta:</h4>
-          <ol className="list-decimal ml-5 space-y-1">
-            <li>Surat ini adalah <strong>bukti sah</strong> pendaftaran regu.</li>
-            <li>Silakan <strong>cetak (print) / Download PDF</strong> surat ini.</li>
-            <li>Bawa surat fisik/PDF ini pada saat registrasi ulang di lokasi perkemahan (Bumi Perkemahan) untuk ditukarkan dengan <strong>Nomor Kapling Tenda</strong> dan ID Card.</li>
-          </ol>
+          <p className="mb-6">
+            Demikian tanda bukti pendaftaran ini kami sampaikan, atas perhatian dan kerjasamanya diucapkan terima kasih.
+          </p>
+
+          <p className="font-bold italic mb-1">Wassalamu'alaikum Wr. Wb.</p>
+          <p className="font-bold italic mb-8">Salam Pramuka,</p>
         </div>
 
         {/* TTD */}
-        <div className="mt-8 flex justify-end">
-          <div className="text-center w-64 text-[15px]">
-            <p className="mb-14">Mekar Baru, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
-            <p className="font-bold underline">Panitia Pendaftaran</p>
-            <p className="text-sm mt-1">LT-II Kwarran Mekar Baru</p>
+        <div className="flex justify-between font-sans text-black text-[15px] mt-4">
+          <div className="w-64">
+            {/* Kiri Kosong */}
+          </div>
+          <div className="w-72">
+            <p>Panitia Pendaftaran</p>
+            <p>Gerakan Pramuka Mekar Baru</p>
+            <p className="mb-20">Ketua,</p>
+            <p className="font-bold underline uppercase">TUTI ALWIYAH, S.Pd.</p>
+            <p className="text-sm">NTA. 28.04.13.090282.0001</p>
           </div>
         </div>
 
