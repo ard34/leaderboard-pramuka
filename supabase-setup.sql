@@ -73,7 +73,28 @@ CREATE TABLE public.peserta (
 -- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS status_berkas JSONB DEFAULT '{"ketersediaan": false, "pendaftaran": false, "biodata_peserta": false, "biodata_pembina": false}'::jsonb;
 -- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS catatan_berkas TEXT DEFAULT '';
 
--- CATATAN: ANDA JUGA PERLU MEMBUAT BUCKET STORAGE BERNAMA 'berkas_peserta' DI SUPABASE.-- 5. Buat tabel PENILAIAN
+-- ============================================================
+-- KONFIGURASI SUPABASE STORAGE (BUCKET)
+-- ============================================================
+-- 1. Buat bucket 'berkas_peserta' (Public) jika belum ada
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('berkas_peserta', 'berkas_peserta', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 2. Buat Policy agar peserta (publik/anonim) bisa mengupload file
+DROP POLICY IF EXISTS "Public can upload berkas_peserta" ON storage.objects;
+CREATE POLICY "Public can upload berkas_peserta" 
+ON storage.objects FOR INSERT 
+TO public
+WITH CHECK ( bucket_id = 'berkas_peserta' );
+
+-- 3. Buat Policy agar admin/semua orang bisa melihat file
+DROP POLICY IF EXISTS "Public can view berkas_peserta" ON storage.objects;
+CREATE POLICY "Public can view berkas_peserta" 
+ON storage.objects FOR SELECT 
+TO public
+USING ( bucket_id = 'berkas_peserta' );
+-- ============================================================-- 5. Buat tabel PENILAIAN
 CREATE TABLE public.penilaian (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   peserta_id UUID NOT NULL REFERENCES public.peserta(id) ON DELETE CASCADE,
