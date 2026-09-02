@@ -95,7 +95,7 @@ export default function CetakBuktiPendaftaran() {
         <div className="flex items-center justify-between pb-3 mb-1" style={{ borderBottom: "5px double black" }}>
           <div className="flex-shrink-0 ml-4">
             <img 
-              src="/logo_kwarran_mekarbaru.png" 
+              src="/tunas_kelapa.jpg" 
               alt="Logo Kiri" 
               className="w-[85px] h-[85px] object-contain" 
             />
