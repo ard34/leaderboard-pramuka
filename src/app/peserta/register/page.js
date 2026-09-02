@@ -11,10 +11,13 @@ export default function RegisterPage() {
 
   // Form states
   const [pangkalan, setPangkalan] = useState("");
+  const [kwartirRanting, setKwartirRanting] = useState("Mekar Baru");
+  const [alamatGudep, setAlamatGudep] = useState("");
   const [noGudep, setNoGudep] = useState("");
   const [namaRegu, setNamaRegu] = useState("");
   const [kategori, setKategori] = useState("SD");
   const [gender, setGender] = useState("Laki-laki");
+  const [namaPembina, setNamaPembina] = useState("");
   const [kontakPerson, setKontakPerson] = useState("");
   const [email, setEmail] = useState("");
 
@@ -41,13 +44,16 @@ export default function RegisterPage() {
     }
 
     // Input validations
-    const cleanPangkalan = pangkalan.trim();
+    const cleanKwartir = kwartirRanting.trim();
+    const cleanAlamat = alamatGudep.trim();
+    const cleanNamaPembina = namaPembina.trim();
+    const cleanPangkalan = `${pangkalan.trim()} - ${cleanAlamat} (Kwarran ${cleanKwartir})`;
     const cleanNoGudep = noGudep.trim();
     const cleanNamaRegu = namaRegu.trim();
-    const cleanKontak = kontakPerson.trim();
+    const cleanKontak = `${cleanNamaPembina} (${kontakPerson.trim()})`;
     const cleanEmail = email.trim();
 
-    if (!cleanPangkalan || !cleanNoGudep || !cleanNamaRegu || !cleanKontak || !cleanEmail) {
+    if (!pangkalan.trim() || !cleanAlamat || !cleanKwartir || !cleanNamaPembina || !cleanNoGudep || !cleanNamaRegu || !kontakPerson.trim() || !cleanEmail) {
       setError("Harap lengkapi semua bidang form pendaftaran termasuk email aktif.");
       return;
     }
@@ -229,7 +235,7 @@ export default function RegisterPage() {
                   {/* Asal Pangkalan */}
                   <div className="space-y-1.5">
                     <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                      Nama Sekolah / Pangkalan
+                      Nama Pangkalan (Sekolah)
                     </label>
                     <input
                       type="text"
@@ -237,6 +243,38 @@ export default function RegisterPage() {
                       onChange={(e) => setPangkalan(e.target.value)}
                       required
                       placeholder="Contoh: SDN 1 Mekar Baru"
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Alamat Gudep */}
+                  <div className="space-y-1.5">
+                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                      Alamat Lengkap Pangkalan / Gudep
+                    </label>
+                    <input
+                      type="text"
+                      value={alamatGudep}
+                      onChange={(e) => setAlamatGudep(e.target.value)}
+                      required
+                      placeholder="Contoh: Jl. Raya Mekar Baru No 12, Kode Pos 15550"
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
+                    />
+                  </div>
+
+                  {/* Kwartir Ranting */}
+                  <div className="space-y-1.5">
+                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                      Kwartir Ranting
+                    </label>
+                    <input
+                      type="text"
+                      value={kwartirRanting}
+                      onChange={(e) => setKwartirRanting(e.target.value)}
+                      required
+                      placeholder="Contoh: Mekar Baru"
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
                     />
                   </div>
@@ -253,22 +291,39 @@ export default function RegisterPage() {
                       value={noGudep}
                       onChange={(e) => setNoGudep(e.target.value)}
                       required
-                      placeholder="Contoh: 04.081 - 04.082"
+                      placeholder="Contoh: 01.001 - 01.002"
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
                     />
                   </div>
 
+                  {/* Nama Pembina */}
+                  <div className="space-y-1.5">
+                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                      Nama Pembina Pendamping
+                    </label>
+                    <input
+                      type="text"
+                      value={namaPembina}
+                      onChange={(e) => setNamaPembina(e.target.value)}
+                      required
+                      placeholder="Contoh: Kak Budi Santoso"
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Kontak Person */}
                   <div className="space-y-1.5">
                     <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                      Kontak Person / No. WA
+                      No. WhatsApp Pembina
                     </label>
                     <input
                       type="text"
                       value={kontakPerson}
                       onChange={(e) => setKontakPerson(e.target.value)}
                       required
-                      placeholder="Contoh: 08123456789"
+                      placeholder="Contoh: 0812xxxxxx"
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
                     />
                   </div>
@@ -332,7 +387,7 @@ export default function RegisterPage() {
                   <div className="space-y-4">
                     <div className="space-y-1.5">
                       <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                        1. Form Ketersediaan Gudep Mengikuti LT-II
+                        1. Formulir 01/LT-II 2026 (Kesediaan Gugus Depan)
                       </label>
                       <input
                         type="file"
@@ -345,7 +400,7 @@ export default function RegisterPage() {
 
                     <div className="space-y-1.5">
                       <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                        2. Form Pendaftaran Peserta LT-II
+                        2. Formulir 02/LT-II 2026 (Pendaftaran Peserta)
                       </label>
                       <input
                         type="file"
@@ -358,7 +413,7 @@ export default function RegisterPage() {
 
                     <div className="space-y-1.5">
                       <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                        3. Biodata Peserta (Anggota Regu)
+                        3. Formulir 03/LT-II 2026 (Biodata Peserta)
                       </label>
                       <input
                         type="file"
@@ -371,7 +426,7 @@ export default function RegisterPage() {
 
                     <div className="space-y-1.5">
                       <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                        4. Biodata Pembina Pendamping
+                        4. Formulir 03/LT-II 2026 (Biodata Pembina Pendamping)
                       </label>
                       <input
                         type="file"

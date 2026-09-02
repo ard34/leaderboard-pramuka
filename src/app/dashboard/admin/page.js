@@ -71,6 +71,8 @@ export default function DashboardAdmin() {
   const [pesanAdmin, setPesanAdmin] = useState({ type: "", text: "" });
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [verifyingId, setVerifyingId] = useState(null);
+  const [rejectingId, setRejectingId] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
   const [noDadaInput, setNoDadaInput] = useState("");
   const [showWinners, setShowWinners] = useState(false);
   const [verifyingJuriId, setVerifyingJuriId] = useState(null);
@@ -448,6 +450,41 @@ export default function DashboardAdmin() {
       }
     } catch (err) {
       showPesan("error", "Gagal memproses verifikasi: " + err.message);
+    } finally {
+      setSaving(false);
+  };
+
+  const handleStartReject = (peserta) => {
+    setRejectingId(peserta.id);
+    setRejectReason("");
+  };
+
+  const handleRejectPeserta = async (id) => {
+    if (!rejectReason.trim()) {
+      showPesan("error", "Alasan penolakan tidak boleh kosong.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/peserta/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ peserta_id: id, reason: rejectReason }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPesan("success", `❌ Regu berhasil ditolak! ${data.emailMessage || ""}`);
+        if (data.mailtoUrl && !data.emailSent) {
+          window.open(data.mailtoUrl, "_blank");
+        }
+        setRejectingId(null);
+        setRejectReason("");
+        await fetchAllData();
+      } else {
+        showPesan("error", "Gagal melakukan penolakan: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Gagal memproses penolakan: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -982,8 +1019,8 @@ export default function DashboardAdmin() {
                       </tr>
                     ) : (
                       filteredPesertaList.map((p) => {
-
                       const isVerifying = verifyingId === p.id;
+                      const isRejecting = rejectingId === p.id;
                       return (
                         <React.Fragment key={p.id}>
                         <tr className={`border-t border-slate-800/30 hover:bg-slate-800/20 ${checkingBerkasId === p.id ? 'bg-slate-800/40' : ''}`}>
@@ -1009,8 +1046,8 @@ export default function DashboardAdmin() {
                                 ✅ Aktif
                               </span>
                             ) : (
-                              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
-                                ⏳ Menunggu
+                              <span className={`px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase ${p.catatan_berkas?.startsWith('DITOLAK') ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                                {p.catatan_berkas?.startsWith('DITOLAK') ? '❌ Ditolak' : '⏳ Menunggu'}
                               </span>
                             )}
                           </td>
@@ -1031,6 +1068,30 @@ export default function DashboardAdmin() {
                                   Batal
                                 </button>
                               </div>
+                            ) : isRejecting ? (
+                              <div className="flex flex-col gap-1 items-end min-w-[200px]">
+                                <input 
+                                  type="text" 
+                                  value={rejectReason} 
+                                  onChange={(e) => setRejectReason(e.target.value)} 
+                                  placeholder="Alasan penolakan..." 
+                                  className="text-xs px-2 py-1 bg-slate-900 border border-red-500/30 text-white rounded w-full focus:outline-none focus:border-red-500"
+                                />
+                                <div className="flex justify-end gap-1 items-center mt-1">
+                                  <button 
+                                    onClick={() => handleRejectPeserta(p.id)} 
+                                    className="text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-xs font-bold transition-all"
+                                  >
+                                    Tolak & Email
+                                  </button>
+                                  <button 
+                                    onClick={() => { setRejectingId(null); setRejectReason(""); }} 
+                                    className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-xs font-bold transition-all"
+                                  >
+                                    Batal
+                                  </button>
+                                </div>
+                              </div>
                             ) : (
                               <div className="flex justify-end gap-1.5 text-right items-center">
                                 {!p.is_verified && (
@@ -1048,6 +1109,12 @@ export default function DashboardAdmin() {
                                       className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
                                       ⚡ Verifikasi & Email
+                                    </button>
+                                    <button 
+                                      onClick={() => handleStartReject(p)} 
+                                      className="text-red-400 bg-red-400/10 hover:bg-red-500 hover:text-white px-2.5 py-1.5 rounded text-xs font-bold transition-colors"
+                                    >
+                                      ❌ Tolak
                                     </button>
                                   </>
                                 )}
