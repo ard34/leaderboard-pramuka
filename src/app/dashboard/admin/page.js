@@ -151,7 +151,7 @@ export default function DashboardAdmin() {
       // Fetch all peserta (including Gudep, CP, is_verified)
       supabase
         .from("peserta")
-        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai, no_gudep, kontak_person, is_verified")
+        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai, no_gudep, kontak_person, is_verified, created_at, status_berkas, catatan_berkas, berkas_ketersediaan, berkas_pendaftaran, berkas_biodata_peserta, berkas_biodata_pembina")
         .order("is_verified", { ascending: true })
         .order("nomor_dada", { ascending: true }),
 
