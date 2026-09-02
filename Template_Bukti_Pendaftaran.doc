@@ -1,0 +1,87 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Template Bukti Pendaftaran</title>
+<style>
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; }
+  .kop-surat { text-align: center; border-bottom: 3px double black; margin-bottom: 20px; padding-bottom: 10px; }
+  .kop-surat h1 { margin: 0; font-size: 20pt; font-weight: bold; }
+  .kop-surat h2 { margin: 0; font-size: 16pt; font-weight: bold; }
+  .kop-surat p { margin: 2px 0; font-size: 10pt; }
+  .kop-surat p.kontak { font-style: italic; font-weight: bold; font-size: 9pt; }
+  .content { margin-top: 20px; line-height: 1.5; }
+  table.info-surat { width: 100%; margin-bottom: 20px; }
+  table.info-surat td { vertical-align: top; }
+  table.biodata { margin-left: 20px; margin-bottom: 20px; }
+  table.biodata td { padding: 2px 5px; }
+  .ttd { width: 100%; margin-top: 50px; }
+  .ttd td { width: 50%; text-align: center; vertical-align: bottom; }
+</style>
+</head>
+<body>
+
+  <!-- KOP SURAT -->
+  <div class="kop-surat">
+    <h1>GERAKAN PRAMUKA</h1>
+    <h2>KWARTIR RANTING MEKAR BARU</h2>
+    <p>Jl.KH Suhaemi Ds. Mekar Baru Kec. Mekar Baru Kabupaten Tangerang Banten 15550</p>
+    <p class="kontak">Website : mekarbaru.kwarcabtangerang.or.id //Email: kwarran.mekarbaru@gmail.com</p>
+  </div>
+
+  <div class="content">
+    <table class="info-surat">
+      <tr>
+        <td width="10%">Nomor</td><td width="2%">:</td><td width="48%">0 5 1 /28.04.13-A</td>
+        <td width="40%" style="text-align: right;">Mekar Baru, {Tanggal Cetak}</td>
+      </tr>
+      <tr>
+        <td>Lampiran</td><td>:</td><td>-</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Perihal</td><td>:</td>
+        <td><b>Tanda Bukti Pendaftaran<br>Lomba Tingkat (LT-II) Tahun 2026<br>Kwartir Ranting Mekar Baru</b></td>
+        <td></td>
+      </tr>
+    </table>
+
+    <p style="margin-bottom: 0;">Kepada Yth.</p>
+    <p style="margin-top: 0; font-weight: bold;">Pembina Pasukan {Pangkalan / Sekolah}<br>Gerakan Pramuka Mekar Baru</p>
+    <p>di-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempat</p>
+
+    <p><i><b>Assalamu'alaikum Wr. Wb.</b></i><br><i><b>Salam Pramuka,</b></i></p>
+
+    <p style="text-align: justify;">Disampaikan dengan hormat, Panitia Pelaksana Lomba Tingkat Regu Pramuka Penggalang Dua (LT-II) Kwartir Ranting Gerakan Pramuka Mekar Baru menerangkan bahwa:</p>
+
+    <table class="biodata">
+      <tr><td width="150">Nama Regu</td><td width="10">:</td><td><b>{Nama Regu}</b></td></tr>
+      <tr><td>Pangkalan / Sekolah</td><td>:</td><td>{Pangkalan / Sekolah}</td></tr>
+      <tr><td>No. Gugus Depan</td><td>:</td><td>{No. Gudep}</td></tr>
+      <tr><td>Kategori & Gender</td><td>:</td><td>{Kategori} - {Gender}</td></tr>
+      <tr><td>Status Pendaftaran</td><td>:</td><td><b>TERVERIFIKASI</b></td></tr>
+    </table>
+
+    <p style="text-align: justify;">Telah menyerahkan kelengkapan dokumen persyaratan dan dinyatakan resmi terdaftar sebagai Peserta pada kegiatan Lomba Tingkat (LT-II) Kwartir Ranting Mekar Baru Tahun 2026.</p>
+
+    <p style="text-align: justify;">Demikian tanda bukti pendaftaran ini kami sampaikan, atas perhatian dan kerjasamanya diucapkan terima kasih.</p>
+
+    <p><i><b>Wassalamu'alaikum Wr. Wb.</b></i><br><i><b>Salam Pramuka,</b></i></p>
+
+    <table class="ttd">
+      <tr>
+        <td></td>
+        <td>
+          Panitia Pendaftaran<br>
+          Gerakan Pramuka Mekar Baru<br>
+          Ketua,
+          <br><br><br><br>
+          <u><b>TUTI ALWIYAH, S.Pd.</b></u><br>
+          <span style="font-size: 10pt;">NTA. 28.04.13.090282.0001</span>
+        </td>
+      </tr>
+    </table>
+
+  </div>
+
+</body>
+</html>
