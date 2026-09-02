@@ -5,11 +5,11 @@ import nodemailer from "nodemailer";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { peserta_id, nomor_kapling } = body;
+    const { peserta_id } = body;
 
-    if (!peserta_id || nomor_kapling === undefined || nomor_kapling === null) {
+    if (!peserta_id) {
       return NextResponse.json(
-        { error: "Parameter peserta_id dan nomor_kapling wajib diisi." },
+        { error: "Parameter peserta_id wajib diisi." },
         { status: 400 }
       );
     }
@@ -43,8 +43,6 @@ export async function POST(request) {
       );
     }
 
-    // 2. Format Kapling number e.g. 001, 002, 003
-    const kaplingNum = Number(nomor_kapling);
     // 2. Update participant to verified
     const payload = {
       is_verified: true
