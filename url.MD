@@ -1,0 +1,8 @@
+https://leaderboard-pramuka.vercel.app/ (Halaman Utama)
+https://leaderboard-pramuka.vercel.app/peserta/register (Form Pendaftaran Peserta Regu)
+https://leaderboard-pramuka.vercel.app/juri/register (Form Pendaftaran Juri Mandiri)
+https://leaderboard-pramuka.vercel.app/login (Login Admin & Juri)
+https://leaderboard-pramuka.vercel.app/dashboard/admin (Dashboard Admin)
+https://leaderboard-pramuka.vercel.app/dashboard/juri (Dashboard Juri)
+https://leaderboard-pramuka.vercel.app/leaderboard/sd (Live Klasemen SD / MI)
+https://leaderboard-pramuka.vercel.app/leaderboard/smp (Live Klasemen SMP / MTs)

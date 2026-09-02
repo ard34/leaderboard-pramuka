@@ -12,8 +12,6 @@ export default function JuriRegisterPage() {
   // Form states
   const [namaLengkap, setNamaLengkap] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [kategori, setKategori] = useState("SD");
   const [gender, setGender] = useState("Laki-laki");
   const [lombaId, setLombaId] = useState("");
@@ -26,13 +24,7 @@ export default function JuriRegisterPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  // Password validation: minimum 8 characters, at least 1 uppercase letter, and 1 number
-  const validatePassword = (pass) => {
-    const minLength = pass.length >= 8;
-    const hasUppercase = /[A-Z]/.test(pass);
-    const hasNumber = /[0-9]/.test(pass);
-    return minLength && hasUppercase && hasNumber;
-  };
+
 
   // Official JUKLAK LT-II Mekar Baru 2026 List
   const OFFICIAL_JUKLAK_LOMBA = [
@@ -152,18 +144,8 @@ export default function JuriRegisterPage() {
     const cleanNama = namaLengkap.trim();
     const cleanEmail = email.trim().toLowerCase();
 
-    if (!cleanNama || !cleanEmail || !password || !confirmPassword) {
+    if (!cleanNama || !cleanEmail) {
       setError("Harap lengkapi seluruh bidang form.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Konfirmasi kata sandi tidak cocok.");
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      setError("Kata sandi harus terdiri dari minimal 8 karakter, mengandung setidaknya 1 huruf besar dan 1 angka.");
       return;
     }
 
@@ -178,7 +160,6 @@ export default function JuriRegisterPage() {
         body: JSON.stringify({
           nama_lengkap: cleanNama,
           email: cleanEmail,
-          password,
           kategori,
           gender,
           lombaId,
@@ -189,48 +170,9 @@ export default function JuriRegisterPage() {
 
       if (apiRes.ok && apiData.success) {
         setSuccess(true);
-        return;
+      } else {
+        setError(apiData?.error || "Pendaftaran gagal. Silakan coba lagi.");
       }
-
-      // Fallback: Direct client sign up
-      const redirectUrl = typeof window !== "undefined" 
-        ? `${window.location.origin}/juri/verified` 
-        : "https://leaderboard-pramuka.vercel.app/juri/verified";
-
-      const targetLombaId = lombaId && !String(lombaId).startsWith("fallback-") ? lombaId : null;
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            nama_lengkap: cleanNama,
-            assigned_kategori: kategori,
-            assigned_gender: gender,
-            assigned_lomba_id: targetLombaId,
-          },
-        },
-      });
-
-      if (signUpError) {
-        setError(apiData?.error || "Gagal mendaftar: " + signUpError.message);
-        return;
-      }
-
-      if (data?.user) {
-        await supabase.from("profiles").upsert({
-          id: data.user.id,
-          nama_lengkap: cleanNama,
-          role: "juri",
-          assigned_kategori: kategori,
-          assigned_gender: gender,
-          assigned_lomba_id: targetLombaId,
-          is_verified: false,
-        }, { onConflict: "id" });
-      }
-
-      setSuccess(true);
     } catch (err) {
       setError("Terjadi kesalahan sistem. Silakan coba lagi.");
     } finally {
@@ -375,38 +317,7 @@ export default function JuriRegisterPage() {
                   </select>
                 </div>
 
-                {/* Password */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between">
-                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                      Kata Sandi
-                    </label>
-                    <span className="text-[0.6rem] text-slate-500">Min 8 Karatker, A-Z, 0-9</span>
-                  </div>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
-                  />
-                </div>
 
-                {/* Confirm Password */}
-                <div className="space-y-1.5">
-                  <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
-                    Ulangi Kata Sandi
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
-                  />
-                </div>
 
                 <button
                   type="submit"
@@ -426,10 +337,10 @@ export default function JuriRegisterPage() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider">
-                  VERIFIKASI EMAIL ANDA!
+                  PENDAFTARAN MENUNGGU VERIFIKASI!
                 </h2>
                 <p className="text-sm text-slate-300 max-w-sm mx-auto">
-                  Registrasi berhasil. Link verifikasi telah dikirimkan ke email <strong className="text-cyan-400">{email}</strong>. Harap buka inbox/spam email Anda dan klik link tersebut agar Anda dapat masuk ke panel juri.
+                  Registrasi berhasil. Data Anda sedang ditinjau oleh Admin. Jika disetujui, Admin akan menghubungi Anda dan memberikan <strong>Kata Sandi</strong> untuk masuk ke panel juri dengan email <strong className="text-cyan-400">{email}</strong>.
                 </p>
               </div>
               <a

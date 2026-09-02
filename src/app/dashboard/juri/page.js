@@ -782,38 +782,21 @@ export default function DashboardJuri() {
                 </div>
               )}
 
-              {/* Total Score Adjuster / Fine Tuning */}
+              {/* Total Score Display */}
               <div className="bg-slate-950/90 border border-amber-500/30 p-5 rounded-2xl space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-[0.7rem] font-black text-amber-300 uppercase tracking-[0.15em]">
-                    Penyesuaian Skor Akhir (0 – 100)
+                    Total Skor Akhir (Otomatis dari Rubrik)
                   </label>
-                  {manualOverrideTotal !== null && (
-                    <button
-                      type="button"
-                      onClick={() => setManualOverrideTotal(null)}
-                      className="text-[0.65rem] text-amber-400 hover:underline font-bold"
-                    >
-                      ↺ Reset ke Hitungan Rubrik
-                    </button>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => stepDown(5)} className="stepper-btn w-12 h-12 md:w-14 md:h-14 bg-slate-800 hover:bg-slate-700 text-white font-bold text-base rounded-xl transition-all">-5</button>
-                  <button type="button" onClick={() => stepDown(1)} className="stepper-btn w-10 h-10 md:w-12 md:h-12 bg-slate-800/70 hover:bg-slate-700 text-slate-300 font-bold text-sm rounded-xl transition-all">-1</button>
-                  
                   <input
                     type="number"
-                    min="0"
-                    max="100"
                     value={totalScoreCalculated}
-                    onChange={(e) => setManualOverrideTotal(Math.min(100, Math.max(0, Number(e.target.value))))}
-                    className="flex-1 bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-3 text-center text-4xl md:text-5xl font-black text-amber-400 focus:border-amber-400 outline-none shadow-inner"
+                    readOnly
+                    className="flex-1 bg-slate-900/50 border-2 border-slate-700 rounded-2xl p-3 text-center text-4xl md:text-5xl font-black text-amber-400 outline-none cursor-not-allowed opacity-80"
                   />
-                  
-                  <button type="button" onClick={() => stepUp(1)} className="stepper-btn w-10 h-10 md:w-12 md:h-12 bg-slate-800/70 hover:bg-slate-700 text-slate-300 font-bold text-sm rounded-xl transition-all">+1</button>
-                  <button type="button" onClick={() => stepUp(5)} className="stepper-btn w-12 h-12 md:w-14 md:h-14 bg-slate-800 hover:bg-slate-700 text-white font-bold text-base rounded-xl transition-all">+5</button>
                 </div>
 
                 <div className="w-full bg-slate-800/80 rounded-full h-2.5 overflow-hidden">

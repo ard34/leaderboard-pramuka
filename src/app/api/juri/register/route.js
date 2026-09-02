@@ -4,12 +4,12 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { nama_lengkap, email, password, kategori, gender, lombaId } = body;
+    const { nama_lengkap, email, kategori, gender, lombaId } = body;
 
     const cleanNama = nama_lengkap?.trim();
     const cleanEmail = email?.trim()?.toLowerCase();
 
-    if (!cleanNama || !cleanEmail || !password || !kategori || !gender || !lombaId) {
+    if (!cleanNama || !cleanEmail || !kategori || !gender || !lombaId) {
       return NextResponse.json(
         { error: "Harap isi seluruh kolom formulir registrasi juri." },
         { status: 400 }
@@ -51,10 +51,13 @@ export async function POST(request) {
       }
     }
 
+    // Generate a temporary random password for the user
+    const tempPassword = Math.random().toString(36).slice(-10) + "A1!";
+
     // 1. Create auth user with auto-email confirm
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: cleanEmail,
-      password: password,
+      password: tempPassword,
       email_confirm: true,
       user_metadata: {
         nama_lengkap: cleanNama,

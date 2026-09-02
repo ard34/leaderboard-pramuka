@@ -73,6 +73,8 @@ export default function DashboardAdmin() {
   const [verifyingId, setVerifyingId] = useState(null);
   const [noDadaInput, setNoDadaInput] = useState("");
   const [showWinners, setShowWinners] = useState(false);
+  const [verifyingJuriId, setVerifyingJuriId] = useState(null);
+  const [juriPasswordInput, setJuriPasswordInput] = useState("");
 
   const handleToggleShowWinners = async () => {
     const nextState = !showWinners;
@@ -156,7 +158,7 @@ export default function DashboardAdmin() {
       // Fetch all juri from profiles
       supabase
         .from("profiles")
-        .select("id, nama_lengkap, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba)")
+        .select("id, nama_lengkap, assigned_lomba_id, assigned_kategori, assigned_gender, is_verified, lomba(nama_lomba)")
         .eq("role", "juri")
         .order("nama_lengkap", { ascending: true }),
 
@@ -385,6 +387,34 @@ export default function DashboardAdmin() {
       } else {
 
         showPesan("error", "Gagal melakukan verifikasi: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Gagal memproses verifikasi: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleVerifikasiJuri = async (id) => {
+    if (!juriPasswordInput || juriPasswordInput.length < 6) {
+      showPesan("error", "Password minimal 6 karakter.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/juri/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: id, password: juriPasswordInput }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPesan("success", "Juri berhasil diverifikasi dan password diupdate.");
+        setVerifyingJuriId(null);
+        setJuriPasswordInput("");
+        await fetchAllData();
+      } else {
+        showPesan("error", "Gagal memverifikasi: " + (data.error || "Terjadi kesalahan"));
       }
     } catch (err) {
       showPesan("error", "Gagal memproses verifikasi: " + err.message);
@@ -1043,6 +1073,7 @@ export default function DashboardAdmin() {
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Tingkat Ditugaskan</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Pos Lomba Ditugaskan</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Gender Ditugaskan</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Status</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
                     </tr>
                   </thead>
@@ -1058,8 +1089,35 @@ export default function DashboardAdmin() {
                         <td className="p-4 text-xs font-black">
                           {j.assigned_gender === "SEMUA" ? "SEMUA" : j.assigned_gender === "Laki-laki" ? "👦 Laki-laki" : "👧 Perempuan"}
                         </td>
+                        <td className="p-4 text-xs">
+                          {j.is_verified ? (
+                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
+                              ✅ Aktif
+                            </span>
+                          ) : (
+                            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
+                              ⏳ Menunggu
+                            </span>
+                          )}
+                        </td>
                         <td className="p-4 text-right">
-                          {confirmDeleteId === j.id ? (
+                          {verifyingJuriId === j.id ? (
+                            <div className="flex justify-end gap-1 items-center">
+                              <input 
+                                type="text" 
+                                placeholder="Set Password" 
+                                value={juriPasswordInput} 
+                                onChange={(e) => setJuriPasswordInput(e.target.value)} 
+                                className="w-28 bg-slate-950 border border-amber-500 rounded px-2 py-1.5 text-amber-300 text-xs font-bold outline-none"
+                              />
+                              <button onClick={() => handleVerifikasiJuri(j.id)} className="text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-1.5 rounded text-xs font-bold transition-all">
+                                Simpan
+                              </button>
+                              <button onClick={() => { setVerifyingJuriId(null); setJuriPasswordInput(""); }} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded text-xs font-bold transition-all">
+                                Batal
+                              </button>
+                            </div>
+                          ) : confirmDeleteId === j.id ? (
                             <div className="flex justify-end gap-1.5">
                               <button onClick={() => handleHapusJuri(j.id, j.nama_lengkap)} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
                                 Ya, Hapus
@@ -1069,9 +1127,16 @@ export default function DashboardAdmin() {
                               </button>
                             </div>
                           ) : (
-                            <button onClick={() => setConfirmDeleteId(j.id)} className="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
-                              Hapus Profil
-                            </button>
+                            <div className="flex justify-end gap-1.5 items-center">
+                              {!j.is_verified && (
+                                <button onClick={() => setVerifyingJuriId(j.id)} className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors">
+                                  ⚡ Verifikasi
+                                </button>
+                              )}
+                              <button onClick={() => setConfirmDeleteId(j.id)} className="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                Hapus Profil
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>

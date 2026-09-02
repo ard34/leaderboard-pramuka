@@ -70,12 +70,6 @@ export default function RegisterPage() {
         const apiData = await apiRes.json();
         
         if (apiRes.ok && apiData.success) {
-          setNomorKapling(apiData.nomor_kapling);
-          setEmailSent(apiData.emailSent);
-          if (!apiData.emailSent && apiData.emailError) {
-             console.error("Vercel Email Error:", apiData.emailError);
-             setError(`Pendaftaran SUKSES, tetapi email otomatis GAGAL dikirim: ${apiData.emailError}`);
-          }
           setSuccess(true);
         } else {
           setError("Gagal mendaftar: " + (apiData.error || "Terjadi kesalahan pada server."));
@@ -275,33 +269,14 @@ export default function RegisterPage() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider">
-                  PENDAFTARAN BERHASIL!
+                  MENUNGGU VERIFIKASI!
                 </h2>
                 <p className="text-sm text-slate-300 max-w-sm mx-auto">
-                  Data Regu <strong className="text-emerald-400">{namaRegu}</strong> telah tersimpan dan <strong className="text-emerald-400">OTOMATIS DIVERIFIKASI</strong>.
+                  Data Regu <strong className="text-emerald-400">{namaRegu}</strong> telah tersimpan dan <strong className="text-amber-400">sedang ditinjau oleh Admin</strong>.
                 </p>
-                
-                {nomorKapling && (
-                  <div className="mt-6 mb-4 p-5 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-2xl shadow-[0_0_30px_rgba(245,166,35,0.1)]">
-                    <div className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                      NOMOR KAPLING TENDA RESMI
-                    </div>
-                    <div className="text-5xl font-black text-amber-400 font-mono tracking-widest drop-shadow-md">
-                      {nomorKapling}
-                    </div>
-                  </div>
-                )}
-                
-                {emailSent ? (
-                  <p className="text-xs text-emerald-400 bg-emerald-500/10 py-2 px-3 rounded-lg border border-emerald-500/20 mt-4">
-                    📩 Bukti verifikasi & No. Kapling telah dikirim ke email <strong>{email}</strong>
-                  </p>
-                ) : (
-                  <div className="text-xs text-red-400 bg-red-500/10 py-3 px-4 rounded-lg border border-red-500/20 mt-4 text-left">
-                    <strong className="block mb-1">⚠️ GAGAL MENGIRIM EMAIL OTOMATIS:</strong>
-                    {error || "Konfigurasi SMTP Vercel bermasalah atau email tidak valid."}
-                  </div>
-                )}
+                <p className="text-xs text-slate-400 mt-2">
+                  Nomor kapling dan bukti verifikasi akan dikirimkan ke email <strong>{email}</strong> setelah disetujui.
+                </p>
               </div>
               <div className="pt-4">
                 <button
