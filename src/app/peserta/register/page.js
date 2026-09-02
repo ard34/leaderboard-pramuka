@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const [filePendaftaran, setFilePendaftaran] = useState(null);
   const [fileBiodataPeserta, setFileBiodataPeserta] = useState(null);
   const [fileBiodataPembina, setFileBiodataPembina] = useState(null);
+  const [fileBuktiPembayaran, setFileBuktiPembayaran] = useState(null);
   const [uploadingFiles, setUploadingFiles] = useState(false);
 
   // UI states
@@ -58,8 +59,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!fileKetersediaan || !filePendaftaran || !fileBiodataPeserta || !fileBiodataPembina) {
-      setError("Harap unggah keempat berkas persyaratan yang diminta.");
+    if (!fileKetersediaan || !filePendaftaran || !fileBiodataPeserta || !fileBiodataPembina || !fileBuktiPembayaran) {
+      setError("Harap unggah kelima berkas persyaratan (termasuk Bukti Pembayaran) yang diminta.");
       return;
     }
 
@@ -87,12 +88,14 @@ export default function RegisterPage() {
       let urlPendaftaran = "";
       let urlBiodataPeserta = "";
       let urlBiodataPembina = "";
+      let urlBuktiPembayaran = "";
 
       try {
         urlKetersediaan = await uploadFile(fileKetersediaan, "ketersediaan");
         urlPendaftaran = await uploadFile(filePendaftaran, "pendaftaran");
         urlBiodataPeserta = await uploadFile(fileBiodataPeserta, "biodata_peserta");
         urlBiodataPembina = await uploadFile(fileBiodataPembina, "biodata_pembina");
+        urlBuktiPembayaran = await uploadFile(fileBuktiPembayaran, "bukti_pembayaran");
       } catch (uploadErr) {
         setError("Gagal mengunggah berkas. Pastikan ukuran file max 2MB dan koneksi stabil. " + uploadErr.message);
         setLoading(false);
@@ -112,6 +115,7 @@ export default function RegisterPage() {
         berkas_pendaftaran: urlPendaftaran,
         berkas_biodata_peserta: urlBiodataPeserta,
         berkas_biodata_pembina: urlBiodataPembina,
+        berkas_bukti_pembayaran: urlBuktiPembayaran,
       };
 
 
@@ -432,6 +436,19 @@ export default function RegisterPage() {
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(e, setFileBiodataPembina)}
+                        required
+                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                        5. Bukti Pembayaran (Camp Fee)
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => handleFileChange(e, setFileBuktiPembayaran)}
                         required
                         className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs focus:outline-none focus:border-amber-500/50"
                       />

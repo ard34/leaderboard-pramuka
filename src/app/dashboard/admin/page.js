@@ -153,7 +153,7 @@ export default function DashboardAdmin() {
       // Fetch all peserta (including Gudep, CP, is_verified)
       supabase
         .from("peserta")
-        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai, no_gudep, kontak_person, is_verified, created_at, status_berkas, catatan_berkas, berkas_ketersediaan, berkas_pendaftaran, berkas_biodata_peserta, berkas_biodata_pembina")
+        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai, no_gudep, kontak_person, is_verified, created_at, status_berkas, catatan_berkas, berkas_ketersediaan, berkas_pendaftaran, berkas_biodata_peserta, berkas_biodata_pembina, berkas_bukti_pembayaran")
         .order("is_verified", { ascending: true })
         .order("nomor_dada", { ascending: true }),
 
@@ -395,6 +395,7 @@ export default function DashboardAdmin() {
       pendaftaran: false,
       biodata_peserta: false,
       biodata_pembina: false,
+      bukti_pembayaran: false,
     });
     setCatatanBerkas(p.catatan_berkas || "");
   };
@@ -1105,8 +1106,8 @@ export default function DashboardAdmin() {
                                     </button>
                                     <button 
                                       onClick={() => handleStartVerifikasi(p)} 
-                                      disabled={!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina}
-                                      title={(!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina) ? "Periksa dan centang semua berkas terlebih dahulu" : "Verifikasi Peserta"}
+                                      disabled={!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina || !p.status_berkas?.bukti_pembayaran}
+                                      title={(!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina || !p.status_berkas?.bukti_pembayaran) ? "Periksa dan centang semua berkas terlebih dahulu" : "Verifikasi Peserta"}
                                       className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
                                       ⚡ Verifikasi & Email
@@ -1151,7 +1152,8 @@ export default function DashboardAdmin() {
                                     { key: "ketersediaan", label: "Form Ketersediaan", url: p.berkas_ketersediaan },
                                     { key: "pendaftaran", label: "Form Pendaftaran", url: p.berkas_pendaftaran },
                                     { key: "biodata_peserta", label: "Biodata Peserta", url: p.berkas_biodata_peserta },
-                                    { key: "biodata_pembina", label: "Biodata Pembina", url: p.berkas_biodata_pembina }
+                                    { key: "biodata_pembina", label: "Biodata Pembina", url: p.berkas_biodata_pembina },
+                                    { key: "bukti_pembayaran", label: "Bukti Pembayaran", url: p.berkas_bukti_pembayaran }
                                   ].map((berkas) => (
                                     <div key={berkas.key} className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-800">
                                       <div className="flex flex-col">

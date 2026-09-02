@@ -6,7 +6,7 @@ export async function POST(request) {
     const body = await request.json();
     const { 
       nama_regu, pangkalan, kategori, gender, no_gudep, kontak_person, email,
-      berkas_ketersediaan, berkas_pendaftaran, berkas_biodata_peserta, berkas_biodata_pembina
+      berkas_ketersediaan, berkas_pendaftaran, berkas_biodata_peserta, berkas_biodata_pembina, berkas_bukti_pembayaran
     } = body;
 
     const cleanNamaRegu = nama_regu?.trim();
@@ -54,11 +54,13 @@ export async function POST(request) {
       berkas_pendaftaran: berkas_pendaftaran || "",
       berkas_biodata_peserta: berkas_biodata_peserta || "",
       berkas_biodata_pembina: berkas_biodata_pembina || "",
+      berkas_bukti_pembayaran: berkas_bukti_pembayaran || "",
       status_berkas: {
         ketersediaan: false,
         pendaftaran: false,
         biodata_peserta: false,
-        biodata_pembina: false
+        biodata_pembina: false,
+        bukti_pembayaran: false,
       },
       catatan_berkas: ""
     };

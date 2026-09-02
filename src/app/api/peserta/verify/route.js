@@ -160,6 +160,9 @@ export async function POST(request) {
                 <tr>
                   <td style="padding: 6px 0; color: #e2e8f0;">✅ Biodata Pembina Pendamping</td>
                 </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #e2e8f0;">✅ Bukti Pembayaran (Camp Fee)</td>
+                </tr>
               </table>
             </div>
 
