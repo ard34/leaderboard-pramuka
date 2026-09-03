@@ -12,6 +12,7 @@ export default function JuriRegisterPage() {
   // Form states
   const [namaLengkap, setNamaLengkap] = useState("");
   const [email, setEmail] = useState("");
+  const [noWa, setNoWa] = useState("");
   const [kategori, setKategori] = useState("SD");
   const [gender, setGender] = useState("Laki-laki");
   const [lombaId, setLombaId] = useState("");
@@ -143,8 +144,9 @@ export default function JuriRegisterPage() {
 
     const cleanNama = namaLengkap.trim();
     const cleanEmail = email.trim().toLowerCase();
+    const cleanNoWa = noWa.trim();
 
-    if (!cleanNama || !cleanEmail) {
+    if (!cleanNama || !cleanEmail || !cleanNoWa) {
       setError("Harap lengkapi seluruh bidang form.");
       return;
     }
@@ -163,6 +165,7 @@ export default function JuriRegisterPage() {
           kategori,
           gender,
           lombaId,
+          noWa: cleanNoWa,
         }),
       });
 
@@ -259,6 +262,21 @@ export default function JuriRegisterPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="email@contoh.com"
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
+                  />
+                </div>
+
+                {/* No WhatsApp */}
+                <div className="space-y-1.5">
+                  <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                    No. WhatsApp (Aktif)
+                  </label>
+                  <input
+                    type="tel"
+                    value={noWa}
+                    onChange={(e) => setNoWa(e.target.value)}
+                    required
+                    placeholder="0812xxxxxx"
                     className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
                   />
                 </div>

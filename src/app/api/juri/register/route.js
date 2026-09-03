@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { nama_lengkap, email, kategori, gender, lombaId } = body;
+    const { nama_lengkap, email, kategori, gender, lombaId, noWa } = body;
 
     const cleanNama = nama_lengkap?.trim();
     const cleanEmail = email?.trim()?.toLowerCase();
@@ -65,6 +65,7 @@ export async function POST(request) {
         assigned_gender: gender,
         assigned_lomba_id: validLombaId,
         role: "juri",
+        no_wa: noWa,
       },
     });
 
@@ -93,6 +94,7 @@ export async function POST(request) {
       assigned_lomba_id: validLombaId,
       assigned_kategori: kategori,
       assigned_gender: gender,
+      no_wa: noWa,
       is_verified: false,
     });
 
