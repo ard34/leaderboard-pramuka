@@ -59,8 +59,8 @@ CREATE TABLE public.peserta (
   berkas_biodata_pembina TEXT DEFAULT '',
   berkas_bukti_pembayaran TEXT DEFAULT '',
   
-  -- Status Pengecekan Berkas (JSONB: {ketersediaan: bool, pendaftaran: bool, biodata_peserta: bool, biodata_pembina: bool})
-  status_berkas JSONB DEFAULT '{"ketersediaan": false, "pendaftaran": false, "biodata_peserta": false, "biodata_pembina": false}'::jsonb,
+  -- Status Pengecekan Berkas (JSONB: {ketersediaan: bool, pendaftaran: bool, biodata_peserta: bool, biodata_pembina: bool, bukti_pembayaran: bool})
+  status_berkas JSONB DEFAULT '{"ketersediaan": false, "pendaftaran": false, "biodata_peserta": false, "biodata_pembina": false, "bukti_pembayaran": false}'::jsonb,
   catatan_berkas TEXT DEFAULT '',
 
   created_at TIMESTAMPTZ DEFAULT NOW()
