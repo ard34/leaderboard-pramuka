@@ -185,8 +185,26 @@ export default function LandingPage() {
         </div>
         
         {/* Footer */}
-        <div className="text-center pt-8 text-slate-500 font-mono text-xs md:text-sm tracking-widest relative z-10">
-          &copy; {new Date().getFullYear()} KWARTIR RANTING MEKAR BARU. ALL RIGHTS RESERVED.
+        <div className="text-center pt-8 relative z-10 flex flex-col items-center gap-3">
+          <div className="text-slate-500 font-mono text-xs md:text-sm tracking-widest">
+            &copy; {new Date().getFullYear()} KWARTIR RANTING MEKAR BARU. ALL RIGHTS RESERVED.
+          </div>
+          
+          {/* Watermark BBN Digital Forge */}
+          <div className="mt-4 flex flex-col items-center gap-2 opacity-80 hover:opacity-100 transition-opacity duration-300">
+            <span className="text-slate-400 text-xs font-semibold tracking-wider uppercase">Sistem Dibuat Oleh:</span>
+            <div className="flex items-center gap-2">
+              <img 
+                src="/bbn-logo.png" 
+                alt="BBN Digital Forge Logo" 
+                className="h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]" 
+                onError={(e) => e.target.style.display = 'none'}
+              />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 font-black text-sm md:text-base tracking-widest">
+                BBN DIGITAL FORGE
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
