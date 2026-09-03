@@ -48,13 +48,13 @@ const MenuCard = ({ href, title, description, icon, color }) => {
   };
 
   return (
-    <Link href={href} className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${colorMap[color]} border backdrop-blur-md p-6 flex flex-col items-center text-center transition-all duration-300 transform hover:-translate-y-2`}>
+    <Link href={href} className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${colorMap[color]} border backdrop-blur-md p-5 sm:p-6 flex flex-col items-center text-center transition-all duration-300 transform hover:-translate-y-2`}>
       <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <div className={`p-4 rounded-full bg-slate-900/60 mb-4 shadow-inner ${iconColorMap[color]} group-hover:scale-110 transition-transform duration-300`}>
+      <div className={`p-3 sm:p-4 rounded-full bg-slate-900/60 mb-3 sm:mb-4 shadow-inner ${iconColorMap[color]} group-hover:scale-110 transition-transform duration-300`}>
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-white mb-2 tracking-wide">{title}</h3>
-      <p className="text-sm text-slate-300 font-light">{description}</p>
+      <h3 className="text-lg sm:text-xl font-bold text-white mb-1.5 sm:mb-2 tracking-wide">{title}</h3>
+      <p className="text-xs sm:text-sm text-slate-300 font-light">{description}</p>
     </Link>
   );
 };
@@ -69,7 +69,7 @@ export default function LandingPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-[100dvh] flex items-center justify-center px-4 py-8 sm:p-8 relative overflow-hidden">
       {/* Background overlay specific to landing page to make it readable */}
       <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-0"></div>
 
@@ -77,7 +77,7 @@ export default function LandingPage() {
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/10 blur-[120px] pointer-events-none z-0"></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto space-y-12 py-10">
+      <div className="relative z-10 w-full max-w-6xl mx-auto space-y-8 sm:space-y-12 py-4 sm:py-10">
         
         {/* Header Section */}
         <div className="text-center space-y-6">
@@ -85,32 +85,32 @@ export default function LandingPage() {
             <img 
               src="/logo_lt2.png" 
               alt="Logo LT-II" 
-              className="h-28 md:h-36 w-auto object-contain drop-shadow-[0_0_15px_rgba(245,166,35,0.5)]" 
+              className="h-20 sm:h-28 md:h-36 w-auto object-contain drop-shadow-[0_0_15px_rgba(245,166,35,0.5)]" 
               onError={(e) => e.target.style.display = 'none'} 
             />
           </div>
           <div>
-            <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 drop-shadow-lg tracking-tight mb-3">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 drop-shadow-lg tracking-tight mb-2 sm:mb-3">
               PORTAL LOMBA TINGKAT II
             </h1>
-            <p className="text-lg md:text-2xl text-amber-100/90 font-bold tracking-[0.2em] uppercase">
+            <p className="text-sm sm:text-lg md:text-2xl text-amber-100/90 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase">
               Kwartir Ranting Mekar Baru 2026
             </p>
           </div>
         </div>
 
         {/* Main Grid Options */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-8 sm:mt-12">
           
           {/* Section: Klasemen */}
-          <div className="bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-slate-700/50 shadow-2xl relative overflow-hidden group">
+          <div className="bg-slate-900/60 backdrop-blur-xl rounded-3xl p-5 sm:p-6 md:p-8 border border-slate-700/50 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] group-hover:bg-amber-500/10 transition-colors duration-500"></div>
             
-            <div className="flex items-center gap-3 mb-8 relative z-10">
+            <div className="flex items-center gap-3 mb-6 sm:mb-8 relative z-10">
               <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400 border border-amber-500/30">
                 <IconTrophy />
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-wider">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-100 tracking-wider">
                 KLASEMEN <span className="text-amber-400">LOMBA</span>
               </h2>
             </div>
@@ -143,14 +143,14 @@ export default function LandingPage() {
           </div>
 
           {/* Section: Akses & Registrasi */}
-          <div className="bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-slate-700/50 shadow-2xl relative overflow-hidden group">
+          <div className="bg-slate-900/60 backdrop-blur-xl rounded-3xl p-5 sm:p-6 md:p-8 border border-slate-700/50 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-[40px] group-hover:bg-rose-500/10 transition-colors duration-500"></div>
 
-            <div className="flex items-center gap-3 mb-8 relative z-10">
+            <div className="flex items-center gap-3 mb-6 sm:mb-8 relative z-10">
               <div className="p-2 bg-slate-800 rounded-lg text-slate-300 border border-slate-700">
                 <IconUserPlus />
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-wider">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-100 tracking-wider">
                 AKSES <span className="text-rose-400">PORTAL</span>
               </h2>
             </div>
