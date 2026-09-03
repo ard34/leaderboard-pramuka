@@ -465,26 +465,26 @@ export default function DashboardJuri() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pl-[7.3%]" style={{
+      <div className="min-h-screen flex items-center justify-center pl-0 md:pl-[7.3%]" style={{
         backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%), url('/scout_event_live.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",
       }}>
-        <img src="/sidebar.png" className="fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
+        <img src="/sidebar.png" className="hidden md:block fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
         <div className="w-12 h-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen text-slate-200 font-sans pl-[7.3%] relative" style={{
-      backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%), url('/scout_event_live.png')",
+    <div className="min-h-screen text-slate-200 font-sans pl-0 md:pl-[7.3%] relative" style={{
+        backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%), url('/scout_event_live.png')",
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundAttachment: "fixed",
     }}>
-      <img src="/sidebar.png" className="fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
+      <img src="/sidebar.png" className="hidden md:block fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
       
       {!isOnline && (
         <div className="offline-banner">
@@ -509,7 +509,7 @@ export default function DashboardJuri() {
       {/* Navbar Banner LT-II Mekar Baru 2026 */}
       <nav className="sticky top-0 z-40 border-b border-amber-500/20 shadow-xl" style={{
         backgroundImage: "url('/header_banner.png')",
-        backgroundSize: "100% 100%",
+        backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
       }}>
