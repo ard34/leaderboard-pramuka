@@ -162,12 +162,8 @@ export default function DashboardAdmin() {
         .from("penilaian")
         .select("peserta_id, lomba_id, nilai"),
 
-      // Fetch all juri from profiles
-      supabase
-        .from("profiles")
-        .select("id, nama_lengkap, assigned_lomba_id, assigned_kategori, assigned_gender, is_verified, lomba(nama_lomba), no_wa")
-        .eq("role", "juri")
-        .order("nama_lengkap", { ascending: true }),
+      // Fetch all juri from profiles via API to get emails
+      fetch("/api/juri/get-all").then(res => res.json()).then(res => ({ data: res.data, error: res.error })),
 
       // Fetch scoring activity logs (Join tables dynamically)
       supabase
@@ -1288,11 +1284,17 @@ export default function DashboardAdmin() {
                             <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                             {j.nama_lengkap}
                           </div>
+                          {j.email && (
+                            <div className="text-[0.65rem] text-slate-400 mt-1 flex items-center gap-1 font-mono">
+                              <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                              {j.email}
+                            </div>
+                          )}
                           {j.no_wa && (
-                            <div className="text-[0.65rem] text-amber-400 mt-1 flex items-center gap-1 font-mono">
+                            <a href={`https://wa.me/${j.no_wa.replace(/^0/, '62')}?text=${encodeURIComponent('Halo Kak ' + j.nama_lengkap + ', akun juri Anda sudah diverifikasi. Silakan cek email di inbox atau spam.')}`} target="_blank" rel="noopener noreferrer" className="text-[0.65rem] text-amber-400 mt-0.5 flex items-center gap-1 font-mono hover:text-amber-300 hover:underline transition-colors w-fit">
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                               {j.no_wa}
-                            </div>
+                            </a>
                           )}
                         </td>
                         <td className="p-4 text-xs font-black">{j.assigned_kategori || "SEMUA"}</td>
