@@ -200,8 +200,13 @@ export default function DashboardAdmin() {
       setLombaList(filtered);
     }
 
+    if (pesertaRes.error) console.error("Error fetching peserta:", pesertaRes.error);
     if (pesertaRes.data) setPesertaList(pesertaRes.data);
+    
+    if (jurisRes.error) console.error("Error fetching juri:", jurisRes.error);
     if (jurisRes.data) setJuriList(jurisRes.data);
+    
+    if (logsRes.error) console.error("Error fetching logs:", logsRes.error);
     if (logsRes.data) setLogEntries(logsRes.data);
     if (informasiRes.data) {
       setInformasiList(informasiRes.data);
