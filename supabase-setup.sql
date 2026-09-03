@@ -57,6 +57,7 @@ CREATE TABLE public.peserta (
   berkas_pendaftaran TEXT DEFAULT '',
   berkas_biodata_peserta TEXT DEFAULT '',
   berkas_biodata_pembina TEXT DEFAULT '',
+  berkas_bukti_pembayaran TEXT DEFAULT '',
   
   -- Status Pengecekan Berkas (JSONB: {ketersediaan: bool, pendaftaran: bool, biodata_peserta: bool, biodata_pembina: bool})
   status_berkas JSONB DEFAULT '{"ketersediaan": false, "pendaftaran": false, "biodata_peserta": false, "biodata_pembina": false}'::jsonb,
@@ -70,6 +71,7 @@ CREATE TABLE public.peserta (
 -- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS berkas_pendaftaran TEXT DEFAULT '';
 -- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS berkas_biodata_peserta TEXT DEFAULT '';
 -- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS berkas_biodata_pembina TEXT DEFAULT '';
+-- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS berkas_bukti_pembayaran TEXT DEFAULT '';
 -- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS status_berkas JSONB DEFAULT '{"ketersediaan": false, "pendaftaran": false, "biodata_peserta": false, "biodata_pembina": false}'::jsonb;
 -- ALTER TABLE public.peserta ADD COLUMN IF NOT EXISTS catatan_berkas TEXT DEFAULT '';
 
