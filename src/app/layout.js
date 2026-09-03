@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Live Leaderboard — Lomba Pramuka 2026",
+  title: "Live Leaderboard — LT II",
   description:
-    "Sistem Penilaian & Live Leaderboard Lomba Pramuka dengan papan klasemen real-time gaya ASEAN Games.",
+    "Sistem Penilaian & Live Leaderboard Lomba Tingkat II (LT II) dengan papan klasemen real-time.",
 };
 
 export default function RootLayout({ children }) {
