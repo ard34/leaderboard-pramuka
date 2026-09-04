@@ -266,8 +266,9 @@ export default function CetakRekapPerJuri() {
             </div>
           </div>
         </div>
-        );
-      })}
-    </div>
+      </div>
+    );
+  })}
+  </div>
   );
 }
