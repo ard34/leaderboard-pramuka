@@ -190,20 +190,29 @@ export default function LandingPage() {
             &copy; {new Date().getFullYear()} KWARTIR RANTING MEKAR BARU. ALL RIGHTS RESERVED.
           </div>
           
-          {/* Watermark BBN Digital Forge */}
-          <div className="mt-4 flex flex-col items-center gap-2 opacity-80 hover:opacity-100 transition-opacity duration-300">
-            <span className="text-slate-400 text-xs font-semibold tracking-wider uppercase">Sistem Dibuat Oleh:</span>
-            <div className="flex items-center gap-2">
+          {/* Watermark BBN Digital Forge - Floating Corner */}
+          <div className="fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-50 flex flex-col items-end gap-1 opacity-30 hover:opacity-100 transition-all duration-500 bg-slate-900/40 hover:bg-slate-900/80 p-2.5 sm:p-3 rounded-xl backdrop-blur-md border border-slate-800/30 hover:border-slate-700/80 shadow-lg hover:shadow-cyan-900/20 group cursor-default">
+            <a href="https://www.bbndigitalforge.web.id/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 group/link">
               <img 
                 src="/bbn-logo.png" 
                 alt="BBN Digital Forge Logo" 
-                className="h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]" 
+                className="h-6 sm:h-7 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500 drop-shadow-md" 
                 onError={(e) => e.target.style.display = 'none'}
               />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 font-black text-sm md:text-base tracking-widest">
-                BBN DIGITAL FORGE
-              </span>
-            </div>
+              <div className="flex flex-col items-start justify-center">
+                <span className="text-[0.55rem] sm:text-[0.6rem] text-slate-500 group-hover:text-slate-400 font-bold tracking-widest uppercase leading-none mb-1 transition-colors">Sistem Dibuat Oleh:</span>
+                <span className="text-slate-600 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-cyan-300 font-black text-[0.7rem] sm:text-xs tracking-widest leading-none transition-all duration-300">
+                  BBN DIGITAL FORGE
+                </span>
+              </div>
+            </a>
+            <div className="w-full h-[1px] bg-slate-800/50 my-0.5 group-hover:bg-slate-700/50 transition-colors"></div>
+            <a href="https://wa.me/6283875644210" target="_blank" rel="noopener noreferrer" className="text-[0.6rem] sm:text-[0.65rem] font-mono text-slate-600 group-hover:text-emerald-400 hover:!text-emerald-300 flex items-center gap-1.5 transition-colors w-full justify-end">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              Hubungi WA: 083875644210
+            </a>
           </div>
         </div>
       </div>
