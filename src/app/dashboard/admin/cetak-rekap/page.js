@@ -43,31 +43,36 @@ export default function CetakRekapPerJuri() {
 
           for (const gen of genders) {
             // Filter penilaian for this combination
-            const filteredPenilaian = penilaianData.filter(
+            const baseFilteredPenilaian = penilaianData.filter(
               (p) => p.lomba?.id === lomba.id && p.peserta?.kategori === kat && p.peserta?.gender === gen
             );
 
-            if (filteredPenilaian.length > 0) {
-              const uniqueJuri = [...new Set(filteredPenilaian.map((p) => p.juri?.nama_lengkap))].filter(Boolean);
+            if (baseFilteredPenilaian.length > 0) {
+              const uniqueJuriNames = [...new Set(baseFilteredPenilaian.map((p) => p.juri?.nama_lengkap))].filter(Boolean);
 
-              const pesertaScores = filteredPenilaian.map((p) => {
-                const pData = pesertaData.find((pes) => pes.id === p.peserta?.id);
-                return {
-                  ...pData,
-                  nilai_lomba: p.nilai, // Specific score for this Lomba
-                };
-              }).filter((p) => p.id); // Remove if pData was not found
+              // Buat grup untuk SETIAP juri
+              for (const juriName of uniqueJuriNames) {
+                const juriPenilaian = baseFilteredPenilaian.filter(p => p.juri?.nama_lengkap === juriName);
 
-              // Sort by specific score descending
-              pesertaScores.sort((a, b) => b.nilai_lomba - a.nilai_lomba);
+                const pesertaScores = juriPenilaian.map((p) => {
+                  const pData = pesertaData.find((pes) => pes.id === p.peserta?.id);
+                  return {
+                    ...pData,
+                    nilai_lomba: p.nilai, // Specific score for this Lomba given by this Juri
+                  };
+                }).filter((p) => p.id); // Remove if pData was not found
 
-              groups.push({
-                lomba,
-                kategori: kat,
-                gender: gen,
-                peserta: pesertaScores,
-                juri: uniqueJuri,
-              });
+                // Sort by specific score descending
+                pesertaScores.sort((a, b) => b.nilai_lomba - a.nilai_lomba);
+
+                groups.push({
+                  lomba,
+                  kategori: kat,
+                  gender: gen,
+                  peserta: pesertaScores,
+                  juriName: juriName,
+                });
+              }
             }
           }
         }
@@ -107,16 +112,16 @@ export default function CetakRekapPerJuri() {
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-2xl flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          CETAK SEKARANG (CTRL+P)
+          DOWNLOAD PDF LENGKAP (CTRL+P)
         </button>
       </div>
 
       {groupedData.map((group, index) => (
         <div 
-          key={`${group.lomba.id}-${group.kategori}-${group.gender}`}
-          className="bg-white w-full max-w-[210mm] mx-auto shadow-2xl mb-8 print:shadow-none print:mb-0 p-[15mm] relative overflow-hidden font-serif text-[12pt] break-after-page"
+          key={`${group.lomba.id}-${group.kategori}-${group.gender}-${group.juriName}`}
+          className="bg-white w-full max-w-[210mm] mx-auto shadow-2xl mb-8 print:shadow-none print:mb-0 p-[15mm] relative overflow-hidden font-serif text-[12pt] break-after-page print:break-inside-avoid print:page-break-after-always"
         >
           {/* KOP SURAT */}
           <div className="flex items-center justify-between pb-3 mb-6" style={{ borderBottom: "5px double black" }}>
@@ -188,7 +193,7 @@ export default function CetakRekapPerJuri() {
               <p className="mb-20">Cabang {group.lomba.nama_lomba}</p>
               
               <div className="w-64 border-b border-black font-bold text-center pb-1">
-                {group.juri.length > 0 ? group.juri.join(" & ") : "( _____________________ )"}
+                {group.juriName || "( _____________________ )"}
               </div>
             </div>
           </div>
