@@ -16,10 +16,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "8 Orang/Regu. Menyanyikan lagu Hymne Pramuka dan Mars Kabupaten Tangerang. Pakaian Seragam Pramuka Lengkap.",
     },
     rubrik: [
-      { id: "vokal", name: "Vokal", min: 5, max: 40, weight: 40, hint: "Kejelasan artikulasi, intonasi, & nada (5-40)" },
-      { id: "teknik", name: "Teknik Menyanyi", min: 5, max: 20, weight: 20, hint: "Pernapasan, tempo, & ritme (5-20)" },
-      { id: "ekspresi", name: "Pembawaan / Ekspresi", min: 5, max: 20, weight: 20, hint: "Penjiwaan & pendalaman lagu (5-20)" },
-      { id: "penampilan", name: "Penampilan", min: 5, max: 20, weight: 20, hint: "Kerapihan seragam & keserasian (5-20)" },
+      { id: "vokal", name: "Vokal (5-40)", min: 5, max: 40, weight: 40, hint: "Kejelasan artikulasi, intonasi" },
+      { id: "teknik", name: "Teknik (5-20)", min: 5, max: 20, weight: 20, hint: "Pernapasan, tempo, & ritme" },
+      { id: "ekspresi", name: "Ekspresi (5-20)", min: 5, max: 20, weight: 20, hint: "Penjiwaan & pendalaman lagu" },
+      { id: "penampilan", name: "Penampilan (5-20)", min: 5, max: 20, weight: 20, hint: "Kerapihan seragam & keserasian" },
     ],
   },
   {
@@ -31,11 +31,11 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "Menampilkan Tarian Nusantara Propinsi. Menyiapkan & mengonfirmasi file musik saat registrasi.",
     },
     rubrik: [
-      { id: "wiraga", name: "Wiraga (Raga/Gerak)", min: 5, max: 20, weight: 20, hint: "Keluwesan & ketepatan gerak tari (5-20)" },
-      { id: "wirama", name: "Wirama (Irama/Musik)", min: 5, max: 20, weight: 20, hint: "Kesesuaian gerak dengan tempo irama (5-20)" },
-      { id: "wirasa", name: "Wirasa (Rasa/Penjiwaan)", min: 5, max: 20, weight: 20, hint: "Ekspresi & penjiwaan karakter (5-20)" },
-      { id: "wirupa", name: "Wirupa (Rupa/Busana)", min: 5, max: 20, weight: 20, hint: "Kesesuaian kostum & rias (5-20)" },
-      { id: "kreativitas", name: "Kreativitas Koreografi", min: 5, max: 20, weight: 20, hint: "Keunikan Pola lantai & variasi (5-20)" },
+      { id: "wiraga", name: "Wiraga (5-20)", min: 5, max: 20, weight: 20, hint: "Keluwesan & ketepatan gerak tari" },
+      { id: "wirama", name: "Wirama (5-20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian gerak dengan tempo irama" },
+      { id: "wirasa", name: "Wirasa (5-20)", min: 5, max: 20, weight: 20, hint: "Ekspresi & penjiwaan karakter" },
+      { id: "wirupa", name: "Wirupa (5-20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian kostum & rias" },
+      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Keunikan Pola lantai & variasi" },
     ],
   },
   {
@@ -47,10 +47,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "4 orang/Regu. Membuat Pionering dari 3 model pilihan panitia (diumumkan saat TM). Waktu maksimal 30 Menit.",
     },
     rubrik: [
-      { id: "simpul", name: "Ketepatan Simpul & Ikatan", min: 5, max: 25, weight: 25, hint: "Kebenaran ikatan pangkal, jangkar, silang (5-25)" },
-      { id: "kekuatan", name: "Kekuatan Konstruksi", min: 5, max: 30, weight: 30, hint: "Kekokohan & kestabilan bangunan (5-30)" },
-      { id: "kerapihan", name: "Kerapihan Sisa Tali", min: 5, max: 25, weight: 25, hint: "Kerapihan gulungan & simpul akhir (5-25)" },
-      { id: "kreativitas", name: "Nilai Kreativitas / Bentuk", min: 5, max: 20, weight: 20, hint: "Kreativitas & keserasian proporsi (5-20)" },
+      { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Kebenaran ikatan pangkal, jangkar" },
+      { id: "kekuatan", name: "Kekuatan (5-30)", min: 5, max: 30, weight: 30, hint: "Kekokohan & kestabilan bangunan" },
+      { id: "kerapihan", name: "Kerapihan (5-25)", min: 5, max: 25, weight: 25, hint: "Kerapihan gulungan & simpul akhir" },
+      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Kreativitas & keserasian proporsi" },
     ],
   },
   {
@@ -62,10 +62,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "5 orang/Regu (1 korban, 2 penolong, 2 pembuat tandu). Penanganan korban + Tandu darurat + Laporan kejadian.",
     },
     rubrik: [
-      { id: "simpul", name: "Ketepatan Simpul & Ikatan Tandu", min: 5, max: 25, weight: 25, hint: "Ketepatan ikatan mitela & balutan (5-25)" },
-      { id: "kekuatan", name: "Kekuatan Tandu / Penanganan", min: 5, max: 20, weight: 20, hint: "Kekuatan fisik tandu & ketenangan (5-20)" },
-      { id: "kerapihan", name: "Kerapihan Balutan & Pemindahan", min: 5, max: 25, weight: 25, hint: "Kerapihan & kebersihan balutan (5-25)" },
-      { id: "pembidaian", name: "Pembidaian & Penanganan Korban", min: 5, max: 30, weight: 30, hint: "Ketepatan posisi bidai patah tulang (5-30)" },
+      { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Ketepatan ikatan mitela & balutan" },
+      { id: "kekuatan", name: "Kekuatan (5-20)", min: 5, max: 20, weight: 20, hint: "Kekuatan fisik tandu & ketenangan" },
+      { id: "kerapihan", name: "Kerapihan (5-25)", min: 5, max: 25, weight: 25, hint: "Kerapihan & kebersihan balutan" },
+      { id: "pembidaian", name: "Pembidaian (5-30)", min: 5, max: 30, weight: 30, hint: "Ketepatan posisi bidai patah tulang" },
     ],
   },
   {
@@ -77,8 +77,8 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "2 orang/Regu. Memecahkan 3 soal sandi (Kimia, A-Z, Jam). Waktu maksimal 15 Menit.",
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Kebenaran terjemahan sandi (0-70)" },
-      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Bonus kecepatan penyelesaian (0-30)" },
+      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Kebenaran terjemahan sandi" },
+      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Bonus kecepatan penyelesaian" },
     ],
   },
   {
@@ -90,8 +90,8 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "2 orang/Regu. Menggunakan Peta & Kartu Kontrol dari Panitia untuk mencari titik kontrol/sudut.",
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban & Titik Kontrol", min: 0, max: 70, weight: 70, hint: "Akurasi plot sudut azimuth & lokasi (0-70)" },
-      { id: "kecepatan", name: "Kecepatan Waktu Tiba", min: 0, max: 30, weight: 30, hint: "Waktu tempuh di lapangan (0-30)" },
+      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Akurasi plot sudut azimuth" },
+      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Waktu tempuh di lapangan" },
     ],
   },
   {
@@ -103,8 +103,8 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "2 orang/Regu. Memperkirakan ukuran LEBAR benda dari panitia. Toleransi 10 cm. Waktu 15 Menit.",
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban (Rumus & Hasil)", min: 0, max: 70, weight: 70, hint: "Kebenaran perhitungan rumus & toleransi 10cm (0-70)" },
-      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Efisiensi pengerjaan (0-30)" },
+      { id: "ketepatan", name: "Ketepatan (Toleransi 10cm)", min: 0, max: 70, weight: 70, hint: "Kebenaran perhitungan rumus" },
+      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Efisiensi pengerjaan" },
     ],
   },
   {
@@ -116,8 +116,8 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "2 orang/Regu. Menjawab soal semaphore jumlah 15 kotak (huruf & angka).",
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban Huruf/Angka", min: 0, max: 70, weight: 70, hint: "Jumlah huruf/angka yang benar (0-70)" },
-      { id: "kecepatan", name: "Kecepatan Waktu Respon", min: 0, max: 30, weight: 30, hint: "Kecepatan waktu penerimaan (0-30)" },
+      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Jumlah huruf/angka benar" },
+      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Waktu penyelesaian" },
     ],
   },
   {
@@ -129,8 +129,8 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "2 orang/Regu. Menjawab soal sandi Morse bunyi pluit jumlah 25 kotak.",
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban Kode Morse", min: 0, max: 70, weight: 70, hint: "Kebenaran terjemahan bunyi pluit (0-70)" },
-      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Waktu penyerahan lembar jawab (0-30)" },
+      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Kode Morse benar" },
+      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Waktu penyerahan" },
     ],
   },
   {
@@ -142,8 +142,9 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "2 orang/Regu. Mengamati KIM Penglihat 25 Benda & mengenali obat tradisional.",
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban Nama Benda", min: 0, max: 70, weight: 70, hint: "Jumlah benda & obat tradisional yang benar (0-70)" },
-      { id: "presentasi", name: "Ketepatan Presentasi / Penjelasan", min: 0, max: 30, weight: 30, hint: "Kelancaran & penjelasan manfaat obat (0-30)" },
+      { id: "ketepatan_kim", name: "Ketepatan KIM", min: 0, max: 40, weight: 40, hint: "Tebak Benda KIM" },
+      { id: "presentasi", name: "Ketepatan Presentasi", min: 0, max: 30, weight: 30, hint: "Kelancaran presentasi" },
+      { id: "obat_tradisional", name: "Obat Tradisional", min: 0, max: 30, weight: 30, hint: "Mengenali Obat Tradisional" },
     ],
   },
   {
@@ -155,10 +156,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "7 orang/Regu. Menggunakan kostum yang telah dibuat di pangkalan masing-masing.",
     },
     rubrik: [
-      { id: "bahan", name: "Komposisi Bahan & Daur Ulang", min: 5, max: 30, weight: 30, hint: "Kreativitas pemanfaatan bahan daur ulang/alam (5-30)" },
-      { id: "kreativitas", name: "Kreativitas Desain Kostum", min: 5, max: 30, weight: 30, hint: "Keunikan & estetika bentuk kostum (5-30)" },
-      { id: "kesulitan", name: "Tingkat Kesulitan Pembuatan", min: 5, max: 20, weight: 20, hint: "Kerumitan detail & kerapihan karya (5-20)" },
-      { id: "kerapihan", name: "Kerapihan & Kekompakan Barisan", min: 5, max: 20, weight: 20, hint: "Peragaan & kekompakan saat pawai (5-20)" },
+      { id: "bahan", name: "Komposisi Bahan (5-30)", min: 5, max: 30, weight: 30, hint: "Kreativitas pemanfaatan bahan" },
+      { id: "kreativitas", name: "Kreativitas (5-30)", min: 5, max: 30, weight: 30, hint: "Keunikan & estetika bentuk" },
+      { id: "kesulitan", name: "Kesulitan (5-20)", min: 5, max: 20, weight: 20, hint: "Kerumitan detail" },
+      { id: "kerapihan", name: "Kerapihan (5-20)", min: 5, max: 20, weight: 20, hint: "Peragaan & kekompakan" },
     ],
   },
   {
@@ -170,9 +171,8 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
     },
     rubrik: [
-      { id: "kelengkapan", name: "Kelengkapan Barang Ransel", min: 0, max: 40, weight: 40, hint: "Kelengkapan perlengkapan wajib perorangan/regu (0-40)" },
-      { id: "kerapihan", name: "Kerapihan & Kepadatan Packing", min: 0, max: 30, weight: 30, hint: "Kepadatan bentuk ransel & kerapihan lipatan (0-30)" },
-      { id: "keseimbangan", name: "Keseimbangan & Proteksi Kedap Air", min: 0, max: 30, weight: 30, hint: "Keseimbangan beban kiri-kanan & kantong plastik (0-30)" },
+      { id: "kerapihan", name: "Kerapihan", min: 0, max: 60, weight: 60, hint: "Kerapihan Packing" },
+      { id: "kecepatan", name: "Ketepatan Waktu", min: 0, max: 40, weight: 40, hint: "Kecepatan & Ketepatan Waktu" },
     ],
   },
   {
@@ -184,8 +184,8 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "Dikumpulkan maks 4 hari sebelum acara. Menggunakan MAP MERAH. Berisi data anggota, notulen, logbook, iuran, SK LT-I.",
     },
     rubrik: [
-      { id: "kelengkapan", name: "Kelengkapan Berkas & Map", min: 0, max: 60, weight: 60, hint: "Kesesuaian warna map & kelengkapan isi (0-60)" },
-      { id: "ketepatan", name: "Ketepatan & Kerapihan Pembukuan", min: 0, max: 40, weight: 40, hint: "Kerapihan notulen, logbook, & iuran (0-40)" },
+      { id: "ketepatan", name: "Ketepatan", min: 0, max: 50, weight: 50, hint: "Ketepatan Berkas" },
+      { id: "kelengkapan", name: "Kelengkapan", min: 0, max: 50, weight: 50, hint: "Kelengkapan Berkas" },
     ],
   },
   {
@@ -197,9 +197,9 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "Musyawarah/Diskusi Penggalang mengenai kepemimpinan regu, evaluasi kegiatan, dan penyampaian gagasan.",
     },
     rubrik: [
-      { id: "partisipasi", name: "Keaktifan & Partisipasi Regu", min: 0, max: 40, weight: 40, hint: "Keaktifan anggota dalam diskusi (0-40)" },
-      { id: "etika", name: "Etika & Ketaatan Tata Tertib", min: 0, max: 30, weight: 30, hint: "Sikap saling menghargai & sopan santun (0-30)" },
-      { id: "gagasan", name: "Bobot Gagasan & Solusi", min: 0, max: 30, weight: 30, hint: "Kualitas usulan & pemecahan masalah (0-30)" },
+      { id: "argumen", name: "Kualitas Argumen", min: 0, max: 40, weight: 40, hint: "Bobot usulan" },
+      { id: "keaktifan", name: "Keaktifan", min: 0, max: 30, weight: 30, hint: "Partisipasi" },
+      { id: "etika", name: "Sikap & Etika", min: 0, max: 30, weight: 30, hint: "Sikap saat forum" },
     ],
   },
   {
@@ -211,10 +211,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "2 orang/Regu. Memasak Masakan Nusantara Lengkap (Nasi, Lauk Pauk, Sayur). DILARANG BUMBU INSTAN (Hanya sasa, garam, royco/masako).",
     },
     rubrik: [
-      { id: "rasa", name: "Cita Rasa Kuliner", min: 5, max: 30, weight: 30, hint: "Kelezatan, keharmonisan bumbu, & tingkat kematangan (5-30)" },
-      { id: "penampilan", name: "Penampilan & Tekstur Platting", min: 5, max: 30, weight: 30, hint: "Keindahan penyajian, warna, & kerapihan piring (5-30)" },
-      { id: "kekompakan", name: "Kekompakan & Kebersihan Tim", min: 5, max: 20, weight: 20, hint: "Kerjasama, kebersihan area masak, & Higienitas (5-20)" },
-      { id: "kreativitas", name: "Kreativitas Resep & Bahan", min: 5, max: 20, weight: 20, hint: "Inovasi kreasi menu Nusantara (5-20)" },
+      { id: "rasa", name: "Cita Rasa", min: 5, max: 30, weight: 30, hint: "Kelezatan" },
+      { id: "penampilan", name: "Penampilan/Tekstur", min: 5, max: 30, weight: 30, hint: "Platting & Tekstur" },
+      { id: "kekompakan", name: "Kekompakan Tim", min: 5, max: 20, weight: 20, hint: "Kerjasama Tim" },
+      { id: "kreativitas", name: "Kreativitas", min: 5, max: 20, weight: 20, hint: "Inovasi Masakan" },
     ],
   },
 ];

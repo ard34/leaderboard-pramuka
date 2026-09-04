@@ -214,10 +214,11 @@ export default function CetakRekapPerJuri() {
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border border-black p-2 text-center w-12 font-bold">No</th>
-                    <th className="border border-black p-2 text-center font-bold">Nama Regu / Pangkalan</th>
+                    <th className="border border-black p-2 text-center font-bold">Nama Regu</th>
+                    <th className="border border-black p-2 text-center font-bold">Pangkalan</th>
                     {rubriks.map(r => (
-                      <th key={r.id} className="border border-black p-2 text-center font-bold w-20">
-                        {r.name} ({r.min}-{r.max})
+                      <th key={r.id} className="border border-black p-2 text-center font-bold w-24">
+                        {r.name}
                       </th>
                     ))}
                     <th className="border border-black p-2 text-center font-bold w-24">Total Nilai</th>
@@ -227,9 +228,11 @@ export default function CetakRekapPerJuri() {
                   {group.peserta.map((peserta, idx) => (
                     <tr key={peserta.id}>
                       <td className="border border-black p-2 text-center">{idx + 1}</td>
-                      <td className="border border-black p-2">
-                        <div className="font-bold">{peserta.nama_regu}</div>
-                        <div className="text-[10pt] text-gray-700">{peserta.pangkalan}</div>
+                      <td className="border border-black p-2 font-bold">
+                        {peserta.nama_regu}
+                      </td>
+                      <td className="border border-black p-2 text-[10pt] text-gray-700">
+                        {peserta.pangkalan}
                       </td>
                       {rubriks.map(r => (
                         <td key={r.id} className="border border-black p-2 text-center">
