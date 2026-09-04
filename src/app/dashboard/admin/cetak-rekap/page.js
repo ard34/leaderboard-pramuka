@@ -7,6 +7,7 @@ import { OFFICIAL_LOMBA_DEFINITIONS } from "@/app/dashboard/juri/page";
 export default function CetakRekapPerJuri() {
   const [loading, setLoading] = useState(true);
   const [groupedData, setGroupedData] = useState([]);
+  const [selectedPrintIndex, setSelectedPrintIndex] = useState(null);
 
   useEffect(() => {
     fetchRekapData();
@@ -106,24 +107,53 @@ export default function CetakRekapPerJuri() {
 
   return (
     <div className="bg-slate-200 min-h-screen text-black">
-      {/* Floating Action Button for Print */}
-      <div className="fixed top-6 right-6 no-print z-50">
+      {/* Floating Action Button for Print All */}
+      <div className="fixed top-6 right-6 no-print z-50 flex flex-col gap-3">
         <button
-          onClick={() => window.print()}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-2xl flex items-center gap-2"
+          onClick={() => {
+            setSelectedPrintIndex(null);
+            setTimeout(() => window.print(), 100);
+          }}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-2xl flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          DOWNLOAD PDF LENGKAP (CTRL+P)
+          CETAK SEMUA JURI SEKALIGUS
         </button>
       </div>
 
-      {groupedData.map((group, index) => (
-        <div 
-          key={`${group.lomba.id}-${group.kategori}-${group.gender}-${group.juriName}`}
-          className="bg-white w-full max-w-[210mm] mx-auto shadow-2xl mb-8 print:shadow-none print:mb-0 p-[15mm] relative overflow-hidden font-serif text-[12pt] break-after-page print:break-inside-avoid print:page-break-after-always"
-        >
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          .no-print { display: none !important; }
+          .print-hidden { display: none !important; }
+        }
+      `}} />
+
+      {groupedData.map((group, index) => {
+        const isHiddenDuringPrint = selectedPrintIndex !== null && selectedPrintIndex !== index;
+        return (
+          <div key={`${group.lomba.id}-${group.kategori}-${group.gender}-${group.juriName}`} className="mb-8 print:mb-0 relative">
+            
+            {/* Tombol Cetak Individual */}
+            <div className="text-center mb-4 no-print">
+              <button
+                onClick={() => {
+                  setSelectedPrintIndex(index);
+                  setTimeout(() => window.print(), 100);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-md inline-flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                CETAK JURI INI SAJA ({group.juriName})
+              </button>
+            </div>
+
+            <div 
+              className={`bg-white w-full max-w-[210mm] mx-auto shadow-2xl p-[15mm] overflow-hidden font-serif text-[12pt] break-after-page print:shadow-none print:break-inside-avoid print:page-break-after-always ${isHiddenDuringPrint ? 'print-hidden' : ''}`}
+            >
           {/* KOP SURAT */}
           <div className="flex items-center justify-between pb-3 mb-6" style={{ borderBottom: "5px double black" }}>
             <div className="flex-shrink-0 ml-4">
@@ -236,7 +266,8 @@ export default function CetakRekapPerJuri() {
             </div>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
