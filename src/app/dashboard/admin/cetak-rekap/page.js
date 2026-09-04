@@ -36,6 +36,9 @@ export default function CetakRekapPerJuri() {
       let groups = [];
       const levels = ["SD", "SMP"];
       const genders = ["Laki-laki", "Perempuan"];
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetJuriName = urlParams.get("juriName");
 
       // Generate groups
       for (const lomba of lombaData) {
@@ -49,12 +52,14 @@ export default function CetakRekapPerJuri() {
               (p) => p.lomba?.id === lomba.id && p.peserta?.kategori === kat && p.peserta?.gender === gen
             );
 
-            if (baseFilteredPenilaian.length > 0) {
-              const uniqueJuriNames = [...new Set(baseFilteredPenilaian.map((p) => p.juri?.nama_lengkap))].filter(Boolean);
+              if (baseFilteredPenilaian.length > 0) {
+                const uniqueJuriNames = [...new Set(baseFilteredPenilaian.map((p) => p.juri?.nama_lengkap))].filter(Boolean);
 
-              // Buat grup untuk SETIAP juri
-              for (const juriName of uniqueJuriNames) {
-                const juriPenilaian = baseFilteredPenilaian.filter(p => p.juri?.nama_lengkap === juriName);
+                // Buat grup untuk SETIAP juri
+                for (const juriName of uniqueJuriNames) {
+                  if (targetJuriName && juriName !== targetJuriName) continue; // Filter untuk Cetak Individual
+
+                  const juriPenilaian = baseFilteredPenilaian.filter(p => p.juri?.nama_lengkap === juriName);
 
                 const pesertaScores = juriPenilaian.map((p) => {
                   const pData = pesertaData.find((pes) => pes.id === p.peserta?.id);

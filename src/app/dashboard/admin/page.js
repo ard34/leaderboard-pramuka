@@ -1275,6 +1275,7 @@ export default function DashboardAdmin() {
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Pos Lomba Ditugaskan</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Gender Ditugaskan</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Status</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Cetak Hasil</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
                     </tr>
                   </thead>
@@ -1321,6 +1322,21 @@ export default function DashboardAdmin() {
                             <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
                               ⏳ Menunggu
                             </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-xs">
+                          {j.is_verified ? (
+                            <button
+                              onClick={() => window.open(`/dashboard/admin/cetak-rekap?juriName=${encodeURIComponent(j.nama_lengkap)}`, '_blank')}
+                              className="text-xs font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md transition-all whitespace-nowrap"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                              </svg>
+                              Cetak
+                            </button>
+                          ) : (
+                            <span className="text-[0.6rem] text-slate-500 italic">Belum Verif</span>
                           )}
                         </td>
                         <td className="p-4 text-right">
