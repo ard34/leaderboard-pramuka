@@ -1188,7 +1188,7 @@ input[type="number"] {
   position: sticky;
   left: 0;
   z-index: 25;
-  background: rgba(11, 19, 41, 0.2);
+  background: #0b1329 !important;
   width: 44px !important;
   min-width: 40px !important;
   max-width: 44px !important;
@@ -1199,7 +1199,7 @@ input[type="number"] {
   position: sticky;
   left: 44px;
   z-index: 25;
-  background: rgba(11, 19, 41, 0.2);
+  background: #0b1329 !important;
   width: 105px !important;
   min-width: 95px !important;
   max-width: 105px !important;
@@ -1211,24 +1211,24 @@ input[type="number"] {
   position: sticky;
   right: 0;
   z-index: 25;
-  background: rgba(11, 19, 41, 0.2);
-  width: 62px !important;
-  min-width: 55px !important;
-  max-width: 62px !important;
+  background: #0b1329 !important;
+  width: 66px !important;
+  min-width: 66px !important;
+  max-width: 66px !important;
 }
 
 /* Row Zebra Color Sticky Match */
 .scoreboard-table thead th.sticky-col-rank,
 .scoreboard-table thead th.sticky-col-name,
 .scoreboard-table thead th.sticky-col-total {
-  background: rgba(10, 22, 40, 0.35) !important;
+  background: #091223 !important;
   z-index: 28;
 }
 
 .scoreboard-row:nth-child(even) td.sticky-col-rank,
 .scoreboard-row:nth-child(even) td.sticky-col-name,
 .scoreboard-row:nth-child(even) td.sticky-col-total {
-  background: rgba(13, 23, 51, 0.25);
+  background: #0d1733 !important;
 }
 
 /* Column locking helper classes for uniform head-body alignment */
@@ -1247,15 +1247,15 @@ input[type="number"] {
 }
 
 .col-total {
-  width: 62px !important;
-  min-width: 55px !important;
-  max-width: 62px !important;
+  width: 66px !important;
+  min-width: 66px !important;
+  max-width: 66px !important;
 }
 
 .col-lomba {
-  width: 32px !important;
-  min-width: 28px !important;
-  max-width: 34px !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
   text-align: center !important;
   padding: 4px 1px !important;
 }
@@ -1338,11 +1338,11 @@ input[type="number"] {
 }
 
 .scoreboard-table {
-  width: 100%;
+  width: max-content;
   border-collapse: separate;
   border-spacing: 0 2px;
-  min-width: 1100px; /* Preserve horizontal scroll on mobile */
-  table-layout: auto;
+  min-width: 100%;
+  table-layout: fixed;
 }
 
 .scoreboard-table thead th {
@@ -1387,8 +1387,8 @@ input[type="number"] {
 }
 
 .sc-th-total {
-  width: 62px;
-  min-width: 55px;
+  width: 66px;
+  min-width: 66px;
   color: #fbbf24 !important;
   font-weight: 800 !important;
   font-size: 0.48rem !important;

@@ -20,21 +20,21 @@ const ROTATION_INTERVAL_MS = 3 * 60 * 1000; // 3 menit (180 detik)
 
 // Official 4 Groups of Competition Activities (Kelompok Kegiatan Lomba LT-II 2026)
 const OFFICIAL_GROUP_ORDER = {
-  HMN: { order: 1, group: "G1", groupName: "Agama & Patriotisme" },
-  TSB: { order: 2, group: "G1", groupName: "Agama & Patriotisme" },
-  PNR: { order: 3, group: "G2", groupName: "Kepramukaan" },
-  PGD: { order: 4, group: "G2", groupName: "Kepramukaan" },
-  SND: { order: 5, group: "G2", groupName: "Kepramukaan" },
-  NAV: { order: 6, group: "G2", groupName: "Kepramukaan" },
-  TKS: { order: 7, group: "G2", groupName: "Kepramukaan" },
-  SMP: { order: 8, group: "G2", groupName: "Kepramukaan" },
-  MRS: { order: 9, group: "G2", groupName: "Kepramukaan" },
-  KIM: { order: 10, group: "G2", groupName: "Kepramukaan" },
-  KRN: { order: 11, group: "G2", groupName: "Kepramukaan" },
-  PCK: { order: 12, group: "G2", groupName: "Kepramukaan" },
-  ADM: { order: 13, group: "G3", groupName: "Manajemen Regu" },
-  FRP: { order: 14, group: "G3", groupName: "Manajemen Regu" },
-  MSK: { order: 15, group: "G4", groupName: "Teknologi & Kuliner" },
+  HMN: { order: 1, group: "G1", groupName: "SPIRITUAL" },
+  TSB: { order: 2, group: "G1", groupName: "SPIRITUAL" },
+  PNR: { order: 3, group: "G2", groupName: "KEPRAMUKAAN" },
+  PGD: { order: 4, group: "G2", groupName: "KEPRAMUKAAN" },
+  SND: { order: 5, group: "G2", groupName: "KEPRAMUKAAN" },
+  NAV: { order: 6, group: "G2", groupName: "KEPRAMUKAAN" },
+  TKS: { order: 7, group: "G2", groupName: "KEPRAMUKAAN" },
+  SMP: { order: 8, group: "G2", groupName: "KEPRAMUKAAN" },
+  MRS: { order: 9, group: "G2", groupName: "KEPRAMUKAAN" },
+  KIM: { order: 10, group: "G2", groupName: "KEPRAMUKAAN" },
+  KRN: { order: 11, group: "G2", groupName: "KEPRAMUKAAN" },
+  PCK: { order: 12, group: "G2", groupName: "KEPRAMUKAAN" },
+  ADM: { order: 13, group: "G3", groupName: "MANAJEMEN" },
+  FRP: { order: 14, group: "G3", groupName: "MANAJEMEN" },
+  MSK: { order: 15, group: "G4", groupName: "TEKNOLOGI" },
 };
 
 
