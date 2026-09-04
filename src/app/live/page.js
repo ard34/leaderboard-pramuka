@@ -703,30 +703,6 @@ export default function Home() {
               <div className="scoreboard-table-scroll no-scrollbar">
                 <table className="scoreboard-table">
                   <thead>
-                    <tr className="sc-th-group-row">
-                      <th colSpan={2} className="sticky-col-rank sticky-col-name bg-slate-950/90 text-[0.42rem] font-black text-slate-400 uppercase tracking-widest border-b border-cyan-500/20 text-center py-1">
-                        INFO REGU
-                      </th>
-                      {groupedLombaHeaders.map((g, idx) => {
-                        const colorClass =
-                          g.group === "G1" ? "bg-amber-950/60 text-amber-300 border-amber-500/30" :
-                          g.group === "G2" ? "bg-cyan-950/60 text-cyan-300 border-cyan-500/30" :
-                          g.group === "G3" ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30" :
-                          "bg-purple-950/60 text-purple-300 border-purple-500/30";
-                        return (
-                          <th
-                            key={idx}
-                            colSpan={g.span}
-                            className={`${colorClass} text-[0.42rem] font-extrabold uppercase border-b text-center tracking-wider py-1 select-none`}
-                          >
-                            {g.name}
-                          </th>
-                        );
-                      })}
-                      <th className="sticky-col-total bg-slate-950/90 text-[0.42rem] font-black text-amber-400 uppercase tracking-widest border-b border-cyan-500/20 text-center py-1">
-                        TOTAL
-                      </th>
-                    </tr>
                     <tr>
                       <th className="sc-th-rank sticky-col-rank col-rank">
                         {showWinners ? "PERINGKAT" : "NO. URUT"}
