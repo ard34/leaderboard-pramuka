@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { OFFICIAL_LOMBA_DEFINITIONS } from "@/app/dashboard/juri/page";
 
 export default function CetakRekapPerJuri() {
   const [loading, setLoading] = useState(true);
@@ -151,36 +152,73 @@ export default function CetakRekapPerJuri() {
 
           {/* JUDUL */}
           <div className="text-center mb-6">
-            <h3 className="font-bold text-[14pt] underline mb-1 uppercase">REKAPITULASI PENILAIAN LOMBA</h3>
-            <p className="text-[12pt] font-bold uppercase">CABANG LOMBA: {group.lomba.nama_lomba}</p>
-            <p className="text-[11pt] font-semibold uppercase mt-1">
-              TINGKAT: {group.kategori} | GOLONGAN: {group.gender === "Laki-laki" ? "PUTRA" : "PUTRI"}
-            </p>
+            <h3 className="font-bold text-[14pt] mb-1 uppercase">FORMAT REKAPITULASI PENILAIAN</h3>
+            <h3 className="font-bold text-[14pt] mb-1 uppercase">LOMBA LT-II 2026</h3>
+            <h3 className="font-bold text-[14pt] mb-6 uppercase">KWARTIR RANTING MEKAR BARU</h3>
+            
+            {(() => {
+              const def = OFFICIAL_LOMBA_DEFINITIONS.find(d => d.nama_lomba.toLowerCase() === group.lomba.nama_lomba.toLowerCase() || group.lomba.nama_lomba.toLowerCase().includes(d.nama_lomba.toLowerCase()));
+              return (
+                <div className="text-left">
+                  <h4 className="font-bold text-[13pt] mb-2">{def ? `Kelompok ${def.kategori_kelompok}` : ""}</h4>
+                  <p className="font-bold text-[12pt] mb-2">
+                    Lomba {group.lomba.nama_lomba} (Tingkat: {group.kategori} {group.gender === "Laki-laki" ? "PUTRA" : "PUTRI"})
+                  </p>
+                </div>
+              );
+            })()}
           </div>
 
           {/* TABEL NILAI */}
-          <table className="w-full border-collapse border border-black mb-8">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-black p-2 text-center w-12">Peringkat</th>
-                <th className="border border-black p-2 text-center w-16">No. Dada</th>
-                <th className="border border-black p-2 text-left">Nama Regu</th>
-                <th className="border border-black p-2 text-left">Pangkalan / Sekolah</th>
-                <th className="border border-black p-2 text-center w-24">Nilai Lomba</th>
-              </tr>
-            </thead>
-            <tbody>
-              {group.peserta.map((peserta, idx) => (
-                <tr key={peserta.id}>
-                  <td className="border border-black p-2 text-center font-bold">{idx + 1}</td>
-                  <td className="border border-black p-2 text-center font-mono">{String(peserta.nomor_dada).padStart(3, "0")}</td>
-                  <td className="border border-black p-2 font-semibold">{peserta.nama_regu}</td>
-                  <td className="border border-black p-2">{peserta.pangkalan}</td>
-                  <td className="border border-black p-2 text-center font-bold text-[13pt]">{peserta.nilai_lomba}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {(() => {
+            const def = OFFICIAL_LOMBA_DEFINITIONS.find(d => d.nama_lomba.toLowerCase() === group.lomba.nama_lomba.toLowerCase() || group.lomba.nama_lomba.toLowerCase().includes(d.nama_lomba.toLowerCase()));
+            const rubriks = def ? def.rubrik : [];
+            
+            return (
+              <table className="w-full border-collapse border border-black mb-8 text-[11pt]">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-black p-2 text-center w-12 font-bold">No</th>
+                    <th className="border border-black p-2 text-center font-bold">Nama Regu / Pangkalan</th>
+                    {rubriks.map(r => (
+                      <th key={r.id} className="border border-black p-2 text-center font-bold w-20">
+                        {r.name} ({r.min}-{r.max})
+                      </th>
+                    ))}
+                    <th className="border border-black p-2 text-center font-bold w-24">Total Nilai</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.peserta.map((peserta, idx) => (
+                    <tr key={peserta.id}>
+                      <td className="border border-black p-2 text-center">{idx + 1}</td>
+                      <td className="border border-black p-2">
+                        <div className="font-bold">{peserta.nama_regu}</div>
+                        <div className="text-[10pt] text-gray-700">{peserta.pangkalan}</div>
+                      </td>
+                      {rubriks.map(r => (
+                        <td key={r.id} className="border border-black p-2 text-center">
+                          {/* Dikosongkan sesuai format manual Juklak Juknis */}
+                        </td>
+                      ))}
+                      <td className="border border-black p-2 text-center font-bold text-[12pt]">
+                        {peserta.nilai_lomba}
+                      </td>
+                    </tr>
+                  ))}
+                  {/* Tambahan baris kosong jika peserta sedikit untuk format form */}
+                  {group.peserta.length < 5 && Array.from({ length: 5 - group.peserta.length }).map((_, i) => (
+                    <tr key={`empty-${i}`}>
+                      <td className="border border-black p-4 text-center"></td>
+                      <td className="border border-black p-4"></td>
+                      {rubriks.map(r => <td key={`empty-r-${r.id}`} className="border border-black p-4"></td>)}
+                      <td className="border border-black p-4"></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+          })()}
 
           {/* TTD JURI */}
           <div className="flex justify-between text-[12pt] mt-12">
