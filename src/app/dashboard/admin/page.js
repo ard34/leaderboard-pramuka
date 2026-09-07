@@ -721,34 +721,23 @@ export default function DashboardAdmin() {
         backgroundPosition: "center",
         backgroundAttachment: "fixed",
       }}>
-        {/* Sidebar Image */}
-        <img src="/sidebar.png" className="fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
-
         <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen text-slate-200 font-sans pl-[7.3%] relative" style={{
-      backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.92) 0%, rgba(3, 7, 18, 0.96) 100%), url('/scout_event_live.png')",
+    <div className="min-h-screen text-slate-200 font-sans relative overflow-x-hidden" style={{
+      backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%), url('/scout_event_live.png')",
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundAttachment: "fixed",
     }}>
-      {/* Sidebar Image */}
-      <img src="/sidebar.png" className="fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
-
-      {!isOnline && <div className="offline-banner">⚠️ KONEKSI TERPUTUS</div>}
+      {!isOnline && <div className="offline-banner sticky top-0 z-50">⚠️ KONEKSI TERPUTUS</div>}
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 border-b border-slate-800/50" style={{
-        backgroundImage: "url('/header_banner.png')",
-        backgroundSize: "100% 100%",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
-      }}>
-        <div className="max-w-[1600px] mx-auto flex justify-between items-center px-4 md:px-8 py-3.5">
+      <nav className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-emerald-500/20 shadow-2xl">
+        <div className="max-w-[1600px] mx-auto flex justify-between items-center px-4 md:px-8 py-3">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <img src="/logo_wosm.png" alt="WOSM" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />

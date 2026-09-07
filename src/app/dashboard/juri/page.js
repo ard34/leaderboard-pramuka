@@ -465,382 +465,428 @@ export default function DashboardJuri() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pl-0 md:pl-[7.3%]" style={{
-        backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%), url('/scout_event_live.png')",
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-200 font-sans relative overflow-hidden" style={{
+        backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%), url('/scout_event_live.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",
       }}>
-        <img src="/sidebar.png" className="hidden md:block fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
-        <div className="w-12 h-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin mx-auto shadow-[0_0_20px_rgba(245,166,35,0.3)]" />
+          <p className="text-xs font-bold text-amber-400 uppercase tracking-widest animate-pulse">Memuat Panel Penilaian Juri...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen text-slate-200 font-sans pl-0 md:pl-[7.3%] relative" style={{
-        backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%), url('/scout_event_live.png')",
+    <div className="min-h-screen text-slate-200 font-sans relative overflow-x-hidden bg-slate-950" style={{
+      backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.95) 0%, rgba(15, 23, 42, 0.97) 100%), url('/scout_event_live.png')",
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundAttachment: "fixed",
     }}>
-      <img src="/sidebar.png" className="hidden md:block fixed left-0 top-0 h-full w-[7.3%] z-30 pointer-events-none" alt="Scout Sidebar" />
-      
+      {/* Background ambient lighting effects */}
+      <div className="fixed top-[-10%] left-[-5%] w-[450px] h-[450px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-5%] w-[450px] h-[450px] bg-cyan-500/5 blur-[120px] rounded-full pointer-events-none" />
+
       {!isOnline && (
-        <div className="offline-banner">
+        <div className="offline-banner sticky top-0 z-50">
           ⚠️ KONEKSI TERPUTUS — Nilai tidak dapat dikirim ke server. Form tetap dapat diisi.
         </div>
       )}
 
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-500/15 backdrop-blur-md pointer-events-none animate-in fade-in duration-200">
-          <div className="bg-slate-900 border-2 border-emerald-500 text-white rounded-3xl p-8 md:p-10 shadow-[0_0_80px_rgba(16,185,129,0.4)] text-center space-y-3">
-            <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md pointer-events-none animate-in fade-in duration-200">
+          <div className="bg-slate-900/95 border-2 border-emerald-500 text-white rounded-3xl p-8 md:p-10 shadow-[0_0_80px_rgba(16,185,129,0.35)] text-center space-y-3 max-w-md mx-4">
+            <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-2xl font-black tracking-wider text-emerald-400">NILAI TERLINDUNGI & TERKUNCI!</h3>
-            <p className="text-xs text-slate-400 uppercase tracking-widest">Data berhasil disinkronkan ke Supabase Live Leaderboard</p>
+            <h3 className="text-2xl font-black tracking-wider text-emerald-400 uppercase">NILAI TERKUNCI & TERSIMPAN!</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Data penilaian berhasil disinkronkan secara real-time ke Live Leaderboard.
+            </p>
           </div>
         </div>
       )}
 
-      {/* Navbar Banner LT-II Mekar Baru 2026 */}
-      <nav className="sticky top-0 z-40 border-b border-amber-500/20 shadow-xl" style={{
-        backgroundImage: "url('/header_banner.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
-      }}>
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center px-4 md:px-8 py-3 gap-3">
-          <div className="flex items-center gap-2 md:gap-3">
-            <img src="/logo_wosm.png" alt="WOSM" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-            <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-            <img src="/logo_lt2.png" alt="LT-II 2026" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
-            <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
-            <div>
-
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[0.6rem] px-2 py-0.5 rounded-full font-black tracking-widest uppercase">
+      {/* Modern Glassmorphism Navbar */}
+      <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-amber-500/20 shadow-2xl transition-all">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+          
+          {/* Brand & Logos */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <img src="/logo_wosm.png" alt="WOSM" className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+              <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+              <img src="/logo_lt2.png" alt="LT-II 2026" className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+              <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+            </div>
+            
+            <div className="border-l border-slate-800 pl-3">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[0.6rem] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
                   LT-II MEKAR BARU 2026
                 </span>
-                <span className="text-[0.65rem] text-slate-400 hidden sm:inline">| 25-27 SEP 2026</span>
+                <span className="text-[0.6rem] text-slate-400 font-medium hidden sm:inline">25-27 SEP 2026</span>
               </div>
-              <h1 className="text-sm md:text-base font-black tracking-wider text-white uppercase">
+              <h1 className="text-xs md:text-sm font-black tracking-wide text-white uppercase mt-0.5">
                 PANEL PENILAIAN <span className="text-amber-400">DEWAN JURI</span>
               </h1>
-              <p className="text-[0.65rem] text-slate-400 tracking-wider uppercase">
-                Juri: <span className="text-white font-bold">{juri?.nama_lengkap}</span>
-              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-            <div className="text-right hidden lg:block">
-              <p className="text-[0.6rem] font-bold text-amber-300 tracking-wider">
-                "SATYAKU KUDARMAKAN DARMAKU KUBAKTIKAN"
-              </p>
-              <p className="text-[0.58rem] text-slate-400">
-                Memantapkan Langkah Organisasi Menuju Indonesia Emas 2045
-              </p>
+          {/* Juri Profile Pill & Actions */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs">
+              <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-[0.65rem] border border-amber-500/30">
+                ⚖️
+              </div>
+              <div>
+                <div className="text-[0.65rem] text-slate-400 uppercase leading-none">Dewan Juri</div>
+                <div className="font-bold text-white text-xs leading-tight">{juri?.nama_lengkap || "Dewan Juri"}</div>
+              </div>
             </div>
+
             <button
               onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
-              className="text-[0.65rem] font-black tracking-wider bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-md"
+              className="text-xs font-bold bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 text-red-400 hover:text-white px-3.5 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-sm"
+              title="Keluar dari panel juri"
             >
-              LOGOUT
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>LOGOUT</span>
             </button>
           </div>
-        </div>
-      </nav>
 
-      {/* Content Grid */}
-      <main className="max-w-6xl mx-auto px-4 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        </div>
+      </header>
+
+      {/* Main Scoring Workspace */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-5">
         
-        {/* Left Column: Config & JUKLAK Info */}
-        <div className="lg:col-span-4 space-y-5">
-          {/* Penugasan Card */}
-          <div className="glass-card p-5 border border-amber-500/20 shadow-lg">
-            <h2 className="text-[0.7rem] font-black text-amber-400 mb-4 uppercase tracking-[0.15em] flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              </svg>
-              Penugasan Juri
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[0.65rem] mb-1.5 text-slate-400 font-bold tracking-wider uppercase">
-                  Mata Lomba {isLockedPos && <span className="text-amber-400 ml-1">🔒 TERKUNCI</span>}
-                </label>
-                <select
-                  value={selectedLombaId}
-                  onChange={(e) => setSelectedLombaId(e.target.value)}
-                  disabled={isLockedPos}
-                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-amber-300 font-bold text-sm focus:ring-1 focus:ring-amber-500 outline-none"
-                >
-                  {filteredLomba.map((l) => (
-                    <option key={l.id} value={l.id}>{l.nama_lomba}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[0.65rem] mb-1.5 text-slate-400 font-bold tracking-wider uppercase">
-                    Tingkatan {juri?.assigned_kategori != null && <span className="text-amber-400 ml-1">🔒</span>}
-                  </label>
-                  <select
-                    value={selectedKategori}
-                    onChange={(e) => { setSelectedKategori(e.target.value); setSelectedPeserta(""); }}
-                    disabled={juri?.assigned_kategori != null}
-                    className="w-full bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-white text-xs font-bold focus:ring-1 focus:ring-amber-500 outline-none"
-                  >
-                    <option value="SD">SD / MI</option>
-                    <option value="SMP">SMP / MTs</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[0.65rem] mb-1.5 text-slate-400 font-bold tracking-wider uppercase">
-                    Kategori Regu {isLockedGender && <span className="text-amber-400 ml-1">🔒</span>}
-                  </label>
-                  <select
-                    value={selectedGender}
-                    onChange={(e) => { setSelectedGender(e.target.value); setSelectedPeserta(""); }}
-                    disabled={isLockedGender}
-                    className="w-full bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-white text-xs font-bold focus:ring-1 focus:ring-amber-500 outline-none"
-                  >
-                    <option value="Laki-laki">👦 PUTRA</option>
-                    <option value="Perempuan">👧 PUTRI</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+        {/* Top Active Task Strip */}
+        <div className="bg-slate-900/70 border border-amber-500/20 rounded-2xl p-3.5 mb-5 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            <span className="text-slate-400 font-bold uppercase text-[0.65rem] tracking-wider">Penugasan Saat Ini:</span>
+            <span className="bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black px-2.5 py-1 rounded-lg">
+              🏆 {currentLombaDef?.nama_lomba || "Pos Lomba"}
+            </span>
+            <span className="bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold px-2.5 py-1 rounded-lg">
+              🏫 {selectedKategori === "SD" ? "SD / MI" : "SMP / MTs"}
+            </span>
+            <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold px-2.5 py-1 rounded-lg">
+              {selectedGender === "Laki-laki" ? "👦 Putra (Laki-laki)" : "👧 Putri (Perempuan)"}
+            </span>
           </div>
 
-          {/* JUKLAK Rules Card */}
-          {currentLombaDef && (
-            <div className="glass-card p-5 border border-cyan-500/20 bg-gradient-to-br from-slate-950/80 to-cyan-950/20 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-0.5 bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[0.6rem] font-black rounded uppercase">
-                  {currentLombaDef.kode}
-                </span>
-                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                  {currentLombaDef.kategori_kelompok}
-                </span>
-              </div>
-              <h3 className="text-sm font-black text-white mb-2">
-                {currentLombaDef.nama_lomba}
-              </h3>
-              <div className="bg-slate-950/90 border border-slate-800/80 p-3 rounded-xl text-xs text-slate-300 leading-relaxed space-y-1.5">
-                <p className="font-bold text-amber-400 flex items-center gap-1.5 text-[0.68rem] uppercase tracking-wider">
-                  <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Aturan JUKLAK ({selectedKategori}):
-                </p>
-                <p className="text-[0.72rem] text-slate-300">
-                  {currentLombaDef.rules[selectedKategori] || currentLombaDef.rules.SD}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Riwayat Penilaian Card */}
-          <div className="glass-card p-5 border border-slate-800">
-            <h2 className="text-[0.65rem] font-black text-slate-400 mb-3 uppercase tracking-[0.15em] flex items-center justify-between">
-              <span>Riwayat Sesi Ini</span>
-              <span className="text-amber-400">{riwayat.length} Regu</span>
-            </h2>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {riwayat.length === 0 ? (
-                <p className="text-xs text-slate-600 italic">Belum ada nilai yang dikirim...</p>
-              ) : (
-                riwayat.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between text-xs py-2 px-3 bg-slate-950/50 rounded-xl border border-slate-800/50">
-                    <div>
-                      <div className="text-white font-bold">{r.regu}</div>
-                      <div className="text-[0.65rem] text-slate-400">{r.pos} • {r.time}</div>
-                    </div>
-                    <span className="text-emerald-400 font-black text-base">{r.nilai}</span>
-                  </div>
-                ))
-              )}
-            </div>
+          <div className="text-[0.68rem] text-slate-400 italic hidden md:block">
+            "Satyaku Kudarmakan Darmaku Kubaktikan"
           </div>
         </div>
 
-        {/* Right Column: Dynamic Scoring Form */}
-        <div className="lg:col-span-8">
-          <div className="glass-card p-6 md:p-8 relative overflow-hidden border border-amber-500/20 shadow-2xl">
+        {/* Content Layout Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          
+          {/* Kolom Kiri: Pengaturan & JUKLAK (Col 4) */}
+          <div className="lg:col-span-4 space-y-4">
             
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 mb-6 border-b border-slate-800 gap-2">
-              <div>
-                <h2 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
-                  <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Lembar Penilaian Juri
-                </h2>
-                <p className="text-xs text-slate-400 uppercase tracking-wider mt-0.5">
-                  Pos: <span className="text-amber-300 font-bold">{currentLombaDef?.nama_lomba}</span> ({selectedKategori} {selectedGender === 'Laki-laki' ? 'PUTRA' : 'PUTRI'})
-                </p>
-              </div>
-
-              {/* Total Score Badge */}
-              <div className="bg-gradient-to-br from-amber-500/20 to-emerald-500/20 border border-amber-500/40 rounded-2xl px-5 py-2 text-right">
-                <div className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Total Skor</div>
-                <div className="text-3xl font-black text-amber-400 drop-shadow-[0_0_12px_rgba(245,166,35,0.4)]">
-                  {totalScoreCalculated} <span className="text-xs text-slate-500 font-normal">/100</span>
+            {/* Card Aturan JUKLAK */}
+            {currentLombaDef && (
+              <div className="bg-slate-900/80 border border-cyan-500/25 rounded-2xl p-4 shadow-lg backdrop-blur-md relative overflow-hidden">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[0.65rem] font-black rounded uppercase">
+                      {currentLombaDef.kode}
+                    </span>
+                    <span className="text-[0.68rem] text-slate-400 font-bold uppercase tracking-wider">
+                      {currentLombaDef.kategori_kelompok}
+                    </span>
+                  </div>
+                  <span className="text-[0.65rem] text-cyan-400 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
+                    SOP JUKLAK
+                  </span>
                 </div>
-              </div>
-            </div>
 
-            {pesan.text && (
-              <div className={`p-4 rounded-xl mb-6 text-xs font-bold border flex items-center gap-2.5 ${pesan.type === "error" ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"}`}>
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {pesan.text}
+                <h3 className="text-sm font-black text-white mb-2 flex items-center gap-1.5">
+                  <span>📖</span> {currentLombaDef.nama_lomba}
+                </h3>
+
+                <div className="bg-slate-950/90 border border-slate-800/80 p-3 rounded-xl text-xs text-slate-300 leading-relaxed space-y-1.5">
+                  <p className="font-bold text-amber-400 flex items-center gap-1.5 text-[0.68rem] uppercase tracking-wider">
+                    <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Ketentuan Tingkat {selectedKategori}:
+                  </p>
+                  <p className="text-[0.72rem] text-slate-300">
+                    {currentLombaDef.rules[selectedKategori] || currentLombaDef.rules.SD}
+                  </p>
+                </div>
               </div>
             )}
 
-            <form onSubmit={handleSimpanNilai} className="space-y-6">
-              
-              {/* Select Regu */}
-              <div className="space-y-2">
-                <label className="block text-[0.7rem] font-black text-slate-400 uppercase tracking-[0.15em]">
-                  PILIH REGU PESERTA (YANG SEDANG TAMPIL)
-                </label>
-                <select
-                  value={selectedPeserta}
-                  onChange={(e) => setSelectedPeserta(e.target.value)}
-                  required
-                  className="w-full bg-slate-950/90 border-2 border-slate-800 rounded-xl p-4 text-base text-white font-bold focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 outline-none transition-all"
-                >
-                  <option value="">— Silakan Pilih Regu Peserta —</option>
-                  {pesertaList
-                    .filter((p) => p.kategori === selectedKategori && p.gender === selectedGender)
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        Kapling {p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"} — {p.nama_regu} ({p.pangkalan})
-                      </option>
+            {/* Card Pengaturan Filter (Jika Juri memiliki akses multi lomba) */}
+            {!isLockedPos && (
+              <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg backdrop-blur-md space-y-3">
+                <h3 className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>⚙️</span> Ganti Pos Lomba / Kategori
+                </h3>
+                
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-[0.65rem] text-slate-400 font-bold uppercase mb-1">Mata Lomba</label>
+                    <select
+                      value={selectedLombaId}
+                      onChange={(e) => setSelectedLombaId(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-bold text-xs focus:ring-1 focus:ring-amber-500 outline-none"
+                    >
+                      {filteredLomba.map((l) => (
+                        <option key={l.id} value={l.id}>{l.nama_lomba}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                    ))}
-                </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[0.65rem] text-slate-400 font-bold uppercase mb-1">Tingkat</label>
+                      <select
+                        value={selectedKategori}
+                        onChange={(e) => { setSelectedKategori(e.target.value); setSelectedPeserta(""); }}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white text-xs font-bold focus:ring-1 focus:ring-amber-500 outline-none"
+                      >
+                        <option value="SD">SD / MI</option>
+                        <option value="SMP">SMP / MTs</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[0.65rem] text-slate-400 font-bold uppercase mb-1">Gender</label>
+                      <select
+                        value={selectedGender}
+                        onChange={(e) => { setSelectedGender(e.target.value); setSelectedPeserta(""); }}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white text-xs font-bold focus:ring-1 focus:ring-amber-500 outline-none"
+                      >
+                        <option value="Laki-laki">👦 PUTRA</option>
+                        <option value="Perempuan">👧 PUTRI</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Card Riwayat Sesi Ini */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>⏱️</span> Riwayat Sesi Ini
+                </h3>
+                <span className="text-[0.65rem] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">
+                  {riwayat.length} Regu
+                </span>
               </div>
 
-              {/* Dynamic Rubric Scoring Breakdown */}
-              {currentLombaDef && (
-                <div className="space-y-4 pt-2">
-                  <h3 className="text-xs font-black text-slate-300 uppercase tracking-[0.15em] flex items-center justify-between border-b border-slate-800/80 pb-2">
-                    <span>Rubrik Aspek Penilaian (JUKLAK)</span>
-                    <span className="text-[0.65rem] text-slate-400 font-normal">Geser slider atau atur nilai per aspek</span>
-                  </h3>
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                {riwayat.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic py-2 text-center">Belum ada regu yang dinilai di sesi ini.</p>
+                ) : (
+                  riwayat.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between text-xs p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/60 hover:border-slate-700 transition-colors">
+                      <div>
+                        <div className="text-white font-bold">{r.regu}</div>
+                        <div className="text-[0.62rem] text-slate-400">{r.pos} • {r.time}</div>
+                      </div>
+                      <span className="text-emerald-400 font-black text-sm bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-lg">
+                        {r.nilai}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentLombaDef.rubrik.map((r) => {
-                      const val = rubrikScores[r.id] ?? Math.round(r.weight * 0.7);
-                      return (
-                        <div key={r.id} className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-2xl space-y-2 hover:border-slate-700 transition-colors">
-                          <div className="flex justify-between items-center">
-                            <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                              {r.name}
-                            </label>
-                            <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                              {val} / {r.max}
-                            </span>
-                          </div>
-                          
-                          <p className="text-[0.62rem] text-slate-400 italic">
-                            {r.hint}
-                          </p>
+          </div>
 
-                          <div className="flex items-center gap-2 pt-1">
-                            <input
-                              type="range"
-                              min={r.min || 0}
-                              max={r.max}
-                              value={val}
-                              onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
-                              className="w-full accent-amber-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
-                            />
-                            <input
-                              type="number"
-                              min={r.min || 0}
-                              max={r.max}
-                              value={val}
-                              onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
-                              className="w-14 bg-slate-900 border border-slate-700 rounded-lg p-1 text-center text-xs text-amber-300 font-bold focus:border-amber-500 outline-none"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+          {/* Kolom Kanan: Lembar Penilaian Real-Time (Col 8) */}
+          <div className="lg:col-span-8">
+            <div className="bg-slate-900/85 border border-amber-500/25 rounded-3xl p-5 md:p-7 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+              
+              {/* Notifikasi Pesan */}
+              {pesan.text && (
+                <div className={`p-3.5 rounded-xl mb-4 text-xs font-bold border flex items-center gap-2.5 ${pesan.type === "error" ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"}`}>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {pesan.text}
                 </div>
               )}
 
-              {/* Total Score Display */}
-              <div className="bg-slate-950/90 border border-amber-500/30 p-5 rounded-2xl space-y-3">
-                <div className="flex justify-between items-center">
-                  <label className="text-[0.7rem] font-black text-amber-300 uppercase tracking-[0.15em]">
-                    Total Skor Akhir (Otomatis dari Rubrik)
-                  </label>
+              <form onSubmit={handleSimpanNilai} className="space-y-5">
+                
+                {/* 1. Pilih Regu Peserta */}
+                <div className="bg-slate-950/80 border-2 border-slate-800 focus-within:border-amber-500/70 rounded-2xl p-4 transition-all">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>🎯</span> PILIH REGU PESERTA (YANG SEDANG TAMPIL DI POS)
+                    </label>
+                    <span className="text-[0.65rem] text-slate-400">
+                      Tersedia: {pesertaList.filter((p) => p.kategori === selectedKategori && p.gender === selectedGender).length} Regu
+                    </span>
+                  </div>
+
+                  <select
+                    value={selectedPeserta}
+                    onChange={(e) => setSelectedPeserta(e.target.value)}
+                    required
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm md:text-base text-white font-bold focus:border-amber-500 outline-none transition-all cursor-pointer"
+                  >
+                    <option value="">— Ketuk untuk Memilih Regu Peserta —</option>
+                    {pesertaList
+                      .filter((p) => p.kategori === selectedKategori && p.gender === selectedGender)
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          Kapling {p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"} : {p.nama_regu} ({p.pangkalan})
+                        </option>
+                      ))}
+                  </select>
+
+                  {selectedPeserta && (
+                    <div className="mt-2.5 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                      <span className="text-emerald-400 font-bold flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                        Regu Terpilih Siap Dinilai
+                      </span>
+                      <span className="text-slate-400 text-[0.68rem]">
+                        Pastikan nomor kapling & nama regu sesuai sebelum menyimpan
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    value={totalScoreCalculated}
-                    readOnly
-                    className="flex-1 bg-slate-900/50 border-2 border-slate-700 rounded-2xl p-3 text-center text-4xl md:text-5xl font-black text-amber-400 outline-none cursor-not-allowed opacity-80"
-                  />
-                </div>
+                {/* 2. Rubrik Aspek Penilaian */}
+                {currentLombaDef && (
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <h3 className="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>📊</span> Rubrik Aspek Penilaian (JUKLAK)
+                      </h3>
+                      <span className="text-[0.65rem] text-slate-400">
+                        Geser slider atau masukkan angka langsung
+                      </span>
+                    </div>
 
-                <div className="w-full bg-slate-800/80 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 transition-all duration-300"
-                    style={{ width: `${totalScoreCalculated}%` }}
-                  />
-                </div>
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      {currentLombaDef.rubrik.map((r) => {
+                        const val = rubrikScores[r.id] ?? Math.round(r.weight * 0.7);
+                        return (
+                          <div key={r.id} className="bg-slate-950/70 border border-slate-800/90 hover:border-amber-500/40 p-3.5 rounded-2xl space-y-2 transition-all">
+                            <div className="flex justify-between items-center">
+                              <label className="text-xs font-bold text-white">
+                                {r.name}
+                              </label>
+                              <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                                {val} / {r.max}
+                              </span>
+                            </div>
+                            
+                            <p className="text-[0.65rem] text-slate-400 italic line-clamp-1">
+                              {r.hint}
+                            </p>
 
-              {/* Optional Catatan Juri */}
-              <div className="space-y-1.5">
-                <label className="block text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider">
-                  Catatan Juri (Opsional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Ikatan simpul sangat rapi, waktu pengerjaan 12 menit..."
-                  value={catatanJuri}
-                  onChange={(e) => setCatatanJuri(e.target.value)}
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:border-amber-500/50 outline-none"
-                />
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={saving || !isOnline || !selectedPeserta}
-                className="w-full bg-gradient-to-r from-amber-500 via-amber-600 to-emerald-600 hover:from-amber-400 hover:to-emerald-500 text-white font-black py-5 px-6 rounded-2xl transition-all duration-300 shadow-[0_10px_35px_rgba(245,166,35,0.3)] hover:shadow-[0_14px_45px_rgba(245,166,35,0.4)] disabled:opacity-40 tracking-wider text-base uppercase"
-              >
-                {saving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    MENULISKAN SKOR & REKAPITULASI...
-                  </span>
-                ) : (
-                  "🔒 KUNCI NILAI & SYNC REAPITULASI REAL-TIME"
+                            <div className="flex items-center gap-2.5 pt-1">
+                              <input
+                                type="range"
+                                min={r.min || 0}
+                                max={r.max}
+                                value={val}
+                                onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
+                                className="w-full accent-amber-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+                              />
+                              <input
+                                type="number"
+                                min={r.min || 0}
+                                max={r.max}
+                                value={val}
+                                onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
+                                className="w-14 bg-slate-900 border border-slate-700 rounded-xl py-1 text-center text-xs text-amber-300 font-black focus:border-amber-500 outline-none"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
-              </button>
-            </form>
+
+                {/* 3. Total Skor & Ringkasan */}
+                <div className="bg-gradient-to-br from-slate-950/90 to-amber-950/20 border border-amber-500/30 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-inner">
+                  <div className="space-y-1 w-full sm:w-auto">
+                    <span className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest block">
+                      Total Nilai Terkalkulasi
+                    </span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl md:text-4xl font-black text-amber-400 drop-shadow-[0_0_12px_rgba(245,166,35,0.4)]">
+                        {totalScoreCalculated}
+                      </span>
+                      <span className="text-xs text-slate-500 font-bold">/ 100 Poin</span>
+                    </div>
+                    <div className="w-48 bg-slate-800 rounded-full h-2 overflow-hidden mt-1">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300"
+                        style={{ width: `${totalScoreCalculated}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full sm:flex-1 sm:max-w-xs space-y-1">
+                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider block">
+                      Catatan Juri (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Catatan pengerjaan regu..."
+                      value={catatanJuri}
+                      onChange={(e) => setCatatanJuri(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-amber-500/60 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* 4. Tombol Kunci & Simpan */}
+                <button
+                  type="submit"
+                  disabled={saving || !isOnline || !selectedPeserta}
+                  className="w-full bg-gradient-to-r from-amber-500 via-amber-600 to-emerald-600 hover:from-amber-400 hover:to-emerald-500 text-slate-950 font-black py-4 px-6 rounded-2xl transition-all duration-300 shadow-[0_8px_30px_rgba(245,166,35,0.3)] hover:shadow-[0_12px_40px_rgba(245,166,35,0.45)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 tracking-wider text-sm uppercase flex items-center justify-center gap-2"
+                >
+                  {saving ? (
+                    <span className="flex items-center gap-2 text-white">
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      MENYIMPAN & MENYINKRONKAN NILAI...
+                    </span>
+                  ) : (
+                    <>
+                      <span>🔒</span>
+                      <span>KUNCI NILAI & SIMPAN KE REKAPITULASI</span>
+                    </>
+                  )}
+                </button>
+
+                {!selectedPeserta && (
+                  <p className="text-center text-[0.68rem] text-slate-500 italic">
+                    * Pilih salah satu Regu Peserta di bagian atas sebelum mengunci nilai.
+                  </p>
+                )}
+
+              </form>
+            </div>
           </div>
+
         </div>
       </main>
     </div>
