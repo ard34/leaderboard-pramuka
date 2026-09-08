@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Panduan Pendaftaran Dewan Juri dan Peserta SILOTI LT-II 2026</title>
+<!--[if gte mso 9]>
+<xml>
+ <w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>100</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+ </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 2cm 2cm 2cm 2cm;
+    mso-header-margin: 36pt;
+    mso-footer-margin: 36pt;
+  }
+  body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1e293b;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+  .header-table {
+    width: 100%;
+    border-bottom: 3px double #0f172a;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+  }
+  .header-table td {
+    vertical-align: middle;
+  }
+  .kop-title {
+    text-align: center;
+  }
+  .kop-title h2 {
+    margin: 0;
+    font-size: 14pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .kop-title h3 {
+    margin: 2px 0;
+    font-size: 12pt;
+    font-weight: 700;
+    color: #b45309;
+    text-transform: uppercase;
+  }
+  .kop-title p {
+    margin: 2px 0 0 0;
+    font-size: 9pt;
+    color: #475569;
+  }
+  h1.doc-title {
+    text-align: center;
+    font-size: 16pt;
+    font-weight: 900;
+    color: #0f172a;
+    margin-top: 15px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .doc-subtitle {
+    text-align: center;
+    font-size: 11pt;
+    font-weight: 600;
+    color: #0284c7;
+    margin-bottom: 25px;
+  }
+  h2.section-title {
+    font-size: 13pt;
+    font-weight: 800;
+    color: #0f172a;
+    background-color: #f1f5f9;
+    border-left: 5px solid #d97706;
+    padding: 6px 12px;
+    margin-top: 25px;
+    margin-bottom: 12px;
+  }
+  h3.subsection-title {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #0369a1;
+    margin-top: 15px;
+    margin-bottom: 6px;
+  }
+  p, li {
+    font-size: 11pt;
+    text-align: justify;
+  }
+  ul, ol {
+    margin-top: 4px;
+    margin-bottom: 10px;
+    padding-left: 25px;
+  }
+  li {
+    margin-bottom: 4px;
+  }
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 18px 0;
+    font-size: 10pt;
+  }
+  table.data-table th {
+    background-color: #0f172a;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 8px 10px;
+    border: 1px solid #0f172a;
+    text-align: left;
+  }
+  table.data-table td {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    vertical-align: top;
+  }
+  table.data-table tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  
+  /* Screenshot Box Placeholder */
+  .screenshot-box {
+    margin: 16px 0;
+    padding: 14px 18px;
+    border: 2px dashed #0284c7;
+    background-color: #f0f9ff;
+    border-radius: 6px;
+  }
+  .screenshot-box .title {
+    font-size: 10.5pt;
+    font-weight: 800;
+    color: #0369a1;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+  }
+  .screenshot-box .meta {
+    font-size: 9.5pt;
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: #e0f2fe;
+    color: #075985;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+  .screenshot-box .desc {
+    font-size: 9.5pt;
+    color: #334155;
+    margin: 0;
+  }
+  .screenshot-box ul {
+    margin: 4px 0 0 0;
+    padding-left: 20px;
+    font-size: 9.5pt;
+    color: #334155;
+  }
+  
+  .note-box {
+    margin: 12px 0;
+    padding: 10px 14px;
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    color: #78350f;
+    font-size: 10pt;
+    border-radius: 4px;
+  }
+  .badge-tag {
+    background-color: #e2e8f0;
+    color: #0f172a;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 9pt;
+    font-weight: bold;
+  }
+  .flow-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-family: 'Consolas', monospace;
+    font-size: 9.5pt;
+    color: #0f172a;
+    line-height: 1.6;
+  }
+  .footer-sign {
+    margin-top: 35px;
+    width: 100%;
+  }
+  .footer-sign td {
+    vertical-align: top;
+    font-size: 10pt;
+  }
+</style>
+</head>
+<body>
+
+<!-- KOP DOKUMEN RESMI -->
+<table class="header-table">
+  <tr>
+    <td style="width: 100%; text-align: center;">
+      <div class="kop-title">
+        <h2>GERAKAN PRAMUKA KWARTIR RANTING MEKAR BARU</h2>
+        <h3>PANITIA PELAKSANA LOMBA TINGKAT REGU PENGGALANG DUA (LT-II) TAHUN 2026</h3>
+        <p>Sekretariat: Jl. Raya Kronjo - Mauk KM. 03, Mekar Baru, Kab. Tangerang, Banten 15550</p>
+        <p>Portal Aplikasi SILOTI: <strong>https://www.siloti-kwaranmekarbaru.my.id</strong></p>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<h1 class="doc-title">BUKU PANDUAN PENDAFTARAN RESMI</h1>
+<div class="doc-subtitle">Tata Cara Registrasi Dewan Juri, Menerima Akses Email, dan Pendaftaran Peserta Regu SILOTI 2026</div>
+
+<!-- ======================================================== -->
+<h2 class="section-title">1. Alur Singkat Pendaftaran & Akses Dewan Juri</h2>
+<p>
+  Sistem Informasi Lomba Tingkat (<strong>SILOTI</strong>) dirancang untuk memastikan akurasi data dan ketertiban administrasi. Calon Dewan Juri mendaftarkan diri secara mandiri, menunggu verifikasi panitia, dan secara otomatis menerima rincian penugasan serta kata sandi login melalui email terdaftar.
+</p>
+
+<div class="flow-box">
+  [Calon Dewan Juri] ──► Mengisi Form Registrasi di Web (/juri/register)<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Status: Menunggu Verifikasi Panitia]<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼ (Setelah Diverifikasi Panitia)<br>
+  [Email Masuk ke babontou@gmail.com] ◄── Menerima Rincian Pos & Kata Sandi Login<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+  [Login di Halaman /login] ──► Masukkan Email & Kata Sandi ──► Masuk Dashboard Juri
+</div>
+
+<!-- ======================================================== -->
+<h2 class="section-title">2. Panduan Langkah Registrasi Dewan Juri</h2>
+<p>
+  Tautan Halaman Registrasi: <strong>https://www.siloti-kwaranmekarbaru.my.id/juri/register</strong>
+</p>
+<p>
+  Calon Dewan Juri membuka tautan di atas dan melengkapi seluruh kolom formulir sesuai penugasan yang diberikan oleh Panitia Pelaksana.
+</p>
+
+<!-- TANDA SCREENSHOT 1 -->
+<div class="screenshot-box">
+  <div class="title">📸 TANDA AREA TANGKAPAN LAYAR (SCREENSHOT 1)</div>
+  <div class="meta">[TEMPATKAN GAMBAR SCREENSHOT 1 DI SINI: 01_formulir_registrasi_juri.png]</div>
+  <p class="desc"><strong>Objek yang Wajib Terlihat pada Gambar:</strong></p>
+  <ul>
+    <li>Tampilan lengkap formulir <strong>REGISTRASI DEWAN JURI</strong> pada website SILOTI.</li>
+    <li>Seluruh kolom isian formulir telah terisi lengkap (Nama, Email <code>babontou@gmail.com</code>, WhatsApp, Tingkat, Kategori, Cabang Lomba).</li>
+    <li>Tombol warna biru bertuliskan <strong>"DAFTAR SEBAGAI JURI"</strong> pada bagian bawah formulir.</li>
+  </ul>
+</div>
+
+<h3 class="subsection-title">Tabel Panduan Pengisian Formulir Dewan Juri:</h3>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th style="width: 5%;">No</th>
+      <th style="width: 25%;">Nama Kolom Form</th>
+      <th style="width: 15%;">Jenis Isian</th>
+      <th style="width: 30%;">Penjelasan Pengisian</th>
+      <th style="width: 25%;">Contoh Isian</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center;">1</td>
+      <td><strong>Nama Lengkap</strong></td>
+      <td>Teks Bebas</td>
+      <td>Nama lengkap calon dewan juri beserta gelar akademik atau pembina jika ada.</td>
+      <td><code>Kak Budi Santoso, S.Pd</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">2</td>
+      <td><strong>Email Aktif</strong></td>
+      <td>Format Email</td>
+      <td>Alamat email aktif calon juri. Berfungsi sebagai <strong>Username Login</strong> dan tujuan pengiriman kata sandi resmi.</td>
+      <td><code>babontou@gmail.com</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">3</td>
+      <td><strong>No. WhatsApp</strong></td>
+      <td>Nomor Telepon</td>
+      <td>Nomor kontak WhatsApp yang aktif untuk keperluan konfirmasi panitia dan koordinasi lapangan.</td>
+      <td><code>081234567890</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">4</td>
+      <td><strong>Tugas Tingkatan</strong></td>
+      <td>Pilihan Dropdown</td>
+      <td>Pilih tingkatan peserta yang akan dinilai di pos lomba: <br>• <strong>SD / MI</strong><br>• <strong>SMP / MTs</strong></td>
+      <td><code>SD / MI</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">5</td>
+      <td><strong>Kategori Regu (Gender)</strong></td>
+      <td>Pilihan Dropdown</td>
+      <td>Pilih kelompok gender peserta yang dinilai: <br>• <strong>Putra (Laki-laki)</strong><br>• <strong>Putri (Perempuan)</strong></td>
+      <td><code>Putra (Laki-laki)</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: center;">6</td>
+      <td><strong>Tugas Cabang Lomba</strong></td>
+      <td>Pilihan Dropdown</td>
+      <td>Pilih 1 dari 15 cabang lomba resmi JUKLAK LT-II Mekar Baru 2026 sesuai SK Panitia.</td>
+      <td><code>Pionering & Tali-Temali</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note-box">
+  <strong>Perhatian:</strong> Pastikan email yang dimasukkan adalah <strong>babontou@gmail.com</strong> karena tautan verifikasi dan informasi kata sandi akan dikirimkan langsung ke alamat email tersebut.
+</div>
+
+<!-- ======================================================== -->
+<h2 class="section-title">3. Status Menunggu Verifikasi Panitia</h2>
+<p>
+  Setelah tombol <strong>"DAFTAR SEBAGAI JURI"</strong> diklik, sistem akan langsung mengarahkan Anda ke layar konfirmasi bahwa pendaftaran telah tercatat dan sedang menunggu verifikasi oleh Panitia Pelaksana.
+</p>
+
+<!-- TANDA SCREENSHOT 2 -->
+<div class="screenshot-box">
+  <div class="title">📸 TANDA AREA TANGKAPAN LAYAR (SCREENSHOT 2)</div>
+  <div class="meta">[TEMPATKAN GAMBAR SCREENSHOT 2 DI SINI: 02_konfirmasi_menunggu_verifikasi.png]</div>
+  <p class="desc"><strong>Objek yang Wajib Terlihat pada Gambar:</strong></p>
+  <ul>
+    <li>Kartu konfirmasi modal di tengah layar dengan judul <strong>"PENDAFTARAN MENUNGGU VERIFIKASI!"</strong>.</li>
+    <li>Ikon amplop surat konfirmasi bercahaya.</li>
+    <li>Pesan sistem yang menyatakan data sedang ditinjau dan menyebutkan alamat email <code>babontou@gmail.com</code>.</li>
+    <li>Tombol tautan <strong>"Ke Halaman Login"</strong>.</li>
+  </ul>
+</div>
+
+<p>
+  Pada tahap ini, calon juri cukup menunggu proses verifikasi selesai. Tidak perlu melakukan pendaftaran ulang. Panitia inti akan memvalidasi data penugasan Anda dan memberikan kata sandi ke kotak masuk email Anda.
+</p>
+
+<!-- ======================================================== -->
+<h2 class="section-title">4. Menerima Email Konfirmasi Akun & Kata Sandi</h2>
+<p>
+  Segera setelah akun Anda diverifikasi dan diaktifkan oleh Panitia, sistem SILOTI secara otomatis mengirimkan surat elektronik resmi ke alamat email <strong>babontou@gmail.com</strong>.
+</p>
+
+<!-- TANDA SCREENSHOT 3 -->
+<div class="screenshot-box">
+  <div class="title">📸 TANDA AREA TANGKAPAN LAYAR (SCREENSHOT 3)</div>
+  <div class="meta">[TEMPATKAN GAMBAR SCREENSHOT 3 DI SINI: 03_email_konfirmasi_dan_password.png]</div>
+  <p class="desc"><strong>Objek yang Wajib Terlihat pada Gambar:</strong></p>
+  <ul>
+    <li>Tampilan kotak masuk (*Inbox*) Gmail pada akun <code>babontou@gmail.com</code>.</li>
+    <li>Email masuk resmi dari <strong>Panitia LT-II Mekar Baru</strong>.</li>
+    <li>Subjek email: <strong>[AKUN JURI AKTIF] Akses Login LT-II Kwarran Mekar Baru 2026</strong>.</li>
+    <li>Rincian badan email yang memuat Penugasan Pos Lomba, Username Login (<code>babontou@gmail.com</code>), dan Password Sementara.</li>
+    <li>Tombol tautan langsung bertuliskan <strong>"Login ke Sistem Penilaian"</strong>.</li>
+  </ul>
+</div>
+
+<h3 class="subsection-title">Contoh Format Pesan Email yang Diterima:</h3>
+<div style="background-color: #0f172a; color: #f8fafc; padding: 16px; border-radius: 8px; font-size: 10pt;">
+  <p style="color: #fbbf24; font-weight: bold; margin-top: 0;">Salam Pramuka, Kak Budi Santoso!</p>
+  <p>Selamat! Akun Dewan Juri Anda telah berhasil <strong>DIVERIFIKASI</strong> dan <strong>AKTIF</strong>.</p>
+  <div style="background-color: rgba(255,255,255,0.08); padding: 10px; border-left: 3px solid #fbbf24; margin: 10px 0;">
+    <strong>Rincian Penugasan Penilaian:</strong><br>
+    • Pos Lomba: <strong>Pionering & Tali-Temali</strong><br>
+    • Tingkatan: <strong>SD / MI</strong><br>
+    • Kategori Regu: <strong>Khusus Putra (Laki-laki)</strong>
+  </div>
+  <div style="background-color: rgba(255,255,255,0.08); padding: 10px; border-left: 3px solid #10b981; margin: 10px 0;">
+    <strong>Akses Kredensial Login:</strong><br>
+    • Email (Username): <strong style="color: #38bdf8;">babontou@gmail.com</strong><br>
+    • Kata Sandi Sementara: <strong style="color: #fbbf24;">juri123</strong>
+  </div>
+  <p style="font-size: 9pt; color: #94a3b8; margin-bottom: 0;"><em>Silakan gunakan informasi di atas untuk masuk ke sistem penilaian di lapangan.</em></p>
+</div>
+
+<!-- ======================================================== -->
+<h2 class="section-title">5. Panduan Login & Penggunaan Dashboard Penilaian Juri</h2>
+<p>
+  Setelah memperoleh kata sandi dari email, Dewan Juri dapat masuk ke aplikasi penilaian kapan saja saat perlombaan berlangsung.
+</p>
+
+<h3 class="subsection-title">Langkah 1: Masuk Melalui Halaman Login</h3>
+<p>Buka tautan login: <strong>https://www.siloti-kwaranmekarbaru.my.id/login</strong></p>
+
+<!-- TANDA SCREENSHOT 4 -->
+<div class="screenshot-box">
+  <div class="title">📸 TANDA AREA TANGKAPAN LAYAR (SCREENSHOT 4)</div>
+  <div class="meta">[TEMPATKAN GAMBAR SCREENSHOT 4 DI SINI: 04_halaman_login_juri.png]</div>
+  <p class="desc"><strong>Objek yang Wajib Terlihat pada Gambar:</strong></p>
+  <ul>
+    <li>Formulir kartu <strong>"MASUK KE SISTEM"</strong>.</li>
+    <li>Kolom <strong>Email / Akun</strong> terisi: <code>babontou@gmail.com</code>.</li>
+    <li>Kolom <strong>Kata Sandi</strong> terisi kata sandi yang diterima di email.</li>
+    <li>Tombol kuning bertuliskan <strong>"MASUK KE SISTEM"</strong>.</li>
+  </ul>
+</div>
+
+<h3 class="subsection-title">Langkah 2: Mengisi Lembar Penilaian Real-Time</h3>
+<p>
+  Setelah login berhasil, sistem otomatis membuka <strong>Dashboard Penilaian Dewan Juri</strong> (<code>/dashboard/juri</code>) yang telah disesuaikan secara khusus dengan mata lomba yang ditugaskan kepada Anda.
+</p>
+
+<!-- TANDA SCREENSHOT 5 -->
+<div class="screenshot-box">
+  <div class="title">📸 TANDA AREA TANGKAPAN LAYAR (SCREENSHOT 5)</div>
+  <div class="meta">[TEMPATKAN GAMBAR SCREENSHOT 5 DI SINI: 05_dashboard_penilaian_juri.png]</div>
+  <p class="desc"><strong>Objek yang Wajib Terlihat pada Gambar:</strong></p>
+  <ul>
+    <li>Header atas: Nama Dewan Juri (Kak Budi Santoso), logo kegiatan, dan pita tugas aktif (Pionering, SD, Putra).</li>
+    <li>Kolom Kiri: Kartu ringkasan <strong>Aturan JUKLAK</strong> resmi dan <strong>Riwayat Penilaian Sesi Ini</strong>.</li>
+    <li>Kolom Kanan: Kotak <strong>PILIH REGU PESERTA</strong> yang sedang tampil di pos.</li>
+    <li>Rubrik aspek penilaian lengkap dengan slider nilai dan input angka per aspek.</li>
+    <li>Total Skor Terkalkulasi Otomatis (skala 0 - 100).</li>
+    <li>Tombol hijau/amber: <strong>"🔒 KUNCI NILAI & SIMPAN KE REKAPITULASI"</strong>.</li>
+  </ul>
+</div>
+
+<h3 class="subsection-title">Petunjuk Teknis Menilai Regu di Lapangan:</h3>
+<ol>
+  <li><strong>Pilih Regu Peserta:</strong> Klik menu dropdown <em>"PILIH REGU PESERTA"</em>, lalu pilih regu yang sedang tampil di depan pos Anda berdasarkan Nomor Kapling/Dada atau Nama Regu/Sekolah.</li>
+  <li><strong>Beri Skor pada Tiap Aspek Rubrik:</strong> Geser slider nilai atau ketikkan angka langsung pada tiap aspek rubrik JUKLAK (contoh Pionering: Ketepatan Simpul, Kekuatan, Kerapihan, dan Kreativitas).</li>
+  <li><strong>Periksa Akumulasi Skor:</strong> Sistem secara otomatis menjumlahkan nilai menjadi Total Skor (0 - 100).</li>
+  <li><strong>Catatan Juri (Opsional):</strong> Tuliskan catatan khusus terkait performa regu bila diperlukan.</li>
+  <li><strong>Simpan & Kunci:</strong> Klik tombol <strong>"🔒 KUNCI NILAI & SIMPAN KE REKAPITULASI"</strong>. Nilai akan langsung tersimpan ke pangkalan data pusat dan memperbarui papan klasemen secara real-time.</li>
+</ol>
+
+<!-- ======================================================== -->
+<h2 class="section-title">6. Panduan Registrasi Peserta Regu & Unggah 5 Berkas Persyaratan</h2>
+<p>
+  Tautan Pendaftaran Regu: <strong>https://www.siloti-kwaranmekarbaru.my.id/peserta/register</strong>
+</p>
+<p>
+  Pendaftaran peserta dilakukan oleh Pembina Pendamping atau Pangkalan Gugus Depan untuk mendaftarkan Regu Putra maupun Regu Putri.
+</p>
+
+<!-- TANDA SCREENSHOT 6 -->
+<div class="screenshot-box">
+  <div class="title">📸 TANDA AREA TANGKAPAN LAYAR (SCREENSHOT 6)</div>
+  <div class="meta">[TEMPATKAN GAMBAR SCREENSHOT 6 DI SINI: 06_formulir_pendaftaran_peserta_regu.png]</div>
+  <p class="desc"><strong>Objek yang Wajib Terlihat pada Gambar:</strong></p>
+  <ul>
+    <li>Formulir lengkap <strong>Registrasi Peserta Regu Pramuka</strong>.</li>
+    <li>Kolom identitas regu (Asal Pangkalan, No. Gudep, Nama Regu, Tingkatan, Gender).</li>
+    <li>Kolom kontak pembina pendamping (Nama Pembina, WhatsApp, Email).</li>
+    <li>Area <strong>Upload Berkas Persyaratan (5 Berkas Formulir)</strong>.</li>
+    <li>Tombol emas bertuliskan <strong>"KIRIM PENDAFTARAN REGU"</strong>.</li>
+  </ul>
+</div>
+
+<h3 class="subsection-title">Rincian Data yang Diinputkan Pembina Regu:</h3>
+<ul>
+  <li><strong>Asal Pangkalan / Sekolah:</strong> Nama sekolah/madrasah (contoh: <code>SDN 1 Mekar Baru</code>).</li>
+  <li><strong>Kwartir Ranting:</strong> Pilihan Kwarran (default: <code>Mekar Baru</code>).</li>
+  <li><strong>Nomor Gudep:</strong> Nomor resmi gugus depan (contoh: <code>01.025 - 01.026</code>).</li>
+  <li><strong>Nama Regu:</strong> Nama regu hewan/tumbuhan (contoh: <code>Regu Elang</code> atau <code>Regu Melati</code>).</li>
+  <li><strong>Tingkatan:</strong> Pilihan <code>SD / MI</code> atau <code>SMP / MTs</code>.</li>
+  <li><strong>Kategori Regu:</strong> Pilihan <code>Putra (Laki-laki)</code> atau <code>Putri (Perempuan)</code>.</li>
+  <li><strong>Kontak Pembina:</strong> Nama Pembina, Nomor WhatsApp, dan Email aktif.</li>
+</ul>
+
+<h3 class="subsection-title">Daftar 5 Berkas Persyaratan yang Wajib Diunggah (Max 2MB per File, Format PDF/JPG/PNG):</h3>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th style="width: 10%;">Berkas</th>
+      <th style="width: 35%;">Nama Dokumen</th>
+      <th style="width: 55%;">Keterangan & Format</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center;"><strong>1</strong></td>
+      <td><strong>Formulir 01 / LT-II 2026</strong></td>
+      <td>Surat Pernyataan Kesediaan Pangkalan Gugus Depan mengikuti kegiatan LT-II.</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;"><strong>2</strong></td>
+      <td><strong>Formulir 02 / LT-II 2026</strong></td>
+      <td>Formulir Pendaftaran Resmi Peserta Regu.</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;"><strong>3</strong></td>
+      <td><strong>Formulir 03 / LT-II 2026 (Peserta)</strong></td>
+      <td>Lembar Biodata seluruh anggota regu (Pinru, Wapinru, dan Anggota).</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;"><strong>4</strong></td>
+      <td><strong>Formulir 03 / LT-II 2026 (Pembina)</strong></td>
+      <td>Lembar Biodata Pembina Pendamping yang ditugaskan pangkalan.</td>
+    </tr>
+    <tr>
+      <td style="text-align: center;"><strong>5</strong></td>
+      <td><strong>Bukti Pembayaran Resmi</strong></td>
+      <td>Foto atau scan resi transfer / bukti pelunasan iuran pendaftaran (Camp Fee).</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ======================================================== -->
+<h2 class="section-title">7. Daftar Tautan Resmi Sistem</h2>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th style="width: 30%;">Halaman Layanan</th>
+      <th style="width: 45%;">Tautan URL Website</th>
+      <th style="width: 25%;">Pengguna</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Beranda Utama</strong></td>
+      <td>https://www.siloti-kwaranmekarbaru.my.id</td>
+      <td>Umum / Informasi</td>
+    </tr>
+    <tr>
+      <td><strong>Pendaftaran Dewan Juri</strong></td>
+      <td>https://www.siloti-kwaranmekarbaru.my.id/juri/register</td>
+      <td>Calon Dewan Juri</td>
+    </tr>
+    <tr>
+      <td><strong>Pendaftaran Peserta Regu</strong></td>
+      <td>https://www.siloti-kwaranmekarbaru.my.id/peserta/register</td>
+      <td>Pembina / Regu</td>
+    </tr>
+    <tr>
+      <td><strong>Pintu Masuk Login</strong></td>
+      <td>https://www.siloti-kwaranmekarbaru.my.id/login</td>
+      <td>Dewan Juri Terverifikasi</td>
+    </tr>
+    <tr>
+      <td><strong>Dashboard Penilaian</strong></td>
+      <td>https://www.siloti-kwaranmekarbaru.my.id/dashboard/juri</td>
+      <td>Dewan Juri</td>
+    </tr>
+    <tr>
+      <td><strong>Live Leaderboard SD</strong></td>
+      <td>https://www.siloti-kwaranmekarbaru.my.id/leaderboard/sd</td>
+      <td>Klasemen Terbuka</td>
+    </tr>
+    <tr>
+      <td><strong>Live Leaderboard SMP</strong></td>
+      <td>https://www.siloti-kwaranmekarbaru.my.id/leaderboard/smp</td>
+      <td>Klasemen Terbuka</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- TANDA TANGAN PANITIA -->
+<table class="footer-sign">
+  <tr>
+    <td style="width: 60%;"></td>
+    <td style="width: 40%; text-align: center;">
+      <p>Mekar Baru, September 2026<br>
+      <strong>Panitia Pelaksana LT-II Mekar Baru</strong></p>
+      <br><br><br>
+      <p><strong><u>Bidang Administrasi & Penjurian</u></strong><br>
+      Kwartir Ranting Gerakan Pramuka Mekar Baru</p>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
