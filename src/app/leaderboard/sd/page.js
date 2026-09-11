@@ -25,10 +25,9 @@ export default function LeaderboardSD() {
         (payload) => {
           if (payload.new.gender !== gender) return;
           setPeserta((currentData) => {
-            const updatedData = currentData.map((p) =>
-              p.id === payload.new.id ? { ...p, total_nilai: payload.new.total_nilai } : p
+            return currentData.map((p) =>
+              p.id === payload.new.id ? { ...p, ...payload.new } : p
             );
-            return updatedData.sort((a, b) => (b.total_nilai ?? 0) - (a.total_nilai ?? 0));
           });
         }
       )
@@ -40,8 +39,7 @@ export default function LeaderboardSD() {
           setPeserta((currentData) => {
             const exists = currentData.find((p) => p.id === payload.new.id);
             if (exists) return currentData;
-            const updated = [...currentData, payload.new];
-            return updated.sort((a, b) => (b.total_nilai ?? 0) - (a.total_nilai ?? 0));
+            return [...currentData, payload.new];
           });
         }
       )
@@ -63,7 +61,7 @@ export default function LeaderboardSD() {
       .eq("kategori", "SD")
       .eq("gender", gender)
       .eq("is_verified", true)
-      .order("total_nilai", { ascending: false });
+      .order("nomor_dada", { ascending: true });
 
     if (!error && data) {
       setPeserta(data);

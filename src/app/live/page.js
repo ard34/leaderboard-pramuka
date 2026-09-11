@@ -342,7 +342,15 @@ export default function Home() {
         "postgres_changes",
         { event: "*", schema: "public", table: "penilaian" },
         async (payload) => {
-          await fetchData(activeTab, activeGender);
+          const pubStatus = await fetchData(activeTab, activeGender);
+          const currentPubAll = pubStatus?.isPubAll ?? false;
+          const currentPubIds = pubStatus?.pubIds ?? [];
+
+          // Moderasi: Jika juri belum dipublish oleh Admin, JANGAN update animasi cell, rank, ataupun ticker!
+          const juriId = payload.new?.juri_id;
+          if (!currentPubAll && (!juriId || !currentPubIds.includes(juriId))) {
+            return;
+          }
 
           if (payload.new && payload.new.peserta_id) {
             setChangedIds(new Set([payload.new.peserta_id]));
@@ -548,7 +556,11 @@ export default function Home() {
             return currentPeserta.map(p => ({
               ...p,
               total_nilai: totalPerPeserta[p.id] || 0,
-            })).sort((a, b) => (b.total_nilai || 0) - (a.total_nilai || 0));
+            })).sort((a, b) => {
+              const diff = (b.total_nilai || 0) - (a.total_nilai || 0);
+              if (diff !== 0) return diff;
+              return (a.nomor_dada || 999) - (b.nomor_dada || 999);
+            });
           });
         }
       }
@@ -582,8 +594,10 @@ export default function Home() {
       }
 
       setLastUpdate(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      return { pubIds, isPubAll };
     } catch (e) {
       console.error(e);
+      return { pubIds: [], isPubAll: false };
     }
   };
 

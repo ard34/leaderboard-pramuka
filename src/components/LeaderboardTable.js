@@ -132,8 +132,10 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       }
 
       setLastUpdate(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      return { pubIds, isPubAll };
     } catch (e) {
       console.error("Error loading subpage details:", e);
+      return { pubIds: [], isPubAll: false };
     }
   };
 
@@ -150,10 +152,6 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
         return;
       }
       await fetchDetails();
-      if (payload?.new?.id) {
-        setChangedIds(new Set([payload.new.id]));
-        setTimeout(() => setChangedIds(new Set()), 3500);
-      }
     };
 
     const channelPeserta = supabase
@@ -171,7 +169,15 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
         "postgres_changes",
         { event: "*", schema: "public", table: "penilaian" },
         async (payload) => {
-          await fetchDetails();
+          const pubStatus = await fetchDetails();
+          const currentPubAll = pubStatus?.isPubAll ?? false;
+          const currentPubIds = pubStatus?.pubIds ?? [];
+
+          // Moderasi: Jika juri belum dipublish oleh Admin, JANGAN update animasi cell, rank, ataupun ticker!
+          const juriId = payload.new?.juri_id;
+          if (!currentPubAll && (!juriId || !currentPubIds.includes(juriId))) {
+            return;
+          }
 
           if (payload.new && payload.new.peserta_id) {
             setChangedIds(new Set([payload.new.peserta_id]));

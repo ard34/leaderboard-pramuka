@@ -107,7 +107,7 @@ export default function DashboardAdmin() {
     if (freshInfo) setInformasiList(freshInfo);
   };
 
-  const handlePublishJuri = async (juriId, juriNama) => {
+  const handlePublishJuri = async (juriId, juriNama = "Juri") => {
     setPublishingJuriId(juriId);
     try {
       const res = await fetch("/api/admin/publish-score", {
@@ -117,10 +117,10 @@ export default function DashboardAdmin() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showPesan("success", `🚀 Nilai dari ${juriNama} berhasil dipublikasikan ke Leaderboard!`);
+        showPesan("success", `👁️ Nilai dari ${juriNama} sekarang DITAMPILKAN di Leaderboard!`);
         await fetchAllData();
       } else {
-        showPesan("error", "Gagal mempublish nilai: " + (data.error || "Terjadi kesalahan"));
+        showPesan("error", "Gagal menampilkan nilai: " + (data.error || "Terjadi kesalahan"));
       }
     } catch (err) {
       showPesan("error", "Kesalahan koneksi: " + err.message);
@@ -129,7 +129,7 @@ export default function DashboardAdmin() {
     }
   };
 
-  const handleUnpublishJuri = async (juriId, juriNama) => {
+  const handleUnpublishJuri = async (juriId, juriNama = "Juri") => {
     setPublishingJuriId(juriId);
     try {
       const res = await fetch("/api/admin/publish-score", {
@@ -139,10 +139,10 @@ export default function DashboardAdmin() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showPesan("info", `⏸️ Nilai dari ${juriNama} ditarik (status: tertahan di sistem).`);
+        showPesan("info", `⏸️ Nilai dari ${juriNama} DITAHAN (disembunyikan dari Leaderboard).`);
         await fetchAllData();
       } else {
-        showPesan("error", "Gagal menarik nilai: " + (data.error || "Terjadi kesalahan"));
+        showPesan("error", "Gagal menyembunyikan nilai: " + (data.error || "Terjadi kesalahan"));
       }
     } catch (err) {
       showPesan("error", "Kesalahan koneksi: " + err.message);
@@ -152,7 +152,7 @@ export default function DashboardAdmin() {
   };
 
   const handlePublishAll = async () => {
-    if (!confirm("Publikasikan seluruh nilai dari semua Dewan Juri ke Leaderboard Utama?")) return;
+    if (!confirm("Tampilkan seluruh nilai dari SEMUA Dewan Juri ke Leaderboard Utama?")) return;
     setGlobalPublishing(true);
     try {
       const res = await fetch("/api/admin/publish-score", {
@@ -162,10 +162,10 @@ export default function DashboardAdmin() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showPesan("success", "🚀 Seluruh nilai juri berhasil dipublikasikan ke Leaderboard Utama!");
+        showPesan("success", "👁️ Seluruh nilai juri sekarang DITAMPILKAN di Leaderboard Utama!");
         await fetchAllData();
       } else {
-        showPesan("error", "Gagal mempublish: " + (data.error || "Terjadi kesalahan"));
+        showPesan("error", "Gagal menampilkan nilai: " + (data.error || "Terjadi kesalahan"));
       }
     } catch (err) {
       showPesan("error", "Kesalahan: " + err.message);
@@ -175,7 +175,7 @@ export default function DashboardAdmin() {
   };
 
   const handleUnpublishAll = async () => {
-    if (!confirm("Tarik seluruh nilai kembali ke status tertahan/draft?")) return;
+    if (!confirm("Tahan / sembunyikan seluruh nilai juri dari Leaderboard Utama?")) return;
     setGlobalPublishing(true);
     try {
       const res = await fetch("/api/admin/publish-score", {
@@ -185,10 +185,10 @@ export default function DashboardAdmin() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showPesan("info", "⏸️ Seluruh nilai ditarik dari Leaderboard Utama (berstatus tertahan).");
+        showPesan("info", "⏸️ Seluruh nilai juri DITAHAN (disembunyikan dari Leaderboard Utama).");
         await fetchAllData();
       } else {
-        showPesan("error", "Gagal menarik: " + (data.error || "Terjadi kesalahan"));
+        showPesan("error", "Gagal menyembunyikan: " + (data.error || "Terjadi kesalahan"));
       }
     } catch (err) {
       showPesan("error", "Kesalahan: " + err.message);
@@ -1575,21 +1575,21 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
               {/* Toolbar Moderasi Nilai Juri */}
               <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 flex flex-wrap gap-3 items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-300">STATUS PUBLIKASI NILAI:</span>
+                  <span className="text-xs font-bold text-slate-300">STATUS TAMPILKAN NILAI:</span>
                   {publishAll ? (
-                    <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      Semua Nilai Juri Tayang di Klasemen Utama
+                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      🟢 Semua Nilai Ditampilkan di Leaderboard
                     </span>
                   ) : publishedJuriIds.length > 0 ? (
-                    <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-                      {publishedJuriIds.length} Juri Ditayangkan (Parsial)
+                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1.5 shadow-sm">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                      🟡 {publishedJuriIds.length} Juri Ditampilkan (Parsial)
                     </span>
                   ) : (
-                    <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                      Semua Nilai Tertahan (Draft / Belum Tayang)
+                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+                      <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                      ⏸️ Semua Nilai Ditahan (Belum Tampil di Leaderboard)
                     </span>
                   )}
                 </div>
@@ -1598,19 +1598,19 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                     <button
                       onClick={handleUnpublishAll}
                       disabled={globalPublishing}
-                      className="px-3 py-1.5 text-xs font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5"
-                      title="Sembunyikan seluruh nilai juri dari papan klasemen publik"
+                      className="px-3 py-1.5 text-xs font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+                      title="Sembunyikan / tahan seluruh nilai juri dari papan klasemen leaderboard"
                     >
-                      {globalPublishing ? "Memproses..." : "⏸️ Tarik Semua Nilai"}
+                      {globalPublishing ? "Memproses..." : "⏸️ Sembunyikan Semua Nilai"}
                     </button>
                   ) : (
                     <button
                       onClick={handlePublishAll}
                       disabled={globalPublishing}
-                      className="px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg shadow-md hover:shadow-cyan-500/25 transition-all disabled:opacity-50 flex items-center gap-1.5"
-                      title="Tayangkan seluruh nilai juri ke papan klasemen utama secara serentak"
+                      className="px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg shadow-md hover:shadow-emerald-500/25 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                      title="Tampilkan seluruh nilai juri ke papan klasemen utama / leaderboard"
                     >
-                      {globalPublishing ? "Memproses..." : "🚀 Publish Semua Nilai"}
+                      {globalPublishing ? "Memproses..." : "👁️ Tampilkan Semua Nilai"}
                     </button>
                   )}
                 </div>
@@ -1628,7 +1628,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Gender Ditugaskan</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Status Akun</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Cetak Hasil</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-cyan-400 uppercase">Publikasi Nilai</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-emerald-400 uppercase">Tampilkan Nilai</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
                     </tr>
                   </thead>
@@ -1692,46 +1692,46 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                             <span className="text-[0.6rem] text-slate-500 italic">Belum Verif</span>
                           )}
                         </td>
-                        {/* Kolom Publikasi Nilai di Samping Tombol Cetak */}
+                        {/* Kolom Tampilkan Nilai */}
                         <td className="p-4 text-xs">
                           {j.is_verified ? (
                             (() => {
                               const isPublished = publishAll || publishedJuriIds.includes(j.id);
                               const scoreCount = penilaianList.filter(p => p.juri_id === j.id).length;
                               return (
-                                <div className="flex flex-col gap-1.5 min-w-[130px]">
+                                <div className="flex flex-col gap-1.5 min-w-[145px]">
                                   <div className="flex items-center gap-1.5 text-[0.65rem]">
                                     {isPublished ? (
                                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                        Tayang ({scoreCount})
+                                        🟢 Tampil ({scoreCount} Nilai)
                                       </span>
                                     ) : (
                                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold">
                                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                                        Tertahan ({scoreCount})
+                                        ⏸️ Ditahan ({scoreCount} Nilai)
                                       </span>
                                     )}
                                   </div>
                                   {isPublished ? (
                                     <button
                                       type="button"
-                                      onClick={() => handleUnpublishJuri(j.id)}
+                                      onClick={() => handleUnpublishJuri(j.id, j.nama_lengkap)}
                                       disabled={publishingJuriId === j.id}
-                                      className="px-2.5 py-1 text-[0.65rem] font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-50"
-                                      title="Tarik nilai juri ini dari papan klasemen publik"
+                                      className="px-2.5 py-1 text-[0.65rem] font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-50 shadow-sm"
+                                      title="Tahan / sembunyikan nilai juri ini dari leaderboard"
                                     >
-                                      {publishingJuriId === j.id ? "Memproses..." : "⏸️ Tarik Nilai"}
+                                      {publishingJuriId === j.id ? "Memproses..." : "⏸️ Sembunyikan Nilai"}
                                     </button>
                                   ) : (
                                     <button
                                       type="button"
-                                      onClick={() => handlePublishJuri(j.id)}
+                                      onClick={() => handlePublishJuri(j.id, j.nama_lengkap)}
                                       disabled={publishingJuriId === j.id}
-                                      className="px-2.5 py-1 text-[0.65rem] font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg shadow-md hover:shadow-cyan-500/25 transition-all flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-50"
-                                      title="Publikasikan nilai juri ini ke papan klasemen utama"
+                                      className="px-2.5 py-1 text-[0.65rem] font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg shadow-md hover:shadow-emerald-500/25 transition-all flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-50"
+                                      title="Tampilkan nilai juri ini ke papan klasemen leaderboard publik"
                                     >
-                                      {publishingJuriId === j.id ? "Memproses..." : "🚀 Publish Nilai"}
+                                      {publishingJuriId === j.id ? "Memproses..." : "👁️ Tampilkan Nilai"}
                                     </button>
                                   )}
                                 </div>
