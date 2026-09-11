@@ -382,18 +382,7 @@ export default function Home() {
         "postgres_changes",
         { event: "*", schema: "public", table: "informasi" },
         async () => {
-          const { data: freshInfo } = await supabase
-            .from("informasi")
-            .select("id, text, created_at")
-            .order("created_at", { ascending: false })
-            .limit(10);
-
-          if (freshInfo) {
-            const cleanInfo = freshInfo.filter((i) => !i.text.startsWith("__CONFIG_"));
-            setAnnouncements(cleanInfo);
-            const isAnnounced = freshInfo.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
-            setShowWinners(isAnnounced);
-          }
+          await fetchData(activeTab, activeGender);
         }
       )
       .subscribe();
@@ -504,17 +493,42 @@ export default function Home() {
         setAvailableCounts((prev) => ({ ...prev, [`${kategori}_${gender}`]: pesertaData.length }));
       }
 
+      // 1. Fetch info and check publication status
+      const { data: infoData } = await supabase
+        .from("informasi")
+        .select("id, text, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      const pubIds = [];
+      let isPubAll = false;
+      if (infoData) {
+        const cleanInfo = infoData.filter((i) => !i.text.startsWith("__CONFIG_") && !i.text.startsWith("__PUBLISH"));
+        setAnnouncements(cleanInfo);
+        const isAnnounced = infoData.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
+        setShowWinners(isAnnounced);
+        infoData.forEach((item) => {
+          if (item.text === "__PUBLISH_ALL_SCORES__:true") isPubAll = true;
+          if (item.text && item.text.startsWith("__PUBLISHED_JURI__:")) {
+            pubIds.push(item.text.replace("__PUBLISHED_JURI__:", "").trim());
+          }
+        });
+      }
+
+      // 2. Process nilai if there are participants
       if (pesertaData && pesertaData.length > 0) {
         const ids = pesertaData.map((p) => p.id);
         const { data: nilaiData } = await supabase
           .from("penilaian")
-          .select("peserta_id, lomba_id, nilai")
+          .select("peserta_id, lomba_id, nilai, juri_id")
           .in("peserta_id", ids);
 
         if (nilaiData) {
+          const publishedNilai = nilaiData.filter(n => isPubAll || pubIds.includes(n.juri_id));
           const map = {};
           const counts = {};
-          nilaiData.forEach((n) => {
+          const totalPerPeserta = {};
+          publishedNilai.forEach((n) => {
             const key = `${n.peserta_id}_${n.lomba_id}`;
             if (!map[key]) {
               map[key] = 0;
@@ -522,44 +536,41 @@ export default function Home() {
             }
             map[key] += n.nilai;
             counts[key] += 1;
+            totalPerPeserta[n.peserta_id] = (totalPerPeserta[n.peserta_id] || 0) + n.nilai;
           });
           Object.keys(map).forEach((key) => {
             map[key] = Math.round((map[key] / counts[key]) * 100) / 100;
           });
           setNilaiMap(map);
+
+          // Update peserta list with calculated published totals and re-sort
+          setPeserta((currentPeserta) => {
+            return currentPeserta.map(p => ({
+              ...p,
+              total_nilai: totalPerPeserta[p.id] || 0,
+            })).sort((a, b) => (b.total_nilai || 0) - (a.total_nilai || 0));
+          });
         }
       }
 
-      // Fetch recent scores for ticker
+      // 3. Fetch recent scores for ticker (moderated to published only)
       const { data: recentScores } = await supabase
         .from("penilaian")
         .select(`
           id,
           nilai,
+          juri_id,
           updated_at,
           peserta!inner (nama_regu, pangkalan, kategori, gender),
           lomba:lomba_id (nama_lomba)
         `)
         .eq("peserta.kategori", kategori)
         .order("updated_at", { ascending: false })
-        .limit(15);
- 
-      const { data: infoData } = await supabase
-        .from("informasi")
-        .select("id, text, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
- 
-      if (infoData) {
-        const cleanInfo = infoData.filter((i) => !i.text.startsWith("__CONFIG_"));
-        setAnnouncements(cleanInfo);
-        const isAnnounced = infoData.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
-        setShowWinners(isAnnounced);
-      }
+        .limit(25);
 
- 
       if (recentScores) {
-        const items = recentScores.map((s) => {
+        const publishedRecent = recentScores.filter((s) => isPubAll || pubIds.includes(s.juri_id)).slice(0, 15);
+        const items = publishedRecent.map((s) => {
           const time = new Date(s.updated_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
           return {
             id: s.id,

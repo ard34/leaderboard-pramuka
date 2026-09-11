@@ -15,6 +15,10 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
   
   const prevDataRef = useRef(new Map());
 
+  const [publishedTotals, setPublishedTotals] = useState({});
+  const [publishedJuriIds, setPublishedJuriIds] = useState([]);
+  const [publishAll, setPublishAll] = useState(false);
+
   // Determine category based on accentColor prop
   const kategori = accentColor === "emerald" ? "SD" : accentColor === "cyan" ? "SMP" : "SMK";
 
@@ -32,7 +36,28 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
   // Fetch lomba and assessment details
   const fetchDetails = async () => {
     try {
-      // 1. Fetch lomba
+      // 1. Fetch info and check publication status
+      const { data: infoData } = await supabase
+        .from("informasi")
+        .select("id, text, created_at")
+        .order("created_at", { ascending: false });
+
+      const pubIds = [];
+      let isPubAll = false;
+      if (infoData) {
+        const cleanInfo = infoData.filter((i) => !i.text.startsWith("__CONFIG_") && !i.text.startsWith("__PUBLISH"));
+        setAnnouncements(cleanInfo);
+        infoData.forEach((item) => {
+          if (item.text === "__PUBLISH_ALL_SCORES__:true") isPubAll = true;
+          if (item.text && item.text.startsWith("__PUBLISHED_JURI__:")) {
+            pubIds.push(item.text.replace("__PUBLISHED_JURI__:", "").trim());
+          }
+        });
+      }
+      setPublishAll(isPubAll);
+      setPublishedJuriIds(pubIds);
+
+      // 2. Fetch lomba
       const { data: lombaData } = await supabase
         .from("lomba")
         .select("id, nama_lomba, kode_lomba")
@@ -41,38 +66,43 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
 
       if (lombaData) setLombaList(lombaData);
 
-      // 2. Fetch nilai if there are participants
+      // 3. Fetch nilai if there are participants
       if (data && data.length > 0) {
         const ids = data.map((p) => p.id);
         const { data: nilaiData } = await supabase
           .from("penilaian")
-          .select("peserta_id, lomba_id, nilai")
+          .select("peserta_id, lomba_id, nilai, juri_id")
           .in("peserta_id", ids);
 
-      if (nilaiData) {
-        const map = {};
-        const counts = {};
-        nilaiData.forEach((n) => {
-          const key = `${n.peserta_id}_${n.lomba_id}`;
-          if (!map[key]) {
-            map[key] = 0;
-            counts[key] = 0;
-          }
-          map[key] += n.nilai;
-          counts[key] += 1;
-        });
-        Object.keys(map).forEach((key) => {
-          map[key] = Math.round((map[key] / counts[key]) * 100) / 100;
-        });
-        setNilaiMap(map);
+        if (nilaiData) {
+          const publishedNilai = nilaiData.filter(n => isPubAll || pubIds.includes(n.juri_id));
+          const map = {};
+          const counts = {};
+          const totalPerPeserta = {};
+          publishedNilai.forEach((n) => {
+            const key = `${n.peserta_id}_${n.lomba_id}`;
+            if (!map[key]) {
+              map[key] = 0;
+              counts[key] = 0;
+            }
+            map[key] += n.nilai;
+            counts[key] += 1;
+            totalPerPeserta[n.peserta_id] = (totalPerPeserta[n.peserta_id] || 0) + n.nilai;
+          });
+          Object.keys(map).forEach((key) => {
+            map[key] = Math.round((map[key] / counts[key]) * 100) / 100;
+          });
+          setNilaiMap(map);
+          setPublishedTotals(totalPerPeserta);
+        }
       }
-    }
 
       let query = supabase
         .from("penilaian")
         .select(`
           id,
           nilai,
+          juri_id,
           updated_at,
           peserta!inner (nama_regu, pangkalan, kategori, gender, is_verified),
           lomba:lomba_id (nama_lomba)
@@ -86,20 +116,11 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
 
       const { data: recentScores } = await query
         .order("updated_at", { ascending: false })
-        .limit(15);
-
-      const { data: infoData } = await supabase
-        .from("informasi")
-        .select("id, text, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (infoData) {
-        setAnnouncements(infoData);
-      }
+        .limit(20);
 
       if (recentScores) {
-        const items = recentScores.map((s) => {
+        const publishedRecent = recentScores.filter((s) => isPubAll || pubIds.includes(s.juri_id)).slice(0, 15);
+        const items = publishedRecent.map((s) => {
           const time = new Date(s.updated_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
           return {
             id: s.id,
@@ -186,9 +207,21 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       )
       .subscribe();
 
+    const channelInfo = supabase
+      .channel(`realtime-subpage-info-${kategori}-${gender}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "informasi" },
+        async () => {
+          await fetchDetails();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channelPeserta);
       supabase.removeChannel(channelNilai);
+      supabase.removeChannel(channelInfo);
     };
   }, [kategori, gender]);
 
@@ -253,6 +286,15 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
         { id: "t1", text: `Lomba Pramuka Tingkat ${kategori} sedang berlangsung`, time: "" },
         { id: "t2", text: "Klasemen diperbarui secara real-time melalui sistem dewan juri", time: "" }
       ];
+
+  const sortedData = useMemo(() => {
+    return [...data].sort((a, b) => {
+      const scoreA = publishedTotals[a.id] ?? 0;
+      const scoreB = publishedTotals[b.id] ?? 0;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return (a.nomor_dada || 999) - (b.nomor_dada || 999);
+    });
+  }, [data, publishedTotals]);
 
   return (
     <div className={`scoreboard-layout theme-${accentColor}`}>
@@ -331,15 +373,16 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
                   </tr>
                 </thead>
                 <tbody>
-                  {data.length === 0 ? (
+                  {sortedData.length === 0 ? (
                     <tr>
                       <td colSpan={lombaList.length + 3} className="scoreboard-empty">
                         Belum ada regu terdaftar untuk tingkat {kategori}.
                       </td>
                     </tr>
                   ) : (
-                    data.map((regu, index) => {
+                    sortedData.map((regu, index) => {
                       const isChanged = changedIds.has(regu.id);
+                      const currentScore = publishedTotals[regu.id] ?? 0;
                       return (
                         <tr
                           key={regu.id}
@@ -367,8 +410,8 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
                             );
                           })}
                           <td className="sticky-col-total col-total">
-                            <span className={`total-score ${getTotalClass(regu.total_nilai)} ${isChanged ? "score-updated" : ""}`}>
-                              {regu.total_nilai ?? 0}
+                            <span className={`total-score ${getTotalClass(currentScore)} ${isChanged ? "score-updated" : ""}`}>
+                              {currentScore}
                             </span>
                           </td>
                         </tr>

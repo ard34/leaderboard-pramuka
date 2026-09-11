@@ -83,6 +83,14 @@ export default function DashboardAdmin() {
   const [berkasStatus, setBerkasStatus] = useState({});
   const [catatanBerkas, setCatatanBerkas] = useState("");
 
+  // States for publish nilai dewan juri
+  const [publishedJuriIds, setPublishedJuriIds] = useState([]);
+  const [publishAll, setPublishAll] = useState(false);
+  const [publishingJuriId, setPublishingJuriId] = useState(null);
+  const [globalPublishing, setGlobalPublishing] = useState(false);
+  const [penilaianList, setPenilaianList] = useState([]);
+  const [seedingPeserta, setSeedingPeserta] = useState(false);
+
   const handleToggleShowWinners = async () => {
     const nextState = !showWinners;
     setShowWinners(nextState);
@@ -97,6 +105,118 @@ export default function DashboardAdmin() {
     }
     const { data: freshInfo } = await supabase.from("informasi").select("id, text, created_at").order("created_at", { ascending: false });
     if (freshInfo) setInformasiList(freshInfo);
+  };
+
+  const handlePublishJuri = async (juriId, juriNama) => {
+    setPublishingJuriId(juriId);
+    try {
+      const res = await fetch("/api/admin/publish-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "publish", juri_id: juriId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPesan("success", `🚀 Nilai dari ${juriNama} berhasil dipublikasikan ke Leaderboard!`);
+        await fetchAllData();
+      } else {
+        showPesan("error", "Gagal mempublish nilai: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Kesalahan koneksi: " + err.message);
+    } finally {
+      setPublishingJuriId(null);
+    }
+  };
+
+  const handleUnpublishJuri = async (juriId, juriNama) => {
+    setPublishingJuriId(juriId);
+    try {
+      const res = await fetch("/api/admin/publish-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unpublish", juri_id: juriId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPesan("info", `⏸️ Nilai dari ${juriNama} ditarik (status: tertahan di sistem).`);
+        await fetchAllData();
+      } else {
+        showPesan("error", "Gagal menarik nilai: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Kesalahan koneksi: " + err.message);
+    } finally {
+      setPublishingJuriId(null);
+    }
+  };
+
+  const handlePublishAll = async () => {
+    if (!confirm("Publikasikan seluruh nilai dari semua Dewan Juri ke Leaderboard Utama?")) return;
+    setGlobalPublishing(true);
+    try {
+      const res = await fetch("/api/admin/publish-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "publish_all" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPesan("success", "🚀 Seluruh nilai juri berhasil dipublikasikan ke Leaderboard Utama!");
+        await fetchAllData();
+      } else {
+        showPesan("error", "Gagal mempublish: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Kesalahan: " + err.message);
+    } finally {
+      setGlobalPublishing(false);
+    }
+  };
+
+  const handleUnpublishAll = async () => {
+    if (!confirm("Tarik seluruh nilai kembali ke status tertahan/draft?")) return;
+    setGlobalPublishing(true);
+    try {
+      const res = await fetch("/api/admin/publish-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unpublish_all" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPesan("info", "⏸️ Seluruh nilai ditarik dari Leaderboard Utama (berstatus tertahan).");
+        await fetchAllData();
+      } else {
+        showPesan("error", "Gagal menarik: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Kesalahan: " + err.message);
+    } finally {
+      setGlobalPublishing(false);
+    }
+  };
+
+  const handleSeedPeserta = async (kategori = "ALL") => {
+    setSeedingPeserta(true);
+    try {
+      const res = await fetch("/api/admin/seed-peserta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kategori }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPesan("success", data.message);
+        await fetchAllData();
+      } else {
+        showPesan("error", "Gagal memuat peserta: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Kesalahan: " + err.message);
+    } finally {
+      setSeedingPeserta(false);
+    }
   };
 
 
@@ -160,7 +280,7 @@ export default function DashboardAdmin() {
       // Fetch all penilaian
       supabase
         .from("penilaian")
-        .select("peserta_id, lomba_id, nilai"),
+        .select("id, peserta_id, juri_id, lomba_id, nilai"),
 
       // Fetch all juri from profiles via API to get emails
       fetch("/api/juri/get-all").then(res => res.json()).then(res => ({ data: res.data, error: res.error })),
@@ -204,10 +324,26 @@ export default function DashboardAdmin() {
     
     if (logsRes.error) console.error("Error fetching logs:", logsRes.error);
     if (logsRes.data) setLogEntries(logsRes.data);
+
+    if (penilaianRes.data) {
+      setPenilaianList(penilaianRes.data);
+    }
+
     if (informasiRes.data) {
       setInformasiList(informasiRes.data);
       const active = informasiRes.data.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
       setShowWinners(active);
+
+      const pubJuriIds = [];
+      let pubAll = false;
+      informasiRes.data.forEach((item) => {
+        if (item.text === "__PUBLISH_ALL_SCORES__:true") pubAll = true;
+        if (item.text && item.text.startsWith("__PUBLISHED_JURI__:")) {
+          pubJuriIds.push(item.text.replace("__PUBLISHED_JURI__:", "").trim());
+        }
+      });
+      setPublishedJuriIds(pubJuriIds);
+      setPublishAll(pubAll);
     }
 
 
@@ -986,6 +1122,15 @@ export default function DashboardAdmin() {
                     <option value="VERIFIED">✅ Aktif (Verified)</option>
                     <option value="PENDING">⏳ Menunggu Verifikasi</option>
                   </select>
+                  <button
+                    type="button"
+                    onClick={handleSeedPeserta}
+                    disabled={seedingPeserta}
+                    className="bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap"
+                    title="Muat data master 30 regu standar (15 SD & 15 SMP) jika data peserta masih kosong"
+                  >
+                    {seedingPeserta ? "Memuat..." : "📥 Muat 30 Regu Standar"}
+                  </button>
                 </div>
               </div>
 
@@ -1252,9 +1397,53 @@ export default function DashboardAdmin() {
               </form>
             </div>
             
-            <div className="lg:col-span-2 glass-card overflow-hidden">
-              <div className="overflow-x-auto max-h-[600px] mobile-table-scroll">
-                <table className="w-full text-left border-collapse min-w-[750px]">
+            <div className="lg:col-span-2 glass-card overflow-hidden flex flex-col">
+              {/* Toolbar Moderasi Nilai Juri */}
+              <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 flex flex-wrap gap-3 items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-300">STATUS PUBLIKASI NILAI:</span>
+                  {publishAll ? (
+                    <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Semua Nilai Juri Tayang di Klasemen Utama
+                    </span>
+                  ) : publishedJuriIds.length > 0 ? (
+                    <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                      {publishedJuriIds.length} Juri Ditayangkan (Parsial)
+                    </span>
+                  ) : (
+                    <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      Semua Nilai Tertahan (Draft / Belum Tayang)
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {publishAll ? (
+                    <button
+                      onClick={handleUnpublishAll}
+                      disabled={globalPublishing}
+                      className="px-3 py-1.5 text-xs font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5"
+                      title="Sembunyikan seluruh nilai juri dari papan klasemen publik"
+                    >
+                      {globalPublishing ? "Memproses..." : "⏸️ Tarik Semua Nilai"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handlePublishAll}
+                      disabled={globalPublishing}
+                      className="px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg shadow-md hover:shadow-cyan-500/25 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                      title="Tayangkan seluruh nilai juri ke papan klasemen utama secara serentak"
+                    >
+                      {globalPublishing ? "Memproses..." : "🚀 Publish Semua Nilai"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="overflow-x-auto max-h-[600px] mobile-table-scroll flex-1">
+                <table className="w-full text-left border-collapse min-w-[850px]">
                   <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
                     <tr>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Nama Juri</th>
@@ -1263,8 +1452,9 @@ export default function DashboardAdmin() {
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Tingkat Ditugaskan</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Pos Lomba Ditugaskan</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Gender Ditugaskan</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Status</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Status Akun</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Cetak Hasil</th>
+                      <th className="p-4 text-[0.65rem] font-bold text-cyan-400 uppercase">Publikasi Nilai</th>
                       <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
                     </tr>
                   </thead>
@@ -1326,6 +1516,55 @@ export default function DashboardAdmin() {
                             </button>
                           ) : (
                             <span className="text-[0.6rem] text-slate-500 italic">Belum Verif</span>
+                          )}
+                        </td>
+                        {/* Kolom Publikasi Nilai di Samping Tombol Cetak */}
+                        <td className="p-4 text-xs">
+                          {j.is_verified ? (
+                            (() => {
+                              const isPublished = publishAll || publishedJuriIds.includes(j.id);
+                              const scoreCount = penilaianList.filter(p => p.juri_id === j.id).length;
+                              return (
+                                <div className="flex flex-col gap-1.5 min-w-[130px]">
+                                  <div className="flex items-center gap-1.5 text-[0.65rem]">
+                                    {isPublished ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        Tayang ({scoreCount})
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                        Tertahan ({scoreCount})
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isPublished ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUnpublishJuri(j.id)}
+                                      disabled={publishingJuriId === j.id}
+                                      className="px-2.5 py-1 text-[0.65rem] font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-50"
+                                      title="Tarik nilai juri ini dari papan klasemen publik"
+                                    >
+                                      {publishingJuriId === j.id ? "Memproses..." : "⏸️ Tarik Nilai"}
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handlePublishJuri(j.id)}
+                                      disabled={publishingJuriId === j.id}
+                                      className="px-2.5 py-1 text-[0.65rem] font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg shadow-md hover:shadow-cyan-500/25 transition-all flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-50"
+                                      title="Publikasikan nilai juri ini ke papan klasemen utama"
+                                    >
+                                      {publishingJuriId === j.id ? "Memproses..." : "🚀 Publish Nilai"}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })()
+                          ) : (
+                            <span className="text-[0.6rem] text-slate-600 italic">—</span>
                           )}
                         </td>
                         <td className="p-4 text-right">

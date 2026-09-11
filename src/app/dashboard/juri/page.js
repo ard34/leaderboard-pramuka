@@ -230,7 +230,7 @@ export default function DashboardJuri() {
 
   // State Form Input
   const [selectedKategori, setSelectedKategori] = useState("SD");
-  const [selectedGender, setSelectedGender] = useState("Laki-laki");
+  const [selectedGender, setSelectedGender] = useState("SEMUA");
   const [selectedLombaId, setSelectedLombaId] = useState("");
   const [selectedPeserta, setSelectedPeserta] = useState("");
   
@@ -238,6 +238,11 @@ export default function DashboardJuri() {
   const [rubrikScores, setRubrikScores] = useState({});
   const [manualOverrideTotal, setManualOverrideTotal] = useState(null);
   const [catatanJuri, setCatatanJuri] = useState("");
+
+  // Juri Scoring Map (peserta_id -> { id, nilai, updated_at })
+  const [juriScoresMap, setJuriScoresMap] = useState({});
+  const [pesertaFilterTab, setPesertaFilterTab] = useState("ALL"); // ALL, UNSCORED, SCORED
+  const [pesertaSearch, setPesertaSearch] = useState("");
 
   // State UI
   const [loading, setLoading] = useState(true);
@@ -316,7 +321,7 @@ export default function DashboardJuri() {
       userId = session.user.id;
     }
 
-    const [profileRes, lombaRes, pesertaRes] = await Promise.all([
+    const [profileRes, lombaRes, pesertaRes, penilaianRes] = await Promise.all([
       supabase
         .from("profiles")
         .select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba, kode_lomba)")
@@ -331,6 +336,10 @@ export default function DashboardJuri() {
         .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
         .eq("is_verified", true)
         .order("nomor_dada", { ascending: true }),
+      supabase
+        .from("penilaian")
+        .select("id, peserta_id, lomba_id, nilai, updated_at")
+        .eq("juri_id", userId),
     ]);
 
     const profile = profileRes.data;
@@ -360,10 +369,63 @@ export default function DashboardJuri() {
     if (profile.assigned_kategori) setSelectedKategori(profile.assigned_kategori);
     if (profile.assigned_gender && profile.assigned_gender !== "SEMUA") {
       setSelectedGender(profile.assigned_gender);
+    } else {
+      setSelectedGender("SEMUA");
     }
 
     if (pesertaRes.data) setPesertaList(pesertaRes.data);
+
+    if (penilaianRes?.data) {
+      const map = {};
+      penilaianRes.data.forEach((s) => {
+        map[s.peserta_id] = s;
+      });
+      setJuriScoresMap(map);
+
+      const recentRiwayat = penilaianRes.data
+        .slice(0, 10)
+        .map((s) => {
+          const pesertaData = (pesertaRes.data || []).find((p) => p.id === s.peserta_id);
+          const lombaData = loadedLomba.find((l) => l.id === s.lomba_id);
+          return {
+            id: s.id,
+            regu: pesertaData ? pesertaData.nama_regu : "Regu",
+            pos: lombaData ? lombaData.nama_lomba : "Pos Lomba",
+            nilai: s.nilai,
+            time: s.updated_at ? new Date(s.updated_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—",
+          };
+        });
+      setRiwayat(recentRiwayat);
+    }
+
     setLoading(false);
+  };
+
+  const handleSelectPeserta = (pesertaId) => {
+    setSelectedPeserta(pesertaId);
+    setPesan({ type: "", text: "" });
+
+    const existing = juriScoresMap[pesertaId];
+    if (existing) {
+      setManualOverrideTotal(existing.nilai);
+      if (currentLombaDef && currentLombaDef.rubrik) {
+        const ratio = Math.min(1, Math.max(0, existing.nilai / 100));
+        const updatedRubrik = {};
+        currentLombaDef.rubrik.forEach((r) => {
+          updatedRubrik[r.id] = Math.round(r.weight * ratio);
+        });
+        setRubrikScores(updatedRubrik);
+      }
+    } else {
+      setManualOverrideTotal(null);
+      if (currentLombaDef && currentLombaDef.rubrik) {
+        const initialRubrik = {};
+        currentLombaDef.rubrik.forEach((r) => {
+          initialRubrik[r.id] = Math.round(r.weight * 0.7);
+        });
+        setRubrikScores(initialRubrik);
+      }
+    }
   };
 
   const handleRubrikChange = (rubrikId, value, maxVal) => {
@@ -430,7 +492,11 @@ export default function DashboardJuri() {
       const reguName = pesertaData ? pesertaData.nama_regu : "Regu";
       const lombaName = currentLombaDef ? currentLombaDef.nama_lomba : "Pos Lomba";
 
-      setPesan({ type: "success", text: `Skor ${finalScore} berhasil dikunci untuk ${reguName} (${lombaName})!` });
+      const updatedScores = {
+        ...juriScoresMap,
+        [selectedPeserta]: { nilai: finalScore, updated_at: new Date().toISOString(), lomba_id: targetLombaId }
+      };
+      setJuriScoresMap(updatedScores);
       setShowSuccess(true);
 
       // Add to history
@@ -442,14 +508,42 @@ export default function DashboardJuri() {
         time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
       }, ...prev].slice(0, 10));
 
-      setSelectedPeserta("");
-      setCatatanJuri("");
-      setManualOverrideTotal(null);
+      // Find next unscored school in active category to allow continuous grading 1 by 1
+      const activeSchools = pesertaList.filter(
+        (p) => p.kategori === selectedKategori && (selectedGender === "SEMUA" || p.gender === selectedGender)
+      );
+      const nextUnscored = activeSchools.find(
+        (p) => p.id !== selectedPeserta && !updatedScores[p.id]
+      );
 
-      setTimeout(() => setShowSuccess(false), 1600);
+      if (nextUnscored) {
+        setSelectedPeserta(nextUnscored.id);
+        setManualOverrideTotal(null);
+        if (currentLombaDef && currentLombaDef.rubrik) {
+          const initialRubrik = {};
+          currentLombaDef.rubrik.forEach((r) => {
+            initialRubrik[r.id] = Math.round(r.weight * 0.7);
+          });
+          setRubrikScores(initialRubrik);
+        }
+        setPesan({
+          type: "success",
+          text: `Skor ${finalScore} untuk ${reguName} tersimpan! Lanjut menilai regu berikutnya: ${nextUnscored.nama_regu} (${nextUnscored.pangkalan}).`
+        });
+      } else {
+        setSelectedPeserta("");
+        setManualOverrideTotal(null);
+        setPesan({
+          type: "success",
+          text: `Skor ${finalScore} untuk ${reguName} tersimpan! Semua regu pada sesi ini telah selesai dinilai! 🎉`
+        });
+      }
+
+      setCatatanJuri("");
+      setTimeout(() => setShowSuccess(false), 1500);
     }
     setSaving(false);
-    setTimeout(() => setPesan({ type: "", text: "" }), 4500);
+    setTimeout(() => setPesan({ type: "", text: "" }), 5000);
   };
 
   // Stepper controls for overall score override
@@ -462,6 +556,40 @@ export default function DashboardJuri() {
   const filteredLomba = isLockedPos 
     ? lombaList.filter((l) => l.id === juri.assigned_lomba_id)
     : lombaList.filter((l) => l.kategori === selectedKategori);
+
+  // Filtered Peserta Calculations
+  const availableInCategory = useMemo(() => {
+    return pesertaList.filter((p) => p.kategori === selectedKategori);
+  }, [pesertaList, selectedKategori]);
+
+  const scoredInCategory = useMemo(() => {
+    return availableInCategory.filter((p) => juriScoresMap[p.id]);
+  }, [availableInCategory, juriScoresMap]);
+
+  const unscoredInCategory = useMemo(() => {
+    return availableInCategory.filter((p) => !juriScoresMap[p.id]);
+  }, [availableInCategory, juriScoresMap]);
+
+  const displayPesertaList = useMemo(() => {
+    let list = availableInCategory;
+    if (selectedGender !== "SEMUA") {
+      list = list.filter((p) => p.gender === selectedGender);
+    }
+    if (pesertaFilterTab === "UNSCORED") {
+      list = list.filter((p) => !juriScoresMap[p.id]);
+    } else if (pesertaFilterTab === "SCORED") {
+      list = list.filter((p) => juriScoresMap[p.id]);
+    }
+    if (pesertaSearch.trim()) {
+      const q = pesertaSearch.toLowerCase();
+      list = list.filter((p) =>
+        p.nama_regu.toLowerCase().includes(q) ||
+        p.pangkalan.toLowerCase().includes(q) ||
+        String(p.nomor_dada).includes(q)
+      );
+    }
+    return list;
+  }, [availableInCategory, selectedGender, pesertaFilterTab, pesertaSearch, juriScoresMap]);
 
   if (loading) {
     return (
@@ -726,43 +854,243 @@ export default function DashboardJuri() {
 
               <form onSubmit={handleSimpanNilai} className="space-y-5">
                 
-                {/* 1. Pilih Regu Peserta */}
-                <div className="bg-slate-950/80 border-2 border-slate-800 focus-within:border-amber-500/70 rounded-2xl p-4 transition-all">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <span>🎯</span> PILIH REGU PESERTA (YANG SEDANG TAMPIL DI POS)
-                    </label>
-                    <span className="text-[0.65rem] text-slate-400">
-                      Tersedia: {pesertaList.filter((p) => p.kategori === selectedKategori && p.gender === selectedGender).length} Regu
-                    </span>
+                {/* 1. Pilih Regu Peserta (Interaktif 1 Persatu Sekolah) */}
+                <div className="bg-slate-950/90 border-2 border-slate-800 focus-within:border-amber-500/70 rounded-2xl p-4 transition-all space-y-3">
+                  {/* Header & Status Progress */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                    <div>
+                      <label className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🎯</span> PILIH REGU PESERTA (1 PER 1 SEKOLAH)
+                      </label>
+                      <p className="text-[0.68rem] text-slate-400 mt-0.5">
+                        Ketuk salah satu kartu regu di bawah. Setelah dinilai, sistem otomatis melanjutkan ke regu berikutnya.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <div className="text-[0.65rem] font-bold text-slate-400 uppercase">
+                          Progres Tingkat {selectedKategori}
+                        </div>
+                        <div className="text-xs font-black text-emerald-400">
+                          {scoredInCategory.length} / {availableInCategory.length} Regu Dinilai
+                        </div>
+                      </div>
+                      <div className="w-16 bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${availableInCategory.length > 0 ? (scoredInCategory.length / availableInCategory.length) * 100 : 0}%`
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <select
-                    value={selectedPeserta}
-                    onChange={(e) => setSelectedPeserta(e.target.value)}
-                    required
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm md:text-base text-white font-bold focus:border-amber-500 outline-none transition-all cursor-pointer"
-                  >
-                    <option value="">— Ketuk untuk Memilih Regu Peserta —</option>
-                    {pesertaList
-                      .filter((p) => p.kategori === selectedKategori && p.gender === selectedGender)
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          Kapling {p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"} : {p.nama_regu} ({p.pangkalan})
-                        </option>
-                      ))}
-                  </select>
-
-                  {selectedPeserta && (
-                    <div className="mt-2.5 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                      <span className="text-emerald-400 font-bold flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                        Regu Terpilih Siap Dinilai
-                      </span>
-                      <span className="text-slate-400 text-[0.68rem]">
-                        Pastikan nomor kapling & nama regu sesuai sebelum menyimpan
-                      </span>
+                  {/* Filter Toolbar: Status Tab, Gender Filter, dan Pencarian */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    {/* Filter Status Penilaian */}
+                    <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setPesertaFilterTab("ALL")}
+                        className={`px-2.5 py-1 rounded-lg text-[0.7rem] font-bold transition-all ${
+                          pesertaFilterTab === "ALL"
+                            ? "bg-amber-500 text-slate-950 shadow"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Semua ({availableInCategory.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPesertaFilterTab("UNSCORED")}
+                        className={`px-2.5 py-1 rounded-lg text-[0.7rem] font-bold transition-all flex items-center gap-1 ${
+                          pesertaFilterTab === "UNSCORED"
+                            ? "bg-amber-500 text-slate-950 shadow"
+                            : "text-amber-400 hover:text-amber-300"
+                        }`}
+                      >
+                        <span>⏳</span> Belum ({unscoredInCategory.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPesertaFilterTab("SCORED")}
+                        className={`px-2.5 py-1 rounded-lg text-[0.7rem] font-bold transition-all flex items-center gap-1 ${
+                          pesertaFilterTab === "SCORED"
+                            ? "bg-emerald-500 text-slate-950 shadow"
+                            : "text-emerald-400 hover:text-emerald-300"
+                        }`}
+                      >
+                        <span>✅</span> Selesai ({scoredInCategory.length})
+                      </button>
                     </div>
+
+                    {/* Filter Gender & Search */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-[0.7rem] font-bold">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedGender("SEMUA")}
+                          className={`px-2 py-0.5 rounded-lg transition-all ${
+                            selectedGender === "SEMUA"
+                              ? "bg-cyan-500 text-slate-950"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Semua Gender
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedGender("Laki-laki")}
+                          className={`px-2 py-0.5 rounded-lg transition-all ${
+                            selectedGender === "Laki-laki"
+                              ? "bg-cyan-500 text-slate-950"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          👦 Putra
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedGender("Perempuan")}
+                          className={`px-2 py-0.5 rounded-lg transition-all ${
+                            selectedGender === "Perempuan"
+                              ? "bg-rose-500 text-white"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          👧 Putri
+                        </button>
+                      </div>
+
+                      <input
+                        type="text"
+                        placeholder="🔍 Cari regu / sekolah..."
+                        value={pesertaSearch}
+                        onChange={(e) => setPesertaSearch(e.target.value)}
+                        className="bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1 text-xs text-white placeholder-slate-600 focus:border-amber-500 outline-none w-36 sm:w-44"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Grid Kartu Regu Sekolah (Interaktif) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                    {displayPesertaList.length === 0 ? (
+                      <div className="col-span-full py-6 text-center text-xs text-slate-500 italic">
+                        Tidak ada regu yang sesuai filter saat ini.
+                      </div>
+                    ) : (
+                      displayPesertaList.map((p) => {
+                        const isSelected = selectedPeserta === p.id;
+                        const scoreData = juriScoresMap[p.id];
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => handleSelectPeserta(p.id)}
+                            className={`cursor-pointer p-3 rounded-xl border text-xs transition-all flex flex-col justify-between gap-1.5 ${
+                              isSelected
+                                ? "bg-amber-500/15 border-amber-400 shadow-[0_0_15px_rgba(245,166,35,0.3)] ring-2 ring-amber-400/80"
+                                : scoreData
+                                ? "bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-500/70"
+                                : "bg-slate-900/80 border-slate-800 hover:border-amber-500/50"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-1">
+                              <div className="truncate">
+                                <span className="font-mono text-[0.65rem] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded mr-1">
+                                  #{p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"}
+                                </span>
+                                <span className="font-bold text-white text-xs">{p.nama_regu}</span>
+                              </div>
+                              <span className="text-[0.6rem] text-slate-400 font-bold whitespace-nowrap">
+                                {p.gender === "Laki-laki" ? "👦 PA" : "👧 PI"}
+                              </span>
+                            </div>
+
+                            <div className="text-[0.68rem] text-slate-400 truncate">{p.pangkalan}</div>
+
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[0.65rem]">
+                              {scoreData ? (
+                                <span className="text-emerald-400 font-black flex items-center gap-1">
+                                  <span>✅</span> Skor: {scoreData.nilai}
+                                </span>
+                              ) : (
+                                <span className="text-amber-400/90 font-bold flex items-center gap-1">
+                                  <span>⏳</span> Belum Dinilai
+                                </span>
+                              )}
+                              <span className={`text-[0.62rem] font-bold ${isSelected ? "text-amber-300 font-black" : "text-slate-500"}`}>
+                                {isSelected ? "● DIPILIH" : "PILIH"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Dropdown Cadangan */}
+                  <div className="pt-2 border-t border-slate-800/60">
+                    <label className="block text-[0.65rem] text-slate-500 font-bold uppercase mb-1">
+                      Atau Pilih Cepat Melalui Menu Dropdown:
+                    </label>
+                    <select
+                      value={selectedPeserta}
+                      onChange={(e) => handleSelectPeserta(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold focus:border-amber-500 outline-none cursor-pointer"
+                    >
+                      <option value="">— Pilih Regu Melalui Dropdown —</option>
+                      {displayPesertaList.map((p) => {
+                        const scoreData = juriScoresMap[p.id];
+                        return (
+                          <option key={p.id} value={p.id}>
+                            {scoreData ? `[✅ Nilai: ${scoreData.nilai}]` : "[⏳ Belum]"} Kapling {p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"} : {p.nama_regu} ({p.pangkalan} - {p.gender === 'Laki-laki' ? 'Putra' : 'Putri'})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {/* Banner Regu Aktif yang Sedang Dipilih */}
+                  {selectedPeserta && (
+                    (() => {
+                      const p = pesertaList.find(item => item.id === selectedPeserta);
+                      const existing = juriScoresMap[selectedPeserta];
+                      if (!p) return null;
+                      return (
+                        <div className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                          existing
+                            ? "bg-cyan-950/40 border-cyan-500/40 text-cyan-200"
+                            : "bg-amber-950/30 border-amber-500/40 text-amber-200"
+                        }`}>
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xl">{existing ? "🔄" : "🎯"}</span>
+                            <div>
+                              <div className="text-xs font-black text-white flex items-center gap-1.5">
+                                <span>{p.nama_regu} ({p.pangkalan})</span>
+                                <span className="text-[0.65rem] bg-slate-800 px-2 py-0.5 rounded text-amber-300 font-mono">
+                                  Kapling #{p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"}
+                                </span>
+                                <span className="text-[0.65rem] bg-slate-800 px-2 py-0.5 rounded text-slate-300">
+                                  {p.gender === "Laki-laki" ? "👦 Putra" : "👧 Putri"}
+                                </span>
+                              </div>
+                              <div className="text-[0.68rem] text-slate-300 mt-0.5">
+                                {existing
+                                  ? `Regu ini sudah dinilai dengan skor ${existing.nilai}. Anda dalam Mode Revisi.`
+                                  : "Regu ini belum dinilai. Silakan atur rubrik nilai di bawah lalu simpan."}
+                              </div>
+                            </div>
+                          </div>
+                          {existing && (
+                            <span className="px-2.5 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[0.65rem] font-black rounded-lg uppercase w-fit">
+                              Mode Revisi Skor
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()
                   )}
                 </div>
 
@@ -859,7 +1187,11 @@ export default function DashboardJuri() {
                 <button
                   type="submit"
                   disabled={saving || !isOnline || !selectedPeserta}
-                  className="w-full bg-gradient-to-r from-amber-500 via-amber-600 to-emerald-600 hover:from-amber-400 hover:to-emerald-500 text-slate-950 font-black py-4 px-6 rounded-2xl transition-all duration-300 shadow-[0_8px_30px_rgba(245,166,35,0.3)] hover:shadow-[0_12px_40px_rgba(245,166,35,0.45)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 tracking-wider text-sm uppercase flex items-center justify-center gap-2"
+                  className={`w-full font-black py-4 px-6 rounded-2xl transition-all duration-300 text-slate-950 tracking-wider text-sm uppercase flex items-center justify-center gap-2 ${
+                    selectedPeserta && juriScoresMap[selectedPeserta]
+                      ? "bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-500 hover:from-cyan-300 hover:to-blue-400 shadow-[0_8px_30px_rgba(6,182,212,0.3)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.45)]"
+                      : "bg-gradient-to-r from-amber-500 via-amber-600 to-emerald-600 hover:from-amber-400 hover:to-emerald-500 shadow-[0_8px_30px_rgba(245,166,35,0.3)] hover:shadow-[0_12px_40px_rgba(245,166,35,0.45)]"
+                  } hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
                 >
                   {saving ? (
                     <span className="flex items-center gap-2 text-white">
@@ -869,10 +1201,15 @@ export default function DashboardJuri() {
                       </svg>
                       MENYIMPAN & MENYINKRONKAN NILAI...
                     </span>
+                  ) : selectedPeserta && juriScoresMap[selectedPeserta] ? (
+                    <>
+                      <span>🔄</span>
+                      <span>PERBARUI NILAI REGU INI (REVISI SKOR: {juriScoresMap[selectedPeserta].nilai} ➔ {totalScoreCalculated})</span>
+                    </>
                   ) : (
                     <>
                       <span>🔒</span>
-                      <span>KUNCI NILAI & SIMPAN KE REKAPITULASI</span>
+                      <span>KUNCI NILAI & SIMPAN (LANJUT KE REGU BERIKUTNYA)</span>
                     </>
                   )}
                 </button>
