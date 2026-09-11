@@ -1231,14 +1231,17 @@ export default function DashboardAdmin() {
                               </div>
                             ) : (
                               <div className="flex justify-end gap-1.5 text-right items-center">
+                                {/* Tombol Cek Berkas selalu tersedia untuk semua peserta */}
+                                <button 
+                                  onClick={() => handleStartCekBerkas(p)} 
+                                  className="text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors"
+                                  title="Lihat & periksa berkas persyaratan dokumen peserta"
+                                >
+                                  📄 Cek Berkas
+                                </button>
+
                                 {!p.is_verified && (
                                   <>
-                                    <button 
-                                      onClick={() => handleStartCekBerkas(p)} 
-                                      className="text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors"
-                                    >
-                                      📄 Cek Berkas
-                                    </button>
                                     <button 
                                       onClick={() => handleStartVerifikasi(p)} 
                                       disabled={!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina || !p.status_berkas?.bukti_pembayaran}
