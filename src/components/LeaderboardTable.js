@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LeaderboardTable({ data, accentColor = "emerald", tingkat, gender, onGenderChange }) {
