@@ -18,6 +18,7 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
   const [publishedTotals, setPublishedTotals] = useState({});
   const [publishedJuriIds, setPublishedJuriIds] = useState([]);
   const [publishAll, setPublishAll] = useState(false);
+  const [showWinners, setShowWinners] = useState(false);
 
   // Determine category based on accentColor prop
   const kategori = accentColor === "emerald" ? "SD" : accentColor === "cyan" ? "SMP" : "SMK";
@@ -44,16 +45,19 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
 
       const pubIds = [];
       let isPubAll = false;
+      let isAnnounced = false;
       if (infoData) {
-        const cleanInfo = infoData.filter((i) => !i.text.startsWith("__CONFIG_") && !i.text.startsWith("__PUBLISH"));
+        const cleanInfo = infoData.filter((i) => !i.text.startsWith("__CONFIG_") && !i.text.startsWith("__PUBLISH") && !i.text.startsWith("__PUBLISHED_JURI__"));
         setAnnouncements(cleanInfo);
+        isAnnounced = infoData.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
         infoData.forEach((item) => {
-          if (item.text === "__PUBLISH_ALL_SCORES__:true") isPubAll = true;
+          if (item.text === "__PUBLISH_ALL_SCORES__:true" || item.text === "__PUBLISH_ALL_SCORES__") isPubAll = true;
           if (item.text && item.text.startsWith("__PUBLISHED_JURI__:")) {
             pubIds.push(item.text.replace("__PUBLISHED_JURI__:", "").trim());
           }
         });
       }
+      setShowWinners(isAnnounced);
       setPublishAll(isPubAll);
       setPublishedJuriIds(pubIds);
 
@@ -294,13 +298,24 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       ];
 
   const sortedData = useMemo(() => {
+    if (showWinners) {
+      // Mode Juara: Urutkan akumulasi nilai tertinggi ke terendah!
+      return [...data].sort((a, b) => {
+        const scoreA = publishedTotals[a.id] ?? 0;
+        const scoreB = publishedTotals[b.id] ?? 0;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return (a.nomor_dada || 999) - (b.nomor_dada || 999);
+      });
+    }
+    // Mode Normal: Runtutan sesuai siapa yang paling dahulu daftar!
     return [...data].sort((a, b) => {
-      const scoreA = publishedTotals[a.id] ?? 0;
-      const scoreB = publishedTotals[b.id] ?? 0;
-      if (scoreB !== scoreA) return scoreB - scoreA;
+      if (a.created_at && b.created_at) {
+        const timeDiff = new Date(a.created_at) - new Date(b.created_at);
+        if (timeDiff !== 0) return timeDiff;
+      }
       return (a.nomor_dada || 999) - (b.nomor_dada || 999);
     });
-  }, [data, publishedTotals]);
+  }, [data, publishedTotals, showWinners]);
 
   return (
     <div className={`scoreboard-layout theme-${accentColor}`}>
@@ -368,7 +383,9 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
               <table className="scoreboard-table">
                 <thead>
                   <tr>
-                    <th className="sc-th-rank sticky-col-rank col-rank">Peringkat</th>
+                    <th className="sc-th-rank sticky-col-rank col-rank">
+                      {showWinners ? "PERINGKAT" : "NO"}
+                    </th>
                     <th className="sc-th-name sticky-col-name col-name">NO. GUDEP</th>
                     {lombaList.map((lomba) => (
                       <th key={lomba.id} title={lomba.nama_lomba} className="col-lomba">
@@ -396,7 +413,13 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
                           className={`scoreboard-row leaderboard-row ${isChanged ? "rank-changed" : ""}`}
                         >
                           <td className="sticky-col-rank col-rank">
-                            <span className="rank-number">{index + 1}</span>
+                            <span className="rank-number">
+                              {showWinners ? (
+                                index === 0 ? "🥇 1" : index === 1 ? "🥈 2" : index === 2 ? "🥉 3" : index + 1
+                              ) : (
+                                index + 1
+                              )}
+                            </span>
                           </td>
                           <td className="sticky-col-name col-name">
                             <div className="school-name text-xs md:text-sm font-mono font-bold text-white" title={`Regu: ${regu.nama_regu} | Sekolah: ${regu.pangkalan}`}>
@@ -416,9 +439,15 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
                             );
                           })}
                           <td className="sticky-col-total col-total">
-                            <span className={`total-score ${getTotalClass(currentScore)} ${isChanged ? "score-updated" : ""}`}>
-                              {currentScore}
-                            </span>
+                            {showWinners ? (
+                              <span className={`total-score ${getTotalClass(currentScore)} ${isChanged ? "score-updated" : ""}`}>
+                                {currentScore}
+                              </span>
+                            ) : (
+                              <span className="text-slate-600 text-[0.8rem] font-mono select-none tracking-widest flex items-center justify-center" title="Nilai akumulasi ditahan sampai pengumuman juara oleh Admin">
+                                —
+                              </span>
+                            )}
                           </td>
                         </tr>
                       );

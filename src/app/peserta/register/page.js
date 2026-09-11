@@ -95,7 +95,7 @@ export default function RegisterPage() {
         urlBiodataPembina = await uploadFile(fileBiodataPembina, "biodata_pembina");
         urlBuktiPembayaran = await uploadFile(fileBuktiPembayaran, "bukti_pembayaran");
       } catch (uploadErr) {
-        setError("Gagal mengunggah berkas. Pastikan ukuran file max 2MB dan koneksi stabil. " + uploadErr.message);
+        setError("Gagal mengunggah berkas. Pastikan ukuran file max 10MB dan koneksi stabil. " + uploadErr.message);
         setLoading(false);
         setUploadingFiles(false);
         return;
@@ -148,9 +148,9 @@ export default function RegisterPage() {
     const file = e.target.files[0];
     if (!file) return;
     
-    // Validate size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran file maksimal 2MB!");
+    // Validate size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Ukuran file maksimal 10MB!");
       e.target.value = "";
       return;
     }
@@ -321,8 +321,8 @@ export default function RegisterPage() {
                 {/* Email Aktif Pembina */}
                 <div className="space-y-1.5">
                   <label className="text-[0.65rem] font-bold text-amber-400 uppercase tracking-[0.1em] flex items-center justify-between">
-                    <span>Email Aktif Pembina / Regu</span>
-                    <span className="text-[0.58rem] text-slate-500 font-normal lowercase">(untuk notifikasi no. kapling & verifikasi)</span>
+                    <span>Email Aktif Pembina / Gugus Depan</span>
+                    <span className="text-[0.6rem] text-emerald-400 font-bold lowercase">(1 email dapat digunakan untuk mendaftar regu Putra & Putri)</span>
                   </label>
                   <input
                     type="email"
@@ -370,7 +370,7 @@ export default function RegisterPage() {
                 {/* File Uploads Section */}
                 <div className="mt-6 pt-4 border-t border-slate-800">
                   <h3 className="text-[0.7rem] font-black text-amber-400 mb-4 uppercase tracking-[0.1em]">
-                    Upload Berkas Persyaratan (Max 2MB per file | PDF/JPG/PNG)
+                    Upload Berkas Persyaratan (Max 10MB per file | PDF/JPG/PNG)
                   </h3>
                   
                   <div className="space-y-4">

@@ -481,11 +481,11 @@ export default function Home() {
 
       const { data: pesertaData } = await supabase
         .from("peserta")
-        .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender, no_gudep")
+        .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender, no_gudep, created_at")
         .eq("kategori", kategori)
         .eq("gender", gender)
         .eq("is_verified", true)
-        .order("total_nilai", { ascending: false });
+        .order("created_at", { ascending: true });
 
       if (pesertaData) {
         const bounds = {};
@@ -652,6 +652,9 @@ export default function Home() {
       return [...peserta].sort((a, b) => (b.total_nilai || 0) - (a.total_nilai || 0));
     }
     return [...peserta].sort((a, b) => {
+      if (a.created_at && b.created_at) {
+        return new Date(a.created_at) - new Date(b.created_at);
+      }
       if (a.nomor_dada && b.nomor_dada) return a.nomor_dada - b.nomor_dada;
       return (a.no_gudep || "").localeCompare(b.no_gudep || "");
     });
@@ -730,7 +733,7 @@ export default function Home() {
                   <thead>
                     <tr>
                       <th className="sc-th-rank sticky-col-rank col-rank">
-                        {showWinners ? "PERINGKAT" : "NO. URUT"}
+                        {showWinners ? "PERINGKAT" : "NO"}
                       </th>
                       <th className="sc-th-name sticky-col-name col-name">NO. KAPLING</th>
                       {currentLombaCols.map((lomba) => (
@@ -759,7 +762,9 @@ export default function Home() {
                             className={`scoreboard-row leaderboard-row ${isChanged ? "rank-changed" : ""}`}
                           >
                             <td className="sticky-col-rank col-rank">
-                              <span className="rank-number">{index + 1}</span>
+                              <span className="rank-number">
+                                {showWinners ? (index === 0 ? "🥇 1" : index === 1 ? "🥈 2" : index === 2 ? "🥉 3" : index + 1) : index + 1}
+                              </span>
                             </td>
                             <td className="sticky-col-name col-name">
                               <div className="school-name text-xs md:text-sm font-mono font-bold text-amber-300" title={`Kapling: ${regu.nomor_dada ? String(regu.nomor_dada).padStart(3, "0") : "—"} | Regu: ${regu.nama_regu} | Gudep: ${regu.no_gudep || "—"}`}>

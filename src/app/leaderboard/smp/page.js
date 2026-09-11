@@ -57,11 +57,11 @@ export default function LeaderboardSMP() {
   const fetchData = async () => {
     const { data, error } = await supabase
       .from("peserta")
-      .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender, no_gudep")
+      .select("id, nomor_dada, nama_regu, pangkalan, total_nilai, gender, no_gudep, created_at")
       .eq("kategori", "SMP")
       .eq("gender", gender)
       .eq("is_verified", true)
-      .order("nomor_dada", { ascending: true });
+      .order("created_at", { ascending: true });
 
     if (!error && data) {
       setPeserta(data);
