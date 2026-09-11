@@ -597,9 +597,9 @@ Panitia Lomba Tingkat II (LT-II) Kwarran Mekar Baru menginformasikan terkait sta
 
 ⚠️ *Status: BELUM SELESAI / BELUM LENGKAP*
 ${missingListStr}${noteStr}
-Mohon untuk segera melengkapi atau merevisi berkas persyaratan tersebut melalui portal https://www.siloti-kwaranmekarbaru.my.id agar regu Kakak dapat segera kami verifikasi secara resmi.
+Untuk melengkapi atau merevisi berkas yang kurang tersebut, mohon *KIRIMKAN LANGSUNG DOKUMEN / FOTO BERKASNYA KE CHAT WHATSAPP ADMIN INI* agar panitia dapat segera memeriksa dan memverifikasi data regu Kakak secara resmi.
 
-Jika ada kendala, silakan hubungi panitia melalui chat ini. Terima kasih! 🙏`;
+Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
     }
 
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;

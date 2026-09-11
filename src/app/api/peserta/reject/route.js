@@ -73,7 +73,7 @@ export async function POST(request) {
     const cetakUrl = `${baseUrl}/peserta/cetak/${peserta.id}`;
 
     const mailSubject = `[PENDAFTARAN DITOLAK] Regu ${peserta.nama_regu} | LT-II Kwarran Mekar Baru 2026`;
-    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) DITOLAK oleh Panitia LT-II Kwarran Mekar Baru 2026 dengan alasan:\n${reason}\n\nSilakan perbaiki kekurangan berkas Anda dan hubungi Panitia.\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) DITOLAK / BELUM LENGKAP oleh Panitia LT-II Kwarran Mekar Baru 2026 dengan alasan/catatan:\n${reason}\n\nSilakan lengkapi kekurangan berkas Anda dan KIRIMKAN LANGSUNG KE WHATSAPP ADMIN PANITIA (https://wa.me/6283875644210).\n\nTerima kasih.\nPanitia Pelaksana LT-II Mekar Baru 2026`;
     const mailtoUrl = targetEmail ? `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}` : null;
 
     if (targetEmail) {
@@ -135,9 +135,12 @@ export async function POST(request) {
             </div>
 
             <div style="text-align: center; margin: 32px 0;">
-              <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
-                Silakan lengkapi / perbaiki berkas pendaftaran Anda dan hubungi Panitia LT-II.
+              <p style="color: #cbd5e1; font-size: 13px; margin-bottom: 16px;">
+                Untuk melengkapi atau memperbaiki berkas yang kurang, silakan <strong>kirimkan dokumen / foto berkas langsung ke WhatsApp Admin Panitia</strong>:
               </p>
+              <a href="https://wa.me/6283875644210" style="display: inline-block; background-color: #10b981; color: #ffffff; font-weight: bold; font-size: 13px; text-decoration: none; padding: 12px 24px; border-radius: 8px;">
+                💬 Hubungi & Kirim Berkas ke WhatsApp Admin
+              </a>
             </div>
 
             <div style="text-align: center; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
