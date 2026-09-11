@@ -524,6 +524,87 @@ export default function DashboardAdmin() {
 
 
 
+  // --- HELPER: WHATSAPP KONFIRMASI PESERTA ---
+  const getWaPesertaUrl = (peserta, type = "auto", currentBerkasStatus = null, currentCatatan = null) => {
+    if (!peserta || !peserta.kontak_person) return null;
+    let cleanPhone = String(peserta.kontak_person).replace(/\D/g, "");
+    if (cleanPhone.startsWith("0")) {
+      cleanPhone = "62" + cleanPhone.slice(1);
+    } else if (!cleanPhone.startsWith("62")) {
+      cleanPhone = "62" + cleanPhone;
+    }
+    if (cleanPhone.length < 9) return null;
+
+    const statusObj = currentBerkasStatus || peserta.status_berkas || {};
+    const catatan = currentCatatan !== null ? currentCatatan : (peserta.catatan_berkas || "");
+
+    const berkasLabels = {
+      ketersediaan: "Form Ketersediaan Pangkalan",
+      pendaftaran: "Form Pendaftaran Regu",
+      biodata_peserta: "Biodata & Foto Peserta",
+      biodata_pembina: "Biodata Pembina Pendamping",
+      bukti_pembayaran: "Bukti Pembayaran / Administrasi",
+    };
+
+    const isComplete = Boolean(
+      statusObj.ketersediaan &&
+      statusObj.pendaftaran &&
+      statusObj.biodata_peserta &&
+      statusObj.biodata_pembina &&
+      statusObj.bukti_pembayaran
+    );
+
+    const actualType = type === "auto" ? (peserta.is_verified || isComplete ? "selesai" : "belum") : type;
+
+    let message = "";
+    if (actualType === "selesai") {
+      message = 
+`Halo Kak Pembina Regu *${peserta.nama_regu}* (${peserta.pangkalan}),
+
+Salam Pramuka! ⚜️
+Panitia Lomba Tingkat II (LT-II) Kwarran Mekar Baru menginformasikan bahwa berkas persyaratan pendaftaran regu Kakak telah *SELESAI & DINYATAKAN LENGKAP*. ✅
+
+📋 *Data Regu Terverifikasi:*
+• Regu: ${peserta.nama_regu} (${peserta.gender === 'Laki-laki' ? 'Putra' : 'Putri'})
+• Pangkalan: ${peserta.pangkalan}
+• Gudep: ${peserta.no_gudep || '-'}
+• No. Kapling: ${peserta.nomor_dada ? String(peserta.nomor_dada).padStart(3, '0') : '-'}
+• Status: *TERVERIFIKASI RESMI*
+
+Silakan masuk ke portal https://www.siloti-kwaranmekarbaru.my.id untuk mengunduh dan mencetak Bukti Pendaftaran resmi.
+
+Terima kasih atas partisipasinya dan salam sukses! ⛺`;
+    } else {
+      const missingKeys = Object.keys(berkasLabels).filter((k) => !statusObj[k]);
+      let missingListStr = "";
+      if (missingKeys.length > 0) {
+        missingListStr = `\n📌 *Berkas yang belum lengkap / perlu dilengkapi:*\n` +
+          missingKeys.map((k) => `• ❌ ${berkasLabels[k]}`).join("\n") + "\n";
+      } else {
+        missingListStr = `\n📌 *Status Berkas:* Sedang dalam tahap verifikasi / peninjauan panitia.\n`;
+      }
+
+      let noteStr = "";
+      if (catatan && catatan.trim()) {
+        noteStr = `\n📝 *Catatan Panitia:*\n"${catatan.trim()}"\n`;
+      }
+
+      message = 
+`Halo Kak Pembina Regu *${peserta.nama_regu}* (${peserta.pangkalan}),
+
+Salam Pramuka! ⚜️
+Panitia Lomba Tingkat II (LT-II) Kwarran Mekar Baru menginformasikan terkait status berkas persyaratan pendaftaran regu Kakak:
+
+⚠️ *Status: BELUM SELESAI / BELUM LENGKAP*
+${missingListStr}${noteStr}
+Mohon untuk segera melengkapi atau merevisi berkas persyaratan tersebut melalui portal https://www.siloti-kwaranmekarbaru.my.id agar regu Kakak dapat segera kami verifikasi secara resmi.
+
+Jika ada kendala, silakan hubungi panitia melalui chat ini. Terima kasih! 🙏`;
+    }
+
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  };
+
   // --- HANDLERS: CEK BERKAS PESERTA ---
   const handleStartCekBerkas = (p) => {
     setCheckingBerkasId(p.id);
@@ -1174,8 +1255,59 @@ export default function DashboardAdmin() {
                             <div className="text-slate-500 text-[0.65rem] font-normal">{p.gender === 'Laki-laki' ? '👦 Putra' : '👧 Putri'}</div>
                           </td>
                           <td className="p-3 text-xs font-mono text-slate-300">
-                            <div>{p.kontak_person || "—"}</div>
-                            {p.email && <div className="text-[0.6rem] text-amber-400 font-sans font-medium">{p.email}</div>}
+                            {p.kontak_person ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-slate-200">{p.kontak_person}</span>
+                                  {getWaPesertaUrl(p, "auto") && (
+                                    <a
+                                      href={getWaPesertaUrl(p, "auto")}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      title={`Chat WhatsApp: Konfirmasi ${p.is_verified ? 'Selesai/Lengkap' : 'Belum Selesai'}`}
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.65rem] font-sans font-bold transition-all shadow-sm ${
+                                        p.is_verified
+                                          ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/40"
+                                          : "bg-amber-500/20 text-amber-300 hover:bg-amber-500 hover:text-black border border-amber-500/40"
+                                      }`}
+                                    >
+                                      <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                                      </svg>
+                                      <span>Chat WA</span>
+                                    </a>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[0.6rem] font-sans">
+                                  <span className="text-slate-500">Kirim status:</span>
+                                  <a
+                                    href={getWaPesertaUrl(p, "selesai") || "#"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Kirim Pesan WA: Berkas Selesai & Terverifikasi"
+                                    className="text-emerald-400 hover:text-emerald-300 hover:underline font-bold"
+                                  >
+                                    ✓ Selesai
+                                  </a>
+                                  <span className="text-slate-600">|</span>
+                                  <a
+                                    href={getWaPesertaUrl(p, "belum") || "#"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Kirim Pesan WA: Berkas Belum Selesai / Kurang"
+                                    className="text-amber-400 hover:text-amber-300 hover:underline font-bold"
+                                  >
+                                    ✗ Belum
+                                  </a>
+                                </div>
+                                {p.email && <div className="text-[0.6rem] text-slate-400 font-sans font-medium">{p.email}</div>}
+                              </div>
+                            ) : (
+                              <div>
+                                <div className="text-slate-600 italic">No HP —</div>
+                                {p.email && <div className="text-[0.6rem] text-amber-400 font-sans font-medium">{p.email}</div>}
+                              </div>
+                            )}
                           </td>
                           <td className="p-3 text-xs">
                             {p.is_verified ? (
@@ -1328,20 +1460,55 @@ export default function DashboardAdmin() {
                                   />
                                 </div>
 
-                                <div className="flex justify-end gap-2">
-                                  <button 
-                                    onClick={() => setCheckingBerkasId(null)}
-                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-bold transition-all"
-                                  >
-                                    Tutup
-                                  </button>
-                                  <button 
-                                    onClick={() => handleSimpanBerkas(p.id)}
-                                    disabled={saving}
-                                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-bold transition-all disabled:opacity-50"
-                                  >
-                                    {saving ? "Menyimpan..." : "Simpan Status Berkas"}
-                                  </button>
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                      <svg className="w-3.5 h-3.5 text-emerald-400 fill-current" viewBox="0 0 24 24">
+                                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                                      </svg>
+                                      Chat WA Pembina:
+                                    </span>
+                                    {p.kontak_person ? (
+                                      <>
+                                        <a
+                                          href={getWaPesertaUrl(p, "selesai", berkasStatus, catatanBerkas) || "#"}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          title="Buka WhatsApp: Kirim konfirmasi berkas SELESAI & LENGKAP"
+                                          className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 rounded text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                                        >
+                                          <span>✅ WA: Selesai / Lengkap</span>
+                                        </a>
+                                        <a
+                                          href={getWaPesertaUrl(p, "belum", berkasStatus, catatanBerkas) || "#"}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          title="Buka WhatsApp: Kirim rincian berkas BELUM SELESAI / REVISI"
+                                          className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-black border border-amber-500/40 rounded text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                                        >
+                                          <span>⚠️ WA: Belum Selesai / Revisi</span>
+                                        </a>
+                                      </>
+                                    ) : (
+                                      <span className="text-xs text-slate-500 italic">(Nomor WA belum dicantumkan)</span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                                    <button 
+                                      onClick={() => setCheckingBerkasId(null)}
+                                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-bold transition-all"
+                                    >
+                                      Tutup
+                                    </button>
+                                    <button 
+                                      onClick={() => handleSimpanBerkas(p.id)}
+                                      disabled={saving}
+                                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-bold transition-all disabled:opacity-50"
+                                    >
+                                      {saving ? "Menyimpan..." : "Simpan Status Berkas"}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </td>
