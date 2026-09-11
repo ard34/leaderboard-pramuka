@@ -573,6 +573,10 @@ Panitia Lomba Tingkat II (LT-II) Kwarran Mekar Baru menginformasikan bahwa berka
 
 Silakan masuk ke portal https://www.siloti-kwaranmekarbaru.my.id untuk mengunduh dan mencetak Bukti Pendaftaran resmi.
 
+👥 *Grup WhatsApp Resmi Pembina Pendamping:*
+Mohon Kakak Pembina Pendamping segera bergabung ke grup koordinasi resmi melalui tautan berikut:
+https://chat.whatsapp.com/G8fYg03xvHjL2lsVKCorPG?s=cl&p=a&mlu=4&ilr=4
+
 Terima kasih atas partisipasinya dan salam sukses! ⛺`;
     } else {
       const missingKeys = Object.keys(berkasLabels).filter((k) => !statusObj[k]);

@@ -70,9 +70,10 @@ export async function POST(request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.siloti-kwaranmekarbaru.my.id";
     const cetakUrl = `${baseUrl}/peserta/cetak/${peserta.id}`;
+    const groupWaUrl = "https://chat.whatsapp.com/G8fYg03xvHjL2lsVKCorPG?s=cl&p=a&mlu=4&ilr=4";
 
     const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} | LT-II Kwarran Mekar Baru 2026`;
-    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nSTATUS: TERVERIFIKASI\nSilakan unduh dan cetak Bukti Pendaftaran Resmi Anda pada tautan berikut:\n${cetakUrl}\n\nTunjukkan bukti cetak tersebut kepada Panitia untuk mengambil Nomor Kapling Tenda Anda.\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nSTATUS: TERVERIFIKASI\nSilakan unduh dan cetak Bukti Pendaftaran Resmi Anda pada tautan berikut:\n${cetakUrl}\n\nTunjukkan bukti cetak tersebut kepada Panitia untuk mengambil Nomor Kapling Tenda Anda.\n\n👥 GABUNG GRUP WHATSAPP RESMI PEMBINA PENDAMPING:\nUntuk koordinasi teknis, pengumuman kapling tenda, dan informasi penting lainnya, Pembina Pendamping diwajibkan segera bergabung ke grup WhatsApp berikut:\n${groupWaUrl}\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
     const mailtoUrl = targetEmail ? `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}` : null;
 
     if (targetEmail) {
@@ -104,8 +105,24 @@ export async function POST(request) {
               Salam Pramuka! Panitia LT-II Kwartir Ranting Mekar Baru menerangkan bahwa regu Anda telah resmi terdaftar dan dokumen pendaftaran telah <strong>DIVERIFIKASI LENGKAP</strong> oleh Admin.
             </p>
 
+            <!-- GABUNG GRUP WHATSAPP PEMBINA PENDAMPING -->
+            <div style="text-align: center; margin: 24px 0; background: linear-gradient(135deg, rgba(37, 211, 102, 0.2) 0%, rgba(37, 211, 102, 0.05) 100%); border: 2px solid #25D366; padding: 20px; border-radius: 16px; box-shadow: 0 0 25px rgba(37, 211, 102, 0.2);">
+              <div style="font-size: 15px; font-weight: 900; color: #25D366; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                👥 GRUP WHATSAPP RESMI PEMBINA PENDAMPING
+              </div>
+              <p style="font-size: 13px; color: #e2e8f0; line-height: 1.6; margin: 0 0 16px 0;">
+                Untuk koordinasi teknis lomba, informasi kapling tenda, jadwal kegiatan, dan pengumuman panitia, Pembina Pendamping <strong>diwajibkan untuk langsung bergabung ke grup WhatsApp resmi</strong> berikut:
+              </p>
+              <a href="${groupWaUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; font-weight: bold; font-size: 14px; text-decoration: none; padding: 13px 26px; border-radius: 8px; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.4);">
+                💬 Gabung Grup WhatsApp Pembina Pendamping
+              </a>
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 10px;">
+                Tautan: <a href="${groupWaUrl}" style="color: #67e8f9; text-decoration: underline;">${groupWaUrl}</a>
+              </div>
+            </div>
+
             <!-- STATUS BUKTI -->
-            <div style="text-align: center; margin: 28px 0; background: linear-gradient(135deg, rgba(245, 166, 35, 0.2) 0%, rgba(245, 166, 35, 0.05) 100%); border: 2px solid #fbbf24; padding: 20px; border-radius: 16px; box-shadow: 0 0 25px rgba(251, 191, 36, 0.15);">
+            <div style="text-align: center; margin: 24px 0; background: linear-gradient(135deg, rgba(245, 166, 35, 0.2) 0%, rgba(245, 166, 35, 0.05) 100%); border: 2px solid #fbbf24; padding: 20px; border-radius: 16px; box-shadow: 0 0 25px rgba(251, 191, 36, 0.15);">
               <div style="font-size: 16px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">
                 STATUS: TERVERIFIKASI
               </div>
