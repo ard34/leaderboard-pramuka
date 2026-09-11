@@ -1212,9 +1212,9 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                     onClick={handleSeedPeserta}
                     disabled={seedingPeserta}
                     className="bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap"
-                    title="Muat data master 30 regu standar (15 SD & 15 SMP) jika data peserta masih kosong"
+                    title="Muat data master 50 regu resmi (20 SD Putra, 20 SD Putri, 5 SMP Putra, 5 SMP Putri) langsung aktif dan terverifikasi"
                   >
-                    {seedingPeserta ? "Memuat..." : "📥 Muat 30 Regu Standar"}
+                    {seedingPeserta ? "Memuat..." : "📥 Muat 50 Regu (Langsung Aktif)"}
                   </button>
                 </div>
               </div>
