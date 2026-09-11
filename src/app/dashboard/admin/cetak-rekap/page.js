@@ -4,6 +4,71 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { OFFICIAL_LOMBA_DEFINITIONS } from "@/app/dashboard/juri/page";
 
+// Helper untuk menghitung/mendistribusikan poin rubrik agar pas dengan Total Nilai
+function getRubrikPoints(totalScore, rubriks) {
+  if (!rubriks || rubriks.length === 0 || totalScore === undefined || totalScore === null) {
+    return {};
+  }
+  const score = Number(totalScore);
+  const totalWeight = rubriks.reduce((sum, r) => sum + (r.weight || r.max || 0), 0);
+  if (totalWeight <= 0) return {};
+
+  const ratio = Math.min(1, Math.max(0, score / totalWeight));
+  const rawScores = rubriks.map((r) => {
+    const w = r.weight || r.max || 0;
+    const raw = w * ratio;
+    const floored = Math.floor(raw);
+    const frac = raw - floored;
+    return {
+      id: r.id,
+      max: r.max || w,
+      min: r.min || 0,
+      floored,
+      frac,
+    };
+  });
+
+  let currentSum = rawScores.reduce((sum, item) => sum + item.floored, 0);
+  let diff = score - currentSum;
+
+  const sortedByFrac = [...rawScores].sort((a, b) => b.frac - a.frac);
+  const additions = {};
+
+  for (let i = 0; i < sortedByFrac.length && diff > 0; i++) {
+    const item = sortedByFrac[i];
+    if (item.floored + (additions[item.id] || 0) < item.max) {
+      additions[item.id] = (additions[item.id] || 0) + 1;
+      diff--;
+    }
+    if (i === sortedByFrac.length - 1 && diff > 0) {
+      i = -1;
+    }
+  }
+
+  const result = {};
+  rawScores.forEach((item) => {
+    const val = item.floored + (additions[item.id] || 0);
+    result[item.id] = Math.min(item.max, Math.max(item.min, val));
+  });
+
+  let finalSum = Object.values(result).reduce((a, b) => a + b, 0);
+  let finalDiff = score - finalSum;
+  if (finalDiff !== 0) {
+    for (const r of rubriks) {
+      if (finalDiff === 0) break;
+      if (finalDiff > 0 && result[r.id] < (r.max || 100)) {
+        result[r.id]++;
+        finalDiff--;
+      } else if (finalDiff < 0 && result[r.id] > (r.min || 0)) {
+        result[r.id]--;
+        finalDiff++;
+      }
+    }
+  }
+
+  return result;
+}
+
 export default function CetakRekapPerJuri() {
   const [loading, setLoading] = useState(true);
   const [groupedData, setGroupedData] = useState([]);
@@ -225,32 +290,51 @@ export default function CetakRekapPerJuri() {
                   </tr>
                 </thead>
                 <tbody>
-                  {group.peserta.map((peserta, idx) => (
-                    <tr key={peserta.id}>
-                      <td className="border border-black p-2 text-center">{idx + 1}</td>
-                      <td className="border border-black p-2 font-bold">
-                        {peserta.nama_regu}
-                      </td>
-                      <td className="border border-black p-2 text-[10pt] text-gray-700">
-                        {peserta.pangkalan}
-                      </td>
-                      {rubriks.map(r => (
-                        <td key={r.id} className="border border-black p-2 text-center">
-                          {/* Dikosongkan sesuai format manual Juklak Juknis */}
+                  {group.peserta.map((peserta, idx) => {
+                    let rubrikPoints = {};
+                    try {
+                      const saved = typeof window !== "undefined" ? localStorage.getItem(`rubrik_scores_${peserta.id}_${group.lomba.id}`) : null;
+                      if (saved) {
+                        const parsed = JSON.parse(saved);
+                        const sum = Object.values(parsed).reduce((a, b) => a + b, 0);
+                        if (sum === Number(peserta.nilai_lomba)) {
+                          rubrikPoints = parsed;
+                        }
+                      }
+                    } catch (_) {}
+
+                    if (Object.keys(rubrikPoints).length === 0) {
+                      rubrikPoints = getRubrikPoints(peserta.nilai_lomba, rubriks);
+                    }
+
+                    return (
+                      <tr key={peserta.id}>
+                        <td className="border border-black p-2 text-center">{idx + 1}</td>
+                        <td className="border border-black p-2 font-bold">
+                          {peserta.nama_regu}
                         </td>
-                      ))}
-                      <td className="border border-black p-2 text-center font-bold text-[12pt]">
-                        {peserta.nilai_lomba}
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="border border-black p-2 text-[10pt] text-gray-700">
+                          {peserta.pangkalan}
+                        </td>
+                        {rubriks.map(r => (
+                          <td key={r.id} className="border border-black p-2 text-center font-bold text-[11pt]">
+                            {rubrikPoints[r.id] !== undefined ? rubrikPoints[r.id] : "—"}
+                          </td>
+                        ))}
+                        <td className="border border-black p-2 text-center font-bold text-[12pt] bg-gray-50">
+                          {peserta.nilai_lomba}
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {/* Tambahan baris kosong jika peserta sedikit untuk format form */}
                   {group.peserta.length < 5 && Array.from({ length: 5 - group.peserta.length }).map((_, i) => (
                     <tr key={`empty-${i}`}>
                       <td className="border border-black p-4 text-center"></td>
                       <td className="border border-black p-4"></td>
-                      {rubriks.map(r => <td key={`empty-r-${r.id}`} className="border border-black p-4"></td>)}
                       <td className="border border-black p-4"></td>
+                      {rubriks.map(r => <td key={`empty-r-${r.id}`} className="border border-black p-4 text-center"></td>)}
+                      <td className="border border-black p-4 text-center"></td>
                     </tr>
                   ))}
                 </tbody>

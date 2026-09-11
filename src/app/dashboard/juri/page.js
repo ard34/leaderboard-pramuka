@@ -409,12 +409,28 @@ export default function DashboardJuri() {
     if (existing) {
       setManualOverrideTotal(existing.nilai);
       if (currentLombaDef && currentLombaDef.rubrik) {
-        const ratio = Math.min(1, Math.max(0, existing.nilai / 100));
-        const updatedRubrik = {};
-        currentLombaDef.rubrik.forEach((r) => {
-          updatedRubrik[r.id] = Math.round(r.weight * ratio);
-        });
-        setRubrikScores(updatedRubrik);
+        let loadedRubrik = null;
+        try {
+          const saved = typeof window !== "undefined" ? localStorage.getItem(`rubrik_scores_${pesertaId}_${existing.lomba_id || selectedLombaId}`) : null;
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            const sum = Object.values(parsed).reduce((a, b) => a + b, 0);
+            if (sum === Number(existing.nilai)) {
+              loadedRubrik = parsed;
+            }
+          }
+        } catch (_) {}
+
+        if (loadedRubrik) {
+          setRubrikScores(loadedRubrik);
+        } else {
+          const ratio = Math.min(1, Math.max(0, existing.nilai / 100));
+          const updatedRubrik = {};
+          currentLombaDef.rubrik.forEach((r) => {
+            updatedRubrik[r.id] = Math.round(r.weight * ratio);
+          });
+          setRubrikScores(updatedRubrik);
+        }
       }
     } else {
       setManualOverrideTotal(null);
@@ -491,6 +507,12 @@ export default function DashboardJuri() {
       const pesertaData = pesertaList.find((p) => p.id === selectedPeserta);
       const reguName = pesertaData ? pesertaData.nama_regu : "Regu";
       const lombaName = currentLombaDef ? currentLombaDef.nama_lomba : "Pos Lomba";
+
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`rubrik_scores_${selectedPeserta}_${targetLombaId}`, JSON.stringify(rubrikScores));
+        }
+      } catch (_) {}
 
       const updatedScores = {
         ...juriScoresMap,
