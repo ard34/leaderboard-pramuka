@@ -82,7 +82,6 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
           const publishedNilai = nilaiData.filter(n => isPubAll || pubIds.includes(n.juri_id));
           const map = {};
           const counts = {};
-          const totalPerPeserta = {};
           publishedNilai.forEach((n) => {
             const key = `${n.peserta_id}_${n.lomba_id}`;
             if (!map[key]) {
@@ -91,10 +90,14 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
             }
             map[key] += n.nilai;
             counts[key] += 1;
-            totalPerPeserta[n.peserta_id] = (totalPerPeserta[n.peserta_id] || 0) + n.nilai;
           });
+
+          const totalPerPeserta = {};
           Object.keys(map).forEach((key) => {
-            map[key] = Math.round((map[key] / counts[key]) * 100) / 100;
+            const avg = Math.round((map[key] / counts[key]) * 100) / 100;
+            map[key] = avg;
+            const [pesertaId] = key.split("_");
+            totalPerPeserta[pesertaId] = Math.round(((totalPerPeserta[pesertaId] || 0) + avg) * 100) / 100;
           });
           setNilaiMap(map);
           setPublishedTotals(totalPerPeserta);
