@@ -90,6 +90,7 @@ export default function DashboardAdmin() {
   const [globalPublishing, setGlobalPublishing] = useState(false);
   const [penilaianList, setPenilaianList] = useState([]);
   const [seedingPeserta, setSeedingPeserta] = useState(false);
+  const [clearingData, setClearingData] = useState(false);
 
   const handleToggleShowWinners = async () => {
     const nextState = !showWinners;
@@ -216,6 +217,57 @@ export default function DashboardAdmin() {
       showPesan("error", "Kesalahan: " + err.message);
     } finally {
       setSeedingPeserta(false);
+    }
+  };
+
+  const handleBersihkanDataPeserta = async () => {
+    if (!confirm("⚠️ PERINGATAN PEMBERSIHAN DATA:\nApakah Anda yakin ingin MENGHAPUS SELURUH data peserta dan penilaian uji coba? Seluruh peserta akan dikosongkan.")) {
+      return;
+    }
+    setClearingData(true);
+    try {
+      // 1. Delete all penilaian
+      await supabase.from("penilaian").delete().neq("id", 0);
+
+      // 2. Delete all peserta
+      const { error: delError } = await supabase
+        .from("peserta")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+      if (delError) throw delError;
+
+      // 3. Reset publish flags
+      await supabase.from("informasi").delete().like("text", "__PUBLISH%");
+      await supabase.from("informasi").delete().like("text", "__CONFIG_%");
+      await supabase.from("informasi").delete().eq("text", "__SHOW_WINNERS__");
+
+      showPesan("success", "🧹 Seluruh data peserta dan nilai uji coba berhasil dibersihkan total!");
+      await fetchAllData();
+    } catch (err) {
+      showPesan("error", "Gagal membersihkan data: " + err.message);
+    } finally {
+      setClearingData(false);
+    }
+  };
+
+  const handleBersihkanJuriTest = async () => {
+    if (!confirm("⚠️ PERINGATAN HAPUS JURI TEST:\nApakah Anda yakin ingin MENGHAPUS SELURUH akun dewan juri uji coba? (Akun Admin Utama tetap aman).")) {
+      return;
+    }
+    setClearingData(true);
+    try {
+      const { error: delError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("role", "juri");
+      if (delError) throw delError;
+
+      showPesan("success", "🧹 Seluruh akun dewan juri uji coba berhasil dibersihkan!");
+      await fetchAllData();
+    } catch (err) {
+      showPesan("error", "Gagal membersihkan juri: " + err.message);
+    } finally {
+      setClearingData(false);
     }
   };
 
@@ -1210,11 +1262,20 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                   <button
                     type="button"
                     onClick={handleSeedPeserta}
-                    disabled={seedingPeserta}
+                    disabled={seedingPeserta || clearingData}
                     className="bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap"
                     title="Muat data master 50 regu resmi (20 SD Putra, 20 SD Putri, 5 SMP Putra, 5 SMP Putri) langsung aktif dan terverifikasi"
                   >
-                    {seedingPeserta ? "Memuat..." : "📥 Muat 50 Regu (Langsung Aktif)"}
+                    {seedingPeserta ? "Memuat..." : "📥 Muat 50 Regu"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBersihkanDataPeserta}
+                    disabled={seedingPeserta || clearingData}
+                    className="bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap shadow-sm"
+                    title="Hapus seluruh data peserta & nilai testing agar bersih total"
+                  >
+                    {clearingData ? "Membersihkan..." : "🗑️ Bersihkan Semua Peserta"}
                   </button>
                 </div>
               </div>
@@ -1597,7 +1658,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                   {publishAll ? (
                     <button
                       onClick={handleUnpublishAll}
-                      disabled={globalPublishing}
+                      disabled={globalPublishing || clearingData}
                       className="px-3 py-1.5 text-xs font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
                       title="Sembunyikan / tahan seluruh nilai juri dari papan klasemen leaderboard"
                     >
@@ -1606,13 +1667,22 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                   ) : (
                     <button
                       onClick={handlePublishAll}
-                      disabled={globalPublishing}
+                      disabled={globalPublishing || clearingData}
                       className="px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg shadow-md hover:shadow-emerald-500/25 transition-all disabled:opacity-50 flex items-center gap-1.5"
                       title="Tampilkan seluruh nilai juri ke papan klasemen utama / leaderboard"
                     >
                       {globalPublishing ? "Memproses..." : "👁️ Tampilkan Semua Nilai"}
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={handleBersihkanJuriTest}
+                    disabled={clearingData}
+                    className="px-3 py-1.5 text-xs font-bold bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+                    title="Hapus seluruh profil dewan juri uji coba"
+                  >
+                    {clearingData ? "Membersihkan..." : "🗑️ Bersihkan Juri Test"}
+                  </button>
                 </div>
               </div>
 
