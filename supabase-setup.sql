@@ -5,13 +5,13 @@
 -- PERINGATAN: Menjalankan script ini akan MENGAPUS & MENGULANG data dari awal.
 -- ============================================================
 
--- 1. Bersihkan tabel lama jika ada
-DROP TRIGGER IF EXISTS trigger_update_total_nilai ON public.penilaian;
-DROP FUNCTION IF EXISTS public.update_total_nilai();
+-- 1. Bersihkan tabel lama jika ada (CASCADE otomatis menghapus seluruh trigger & relasi lama)
 DROP TABLE IF EXISTS public.penilaian CASCADE;
 DROP TABLE IF EXISTS public.peserta CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
 DROP TABLE IF EXISTS public.lomba CASCADE;
+DROP TABLE IF EXISTS public.informasi CASCADE;
+DROP FUNCTION IF EXISTS public.update_total_nilai() CASCADE;
 
 -- 2. Buat tabel LOMBA (Dinamis per Kategori)
 CREATE TABLE public.lomba (
@@ -34,6 +34,7 @@ CREATE TABLE public.profiles (
   assigned_lomba_id UUID REFERENCES public.lomba(id) ON DELETE SET NULL, -- Cabang lomba yang ditugaskan
   assigned_kategori TEXT DEFAULT NULL, -- Tingkatan yang ditugaskan (SD/SMP/SMK)
   assigned_gender TEXT DEFAULT 'SEMUA' CHECK (assigned_gender IN ('Laki-laki', 'Perempuan', 'SEMUA')), -- Gender yang ditugaskan
+  no_wa TEXT DEFAULT '', -- Nomor WhatsApp Juri
   is_verified BOOLEAN DEFAULT false, -- Status verifikasi dari Admin
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -96,7 +97,10 @@ CREATE POLICY "Public can view berkas_peserta"
 ON storage.objects FOR SELECT 
 TO public
 USING ( bucket_id = 'berkas_peserta' );
--- ============================================================-- 5. Buat tabel PENILAIAN
+
+-- ============================================================
+-- 5. Buat tabel PENILAIAN
+-- ============================================================
 CREATE TABLE public.penilaian (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   peserta_id UUID NOT NULL REFERENCES public.peserta(id) ON DELETE CASCADE,
@@ -110,11 +114,19 @@ CREATE TABLE public.penilaian (
   UNIQUE (peserta_id, juri_id, lomba_id)
 );
 
+-- 5B. Buat tabel INFORMASI (Live Announcement & Config)
+CREATE TABLE IF NOT EXISTS public.informasi (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  text TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 6. Aktifkan Row Level Security (RLS)
 ALTER TABLE public.lomba ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.peserta ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.penilaian ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.informasi ENABLE ROW LEVEL SECURITY;
 
 -- 7. Helper function to check if the current user is admin (prevents RLS recursion)
 CREATE OR REPLACE FUNCTION public.is_admin()
@@ -268,10 +280,11 @@ GRANT ALL ON public.lomba TO anon, authenticated, service_role;
 GRANT ALL ON public.profiles TO anon, authenticated, service_role;
 GRANT ALL ON public.peserta TO anon, authenticated, service_role;
 GRANT ALL ON public.penilaian TO anon, authenticated, service_role;
+GRANT ALL ON public.informasi TO anon, authenticated, service_role;
 
 -- 14. Aktifkan Realtime Live untuk Tabel
 DROP PUBLICATION IF EXISTS supabase_realtime;
-CREATE PUBLICATION supabase_realtime FOR TABLE public.lomba, public.peserta, public.penilaian, public.profiles;
+CREATE PUBLICATION supabase_realtime FOR TABLE public.lomba, public.peserta, public.penilaian, public.profiles, public.informasi;
 
 -- 15. Seed Data Cabang Lomba Resmi JUKLAK LT-II Mekar Baru 2026 (SD & SMP)
 INSERT INTO public.lomba (nama_lomba, kode_lomba, kategori) VALUES

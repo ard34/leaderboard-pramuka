@@ -23,15 +23,14 @@ export async function GET() {
 
     if (profileError) throw profileError;
 
-    // 2. Fetch auth users to get emails
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (authError) throw authError;
-
+    // 2. Fetch auth users to get emails (safely, fallback if anon key used)
     const usersMap = {};
-    authData?.users?.forEach(u => {
-      usersMap[u.id] = u.email;
-    });
+    try {
+      const { data: authData } = await supabaseAdmin.auth.admin.listUsers();
+      authData?.users?.forEach(u => {
+        usersMap[u.id] = u.email;
+      });
+    } catch (_) {}
 
     // 3. Merge email into profiles
     const mergedProfiles = profiles.map(p => ({

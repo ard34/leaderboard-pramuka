@@ -329,10 +329,28 @@ export default function DashboardAdmin() {
         .order("is_verified", { ascending: true })
         .order("nomor_dada", { ascending: true }),
 
-      // Fetch all penilaian
-      supabase
-        .from("penilaian")
-        .select("id, peserta_id, juri_id, lomba_id, nilai"),
+      // Fetch all penilaian (paginated to load all 1000+ entries)
+      (async () => {
+        let allScores = [];
+        let fromIdx = 0;
+        const step = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from("penilaian")
+            .select("id, peserta_id, juri_id, lomba_id, nilai")
+            .range(fromIdx, fromIdx + step - 1);
+          if (error) return { data: allScores, error };
+          if (data && data.length > 0) {
+            allScores.push(...data);
+            if (data.length < step) hasMore = false;
+            else fromIdx += step;
+          } else {
+            hasMore = false;
+          }
+        }
+        return { data: allScores, error: null };
+      })(),
 
       // Fetch all juri from profiles via API to get emails
       fetch("/api/juri/get-all").then(res => res.json()).then(res => ({ data: res.data, error: res.error })),

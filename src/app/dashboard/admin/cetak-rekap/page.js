@@ -89,14 +89,32 @@ export default function CetakRekapPerJuri() {
       const { data: pesertaData, error: errPeserta } = await supabase.from("peserta").select("*").eq("is_verified", true);
       if (errPeserta) throw errPeserta;
 
-      // 3. Fetch Penilaian (with relations)
-      const { data: penilaianData, error: errPenilaian } = await supabase.from("penilaian").select(`
-        nilai,
-        lomba:lomba_id (id),
-        peserta:peserta_id (id, kategori, gender),
-        juri:juri_id (nama_lengkap)
-      `);
-      if (errPenilaian) throw errPenilaian;
+      // 3. Fetch Penilaian (with relations) - Paginated to bypass 1000 row limit
+      let penilaianData = [];
+      let fromIdx = 0;
+      const stepSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data: chunk, error: errPenilaian } = await supabase
+          .from("penilaian")
+          .select(`
+            nilai,
+            lomba:lomba_id (id),
+            peserta:peserta_id (id, kategori, gender),
+            juri:juri_id (nama_lengkap)
+          `)
+          .range(fromIdx, fromIdx + stepSize - 1);
+
+        if (errPenilaian) throw errPenilaian;
+        if (chunk && chunk.length > 0) {
+          penilaianData.push(...chunk);
+          if (chunk.length < stepSize) hasMore = false;
+          else fromIdx += stepSize;
+        } else {
+          hasMore = false;
+        }
+      }
 
       let groups = [];
       const levels = ["SD", "SMP"];
