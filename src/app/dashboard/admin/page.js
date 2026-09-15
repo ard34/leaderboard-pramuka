@@ -277,6 +277,16 @@ export default function DashboardAdmin() {
     cekAuth();
   }, []);
 
+  // Auto-sync next nomor kapling when peserta list updates or is emptied (starts from 001 for Putra, 002 for Putri)
+  useEffect(() => {
+    if (!formPeserta.nama_regu) {
+      setFormPeserta((prev) => ({
+        ...prev,
+        nomor_dada: getNextKaplingFormatted(prev.gender, pesertaList),
+      }));
+    }
+  }, [pesertaList]);
+
   const cekAuth = async () => {
     // Try to use cached profile from login page (avoids redundant getSession + profile query)
     try {
@@ -590,7 +600,25 @@ export default function DashboardAdmin() {
     setSaving(false);
   };
 
-  // Kapling auto-assignment removed.
+  // --- KAPLING AUTO-ASSIGNMENT (Putra = Ganjil / 001, Putri = Genap / 002) ---
+  const getNextKapling = (gender, list = pesertaList) => {
+    const isPutra = gender?.toLowerCase().includes("laki") || gender?.toLowerCase().includes("putra");
+    const validKaplings = (list || [])
+      .map((p) => Number(p.nomor_dada))
+      .filter((n) => !isNaN(n) && n > 0);
+
+    if (isPutra) {
+      const oddNumbers = validKaplings.filter((n) => n % 2 !== 0);
+      return oddNumbers.length > 0 ? Math.max(...oddNumbers) + 2 : 1;
+    } else {
+      const evenNumbers = validKaplings.filter((n) => n % 2 === 0);
+      return evenNumbers.length > 0 ? Math.max(...evenNumbers) + 2 : 2;
+    }
+  };
+
+  const getNextKaplingFormatted = (gender, list = pesertaList) => {
+    return String(getNextKapling(gender, list)).padStart(3, "0");
+  };
 
 
 
@@ -719,24 +747,32 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
   const handleStartVerifikasi = (peserta) => {
     setVerifyingId(peserta.id);
+    const suggestedKapling = peserta.nomor_dada
+      ? String(peserta.nomor_dada).padStart(3, "0")
+      : getNextKaplingFormatted(peserta.gender, pesertaList);
+    setNoDadaInput(suggestedKapling);
   };
 
   const handleVerifikasiPeserta = async (id) => {
     setSaving(true);
     try {
+      const cleanKapling = noDadaInput ? Number(noDadaInput) : undefined;
       const res = await fetch("/api/peserta/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ peserta_id: id }),
+        body: JSON.stringify({ peserta_id: id, nomor_kapling: cleanKapling }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showPesan("success", `🎉 Regu berhasil diverifikasi! ${data.emailMessage || ""}`);
+        showPesan(
+          "success",
+          `🎉 Regu berhasil diverifikasi! ${data.nomor_kapling_formatted ? `Nomor Kapling: #${data.nomor_kapling_formatted}. ` : ""}${data.emailMessage || ""}`
+        );
         if (data.mailtoUrl && !data.emailSent) {
           window.open(data.mailtoUrl, "_blank");
         }
         setVerifyingId(null);
-        setNoDadaInput(""); // Legacy state reset
+        setNoDadaInput("");
         await fetchAllData();
       } else {
         showPesan("error", "Gagal melakukan verifikasi: " + (data.error || "Terjadi kesalahan"));
@@ -1226,13 +1262,13 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Gender</label>
                   <select value={formPeserta.gender} onChange={(e) => {
                       const newGender = e.target.value;
-                      setFormPeserta({...formPeserta, gender: newGender, nomor_dada: getNextKapling(newGender)});
+                      setFormPeserta({...formPeserta, gender: newGender, nomor_dada: getNextKaplingFormatted(newGender, pesertaList)});
                   }} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
-                    <option value="Laki-laki">Laki-laki (Putra)</option><option value="Perempuan">Perempuan (Putri)</option>
+                    <option value="Laki-laki">Laki-laki (Putra - Kapling Ganjil)</option><option value="Perempuan">Perempuan (Putri - Kapling Genap)</option>
                   </select>
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nomor Kapling (Urut Tenda)</label>
-                  <input type="number" required value={formPeserta.nomor_dada} onChange={(e) => setFormPeserta({...formPeserta, nomor_dada: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="001" />
+                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nomor Kapling (Urut Tenda: 001, 002, dst.)</label>
+                  <input type="text" required value={formPeserta.nomor_dada} onChange={(e) => setFormPeserta({...formPeserta, nomor_dada: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-amber-400 font-mono font-bold outline-none" placeholder="001" />
                 </div>
                 <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nama Regu</label>
                   <input type="text" required value={formPeserta.nama_regu} onChange={(e) => setFormPeserta({...formPeserta, nama_regu: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="Regu Rajawali" />
@@ -1326,7 +1362,18 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                         <React.Fragment key={p.id}>
                         <tr className={`border-t border-slate-800/30 hover:bg-slate-800/20 ${checkingBerkasId === p.id ? 'bg-slate-800/40' : ''}`}>
                           <td className="p-3 text-sm font-mono font-bold text-amber-400">
-                            {p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"}
+                            {isVerifying ? (
+                              <input 
+                                type="text" 
+                                placeholder="001" 
+                                value={noDadaInput} 
+                                onChange={(e) => setNoDadaInput(e.target.value)} 
+                                className="w-16 bg-slate-950 border border-amber-500 rounded px-2 py-1 text-amber-300 text-xs font-mono font-bold outline-none text-center shadow-inner"
+                                title="Nomor Kapling Tenda"
+                              />
+                            ) : (
+                              p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"
+                            )}
                           </td>
                           <td className="p-3 text-sm font-bold text-white">{p.nama_regu}</td>
                           <td className="p-3 text-sm text-slate-400">
@@ -1405,16 +1452,16 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                           </td>
                           <td className="p-3 text-right">
                             {isVerifying ? (
-                              <div className="flex justify-end gap-1 items-center">
-                                <span className="text-[0.65rem] text-slate-400 mr-2">Verifikasi?</span>
+                              <div className="flex justify-end gap-1.5 items-center">
+                                <span className="text-[0.65rem] text-amber-400 font-mono font-bold mr-1">#{noDadaInput || "—"}</span>
                                 <button 
                                   onClick={() => handleVerifikasiPeserta(p.id)} 
-                                  className="text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-1 rounded text-xs font-bold transition-all"
+                                  className="text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded text-xs font-bold transition-all shadow-sm"
                                 >
-                                  Ya, Kirim Email
+                                  Simpan & Verifikasi
                                 </button>
                                 <button 
-                                  onClick={() => setVerifyingId(null)} 
+                                  onClick={() => { setVerifyingId(null); setNoDadaInput(""); }} 
                                   className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-xs font-bold transition-all"
                                 >
                                   Batal

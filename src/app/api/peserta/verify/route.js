@@ -6,7 +6,7 @@ import path from "path";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { peserta_id } = body;
+    const { peserta_id, nomor_kapling } = body;
 
     if (!peserta_id) {
       return NextResponse.json(
@@ -40,13 +40,44 @@ export async function POST(request) {
     if (fetchError || !peserta) {
       return NextResponse.json(
         { error: "Peserta tidak ditemukan: " + (fetchError?.message || "") },
-        { status: 444 }
+        { status: 404 }
       );
     }
 
-    // 2. Update participant to verified
+    // 2. Determine Kapling Number (Putra = Ganjil / 001, Putri = Genap / 002)
+    let finalKapling = Number(nomor_kapling);
+    if (!finalKapling || isNaN(finalKapling) || finalKapling <= 0) {
+      if (peserta.nomor_dada) {
+        finalKapling = Number(peserta.nomor_dada);
+      } else {
+        // Query active participants with kaplings to determine next odd/even
+        const { data: allPeserta } = await supabaseAdmin
+          .from("peserta")
+          .select("nomor_dada, gender")
+          .not("nomor_dada", "is", null);
+
+        const isPutra = peserta.gender?.toLowerCase().includes("laki") || peserta.gender?.toLowerCase().includes("putra");
+        const validKaplings = (allPeserta || [])
+          .map((p) => Number(p.nomor_dada))
+          .filter((n) => !isNaN(n) && n > 0);
+
+        if (isPutra) {
+          const oddNumbers = validKaplings.filter((n) => n % 2 !== 0);
+          finalKapling = oddNumbers.length > 0 ? Math.max(...oddNumbers) + 2 : 1;
+        } else {
+          const evenNumbers = validKaplings.filter((n) => n % 2 === 0);
+          finalKapling = evenNumbers.length > 0 ? Math.max(...evenNumbers) + 2 : 2;
+        }
+      }
+    }
+
+    const kaplingFormatted = String(finalKapling).padStart(3, "0");
+    peserta.nomor_dada = finalKapling;
+
+    // 3. Update participant to verified with nomor kapling
     const payload = {
-      is_verified: true
+      is_verified: true,
+      nomor_dada: finalKapling,
     };
     const { error: updateError } = await supabaseAdmin
       .from("peserta")
@@ -72,8 +103,8 @@ export async function POST(request) {
     const cetakUrl = `${baseUrl}/peserta/cetak/${peserta.id}`;
     const groupWaUrl = "https://chat.whatsapp.com/G8fYg03xvHjL2lsVKCorPG?s=cl&p=a&mlu=4&ilr=4";
 
-    const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} | LT-II Kwarran Mekar Baru 2026`;
-    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nSTATUS: TERVERIFIKASI\nSilakan unduh dan cetak Bukti Pendaftaran Resmi Anda pada tautan berikut:\n${cetakUrl}\n\nTunjukkan bukti cetak tersebut kepada Panitia untuk mengambil Nomor Kapling Tenda Anda.\n\n👥 GABUNG GRUP WHATSAPP RESMI PEMBINA PENDAMPING:\nUntuk koordinasi teknis, pengumuman kapling tenda, dan informasi penting lainnya, Pembina Pendamping diwajibkan segera bergabung ke grup WhatsApp berikut:\n${groupWaUrl}\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
+    const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} - NO. KAPLING: #${kaplingFormatted} | LT-II Kwarran Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nSTATUS: TERVERIFIKASI\nNOMOR KAPLING TENDA RESMI: #${kaplingFormatted}\n\nSilakan unduh dan cetak Bukti Pendaftaran Resmi Anda pada tautan berikut:\n${cetakUrl}\n\nTunjukkan bukti cetak tersebut kepada Panitia untuk konfirmasi penempatan kapling tenda.\n\n👥 GABUNG GRUP WHATSAPP RESMI PEMBINA PENDAMPING:\nUntuk koordinasi teknis, pengumuman kapling tenda, dan informasi penting lainnya, Pembina Pendamping diwajibkan segera bergabung ke grup WhatsApp berikut:\n${groupWaUrl}\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
     const mailtoUrl = targetEmail ? `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}` : null;
 
     if (targetEmail) {
@@ -121,13 +152,16 @@ export async function POST(request) {
               </div>
             </div>
 
-            <!-- STATUS BUKTI -->
+            <!-- STATUS BUKTI & NOMOR KAPLING -->
             <div style="text-align: center; margin: 24px 0; background: linear-gradient(135deg, rgba(245, 166, 35, 0.2) 0%, rgba(245, 166, 35, 0.05) 100%); border: 2px solid #fbbf24; padding: 20px; border-radius: 16px; box-shadow: 0 0 25px rgba(251, 191, 36, 0.15);">
-              <div style="font-size: 16px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">
-                STATUS: TERVERIFIKASI
+              <div style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">
+                NOMOR KAPLING TENDA RESMI
               </div>
-              <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px; margin-bottom: 20px;">
-                Tunjukkan bukti pendaftaran cetak fisik kepada Panitia untuk mengambil <strong>Nomor Kapling Tenda</strong> Anda.
+              <div style="font-size: 38px; font-weight: 900; color: #fbbf24; font-family: monospace; letter-spacing: 4px; margin-bottom: 6px;">
+                #${kaplingFormatted}
+              </div>
+              <div style="font-size: 12px; color: #cbd5e1; margin-top: 6px; margin-bottom: 18px;">
+                Gunakan nomor kapling ini untuk penempatan lokasi tenda regu di Bumi Perkemahan.
               </div>
               <a href="${cetakUrl}" target="_blank" style="display: inline-block; background-color: #fbbf24; color: #000; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(251, 191, 36, 0.3);">
                 🖨️ Unduh & Cetak Bukti Pendaftaran
@@ -285,6 +319,8 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
+      nomor_kapling: finalKapling,
+      nomor_kapling_formatted: kaplingFormatted,
       targetEmail,
       mailtoUrl,
       emailSent,

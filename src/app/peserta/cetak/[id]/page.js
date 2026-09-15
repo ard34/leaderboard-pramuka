@@ -135,6 +135,7 @@ export default function CetakBuktiPendaftaran() {
           <table className="w-full ml-10 mb-6 font-bold">
             <tbody>
               <tr><td className="py-1.5 w-48">Nama Regu</td><td className="py-1.5 w-4">:</td><td className="py-1.5">{peserta.nama_regu}</td></tr>
+              <tr><td className="py-1.5">No. Kapling (Tenda)</td><td className="py-1.5">:</td><td className="py-1.5 font-mono">{peserta.nomor_dada ? `#${String(peserta.nomor_dada).padStart(3, "0")}` : "Menunggu Verifikasi"}</td></tr>
               <tr><td className="py-1.5">Pangkalan / Sekolah</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.pangkalan}</td></tr>
               <tr><td className="py-1.5">No. Gugus Depan</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.no_gudep || "-"}</td></tr>
               <tr><td className="py-1.5">Kategori Peserta</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.kategori}</td></tr>
