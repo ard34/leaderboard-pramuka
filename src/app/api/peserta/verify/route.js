@@ -104,7 +104,7 @@ export async function POST(request) {
     const groupWaUrl = "https://chat.whatsapp.com/G8fYg03xvHjL2lsVKCorPG?s=cl&p=a&mlu=4&ilr=4";
 
     const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} - NO. KAPLING: #${kaplingFormatted} | LT-II Kwarran Mekar Baru 2026`;
-    const plainTextBody = `Salam Pramuka!\n\nPendaftaran Regu ${peserta.nama_regu} (${peserta.pangkalan}) telah DIVERIFIKASI RESMI oleh Panitia LT-II Kwarran Mekar Baru 2026.\n\nSTATUS: TERVERIFIKASI\nNOMOR KAPLING TENDA RESMI: #${kaplingFormatted}\n\nSilakan unduh dan cetak Bukti Pendaftaran Resmi Anda pada tautan berikut:\n${cetakUrl}\n\nTunjukkan bukti cetak tersebut kepada Panitia untuk konfirmasi penempatan kapling tenda.\n\n👥 GABUNG GRUP WHATSAPP RESMI PEMBINA PENDAMPING:\nUntuk koordinasi teknis, pengumuman kapling tenda, dan informasi penting lainnya, Pembina Pendamping diwajibkan segera bergabung ke grup WhatsApp berikut:\n${groupWaUrl}\n\nGudep: ${peserta.no_gudep || "—"}\nTingkat/Gender: ${peserta.kategori} - ${peserta.gender}\n\nTerima kasih.\nPanitia LT-II Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka!\n\nPemberitahuan Resmi Panitia LT-II Kwarran Mekar Baru 2026 kepada Pembina Pendamping Regu ${peserta.nama_regu} (${peserta.pangkalan}).\n\nPendaftaran regu Kakak telah DIVERIFIKASI RESMI & LENGKAP.\n\n📋 INFORMASI KAPLING & REGU:\n• Nomor Kapling Tenda: #${kaplingFormatted}\n• Nama Regu: ${peserta.nama_regu} (${peserta.gender === 'Laki-laki' ? 'Putra' : 'Putri'})\n• Asal Sekolah / Pangkalan: ${peserta.pangkalan}\n• No. Gugus Depan: ${peserta.no_gudep || "—"}\n• Tingkat: ${peserta.kategori}\n• Status: TERVERIFIKASI RESMI ✅\n\nSilakan unduh dan cetak Bukti Pendaftaran Resmi Anda pada tautan berikut:\n${cetakUrl}\n\n(Tunjukkan bukti cetak tersebut kepada Panitia saat tiba di Bumi Perkemahan untuk konfirmasi lokasi penempatan kapling tenda #${kaplingFormatted})\n\n👥 GABUNG GRUP WHATSAPP RESMI PEMBINA PENDAMPING:\nUntuk koordinasi teknis, informasi kapling, jadwal kegiatan, dan pengumuman panitia, Pembina Pendamping diwajibkan segera bergabung ke grup WhatsApp berikut:\n${groupWaUrl}\n\nTerima kasih atas partisipasinya dan salam Pramuka!\nPanitia Pelaksana LT-II Kwarran Mekar Baru 2026`;
     const mailtoUrl = targetEmail ? `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}` : null;
 
     if (targetEmail) {
@@ -121,7 +121,7 @@ export async function POST(request) {
               <h1 style="color: #fbbf24; font-size: 22px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1.5px;">
                 KWARTIR RANTING MEKAR BARU
               </h1>
-              <p style="color: #67e8f9; font-size: 13px; font-weight: 700; margin-top: 4px; uppercase; tracking-widest;">
+              <p style="color: #67e8f9; font-size: 13px; font-weight: 700; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px;">
                 LOMBA TINGKAT REGU PRAMUKA PENGGALANG DUA (LT-II) TAHUN 2026
               </p>
             </div>
@@ -133,8 +133,24 @@ export async function POST(request) {
             </div>
 
             <p style="font-size: 14px; line-height: 1.6; color: #e2e8f0;">
-              Salam Pramuka! Panitia LT-II Kwartir Ranting Mekar Baru menerangkan bahwa regu Anda telah resmi terdaftar dan dokumen pendaftaran telah <strong>DIVERIFIKASI LENGKAP</strong> oleh Admin.
+              Salam Pramuka! Panitia LT-II Kwartir Ranting Mekar Baru menginformasikan kepada <strong>Kakak Pembina Pendamping</strong> bahwa berkas persyaratan dan pendaftaran regu <strong>${peserta.nama_regu}</strong> (${peserta.pangkalan}) telah <strong>DIVERIFIKASI RESMI & LENGKAP</strong> oleh Panitia.
             </p>
+
+            <!-- STATUS BUKTI & NOMOR KAPLING TENDA -->
+            <div style="text-align: center; margin: 24px 0; background: linear-gradient(135deg, rgba(245, 166, 35, 0.25) 0%, rgba(245, 166, 35, 0.08) 100%); border: 2px solid #fbbf24; padding: 22px; border-radius: 16px; box-shadow: 0 0 30px rgba(251, 191, 36, 0.2);">
+              <div style="font-size: 12px; font-weight: 800; color: #fde68a; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px;">
+                ⛺ NOMOR KAPLING TENDA RESMI
+              </div>
+              <div style="font-size: 46px; font-weight: 900; color: #fbbf24; font-family: 'Courier New', monospace; letter-spacing: 4px; margin: 8px 0;">
+                #${kaplingFormatted}
+              </div>
+              <div style="font-size: 13px; color: #f1f5f9; margin-bottom: 18px; line-height: 1.5;">
+                Nomor kapling ini adalah <strong>lokasi penempatan tenda resmi</strong> bagi regu Kakak di Bumi Perkemahan.
+              </div>
+              <a href="${cetakUrl}" target="_blank" style="display: inline-block; background-color: #fbbf24; color: #000; font-weight: bold; font-size: 14px; text-decoration: none; padding: 13px 28px; border-radius: 8px; box-shadow: 0 4px 10px rgba(251, 191, 36, 0.35);">
+                🖨️ Unduh & Cetak Bukti Pendaftaran Resmi
+              </a>
+            </div>
 
             <!-- GABUNG GRUP WHATSAPP PEMBINA PENDAMPING -->
             <div style="text-align: center; margin: 24px 0; background: linear-gradient(135deg, rgba(37, 211, 102, 0.2) 0%, rgba(37, 211, 102, 0.05) 100%); border: 2px solid #25D366; padding: 20px; border-radius: 16px; box-shadow: 0 0 25px rgba(37, 211, 102, 0.2);">
@@ -152,45 +168,33 @@ export async function POST(request) {
               </div>
             </div>
 
-            <!-- STATUS BUKTI & NOMOR KAPLING -->
-            <div style="text-align: center; margin: 24px 0; background: linear-gradient(135deg, rgba(245, 166, 35, 0.2) 0%, rgba(245, 166, 35, 0.05) 100%); border: 2px solid #fbbf24; padding: 20px; border-radius: 16px; box-shadow: 0 0 25px rgba(251, 191, 36, 0.15);">
-              <div style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;">
-                NOMOR KAPLING TENDA RESMI
-              </div>
-              <div style="font-size: 38px; font-weight: 900; color: #fbbf24; font-family: monospace; letter-spacing: 4px; margin-bottom: 6px;">
-                #${kaplingFormatted}
-              </div>
-              <div style="font-size: 12px; color: #cbd5e1; margin-top: 6px; margin-bottom: 18px;">
-                Gunakan nomor kapling ini untuk penempatan lokasi tenda regu di Bumi Perkemahan.
-              </div>
-              <a href="${cetakUrl}" target="_blank" style="display: inline-block; background-color: #fbbf24; color: #000; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(251, 191, 36, 0.3);">
-                🖨️ Unduh & Cetak Bukti Pendaftaran
-              </a>
-            </div>
-
-            <!-- DETAIL REGU -->
+            <!-- DETAIL REGU & PEMBINA PENDAMPING -->
             <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-              <h3 style="color: #67e8f9; font-size: 14px; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid rgba(103, 232, 249, 0.2); padding-bottom: 8px;">KETERANGAN PESERTA</h3>
+              <h3 style="color: #67e8f9; font-size: 14px; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid rgba(103, 232, 249, 0.2); padding-bottom: 8px;">KETERANGAN REGU & PEMBINA PENDAMPING</h3>
               <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
-                  <td style="padding: 8px 0; color: #94a3b8;">Nama Regu</td>
-                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; text-align: right;">${peserta.nama_regu}</td>
+                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.15); background: rgba(251, 191, 36, 0.1);">
+                  <td style="padding: 10px 8px; color: #fbbf24; font-weight: bold;">No. Kapling Tenda</td>
+                  <td style="padding: 10px 8px; color: #fbbf24; font-weight: 900; font-family: monospace; font-size: 16px; text-align: right;">#${kaplingFormatted}</td>
                 </tr>
                 <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
-                  <td style="padding: 8px 0; color: #94a3b8;">Sekolah / Pangkalan</td>
-                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; text-align: right;">${peserta.pangkalan}</td>
+                  <td style="padding: 8px; color: #94a3b8;">Nama Regu</td>
+                  <td style="padding: 8px; color: #ffffff; font-weight: bold; text-align: right;">${peserta.nama_regu}</td>
                 </tr>
                 <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
-                  <td style="padding: 8px 0; color: #94a3b8;">No. Gugus Depan</td>
-                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; font-family: monospace; text-align: right;">${peserta.no_gudep || "—"}</td>
+                  <td style="padding: 8px; color: #94a3b8;">Sekolah / Pangkalan</td>
+                  <td style="padding: 8px; color: #ffffff; font-weight: bold; text-align: right;">${peserta.pangkalan}</td>
                 </tr>
                 <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
-                  <td style="padding: 8px 0; color: #94a3b8;">Tingkat & Gender</td>
-                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; text-align: right;">${peserta.kategori} - ${peserta.gender}</td>
+                  <td style="padding: 8px; color: #94a3b8;">No. Gugus Depan</td>
+                  <td style="padding: 8px; color: #ffffff; font-weight: bold; font-family: monospace; text-align: right;">${peserta.no_gudep || "—"}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                  <td style="padding: 8px; color: #94a3b8;">Tingkat & Gender</td>
+                  <td style="padding: 8px; color: #ffffff; font-weight: bold; text-align: right;">${peserta.kategori} - ${peserta.gender} (${peserta.gender === 'Laki-laki' ? 'Putra' : 'Putri'})</td>
                 </tr>
                 <tr>
-                  <td style="padding: 8px 0; color: #94a3b8;">Tanggal Pendaftaran</td>
-                  <td style="padding: 8px 0; color: #ffffff; font-weight: bold; text-align: right;">${new Date(peserta.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</td>
+                  <td style="padding: 8px; color: #94a3b8;">Tanggal Pendaftaran</td>
+                  <td style="padding: 8px; color: #ffffff; font-weight: bold; text-align: right;">${new Date(peserta.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</td>
                 </tr>
               </table>
             </div>
@@ -268,7 +272,7 @@ export async function POST(request) {
 
             docContent = docContent.replace(/(No\.\s*(?:<[^>]+>\s*)*Registrasi\s*(?:<[^>]+>\s*)*\:)/i, `$1 ${peserta_id.slice(0, 8).toUpperCase()}`);
             docContent = docContent.replace(/(…………….)/g, tglDaftar);
-            docContent = docContent.replace(/(Nama\s*(?:<[^>]+>\s*)*Regu(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${namaRegu}`);
+            docContent = docContent.replace(/(Nama\s*(?:<[^>]+>\s*)*Regu(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${namaRegu} (Kapling #${kaplingFormatted})`);
             docContent = docContent.replace(/(Pangkalan\s*(?:<[^>]+>\s*)*\/\s*(?:<[^>]+>\s*)*Sekolah(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${pangkalan}`);
             docContent = docContent.replace(/(No\.\s*(?:<[^>]+>\s*)*Gugus\s*(?:<[^>]+>\s*)*Depan(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${noGudep}`);
             docContent = docContent.replace(/(Kategori\s*(?:<[^>]+>\s*)*Peserta(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${kategoriPeserta}`);

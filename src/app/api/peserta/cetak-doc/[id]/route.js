@@ -56,9 +56,10 @@ export async function GET(request, { params }) {
       year: 'numeric'
     });
 
+    const kaplingStr = peserta.nomor_dada ? ` (Kapling #${String(peserta.nomor_dada).padStart(3, "0")})` : "";
     docContent = docContent.replace(/(No\.\s*(?:<[^>]+>\s*)*Registrasi\s*(?:<[^>]+>\s*)*\:)/i, `$1 ${id.slice(0, 8).toUpperCase()}`);
     docContent = docContent.replace(/(…………….)/g, tglDaftar);
-    docContent = docContent.replace(/(Nama\s*(?:<[^>]+>\s*)*Regu(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${namaRegu}`);
+    docContent = docContent.replace(/(Nama\s*(?:<[^>]+>\s*)*Regu(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${namaRegu}${kaplingStr}`);
     docContent = docContent.replace(/(Pangkalan\s*(?:<[^>]+>\s*)*\/\s*(?:<[^>]+>\s*)*Sekolah(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${pangkalan}`);
     docContent = docContent.replace(/(No\.\s*(?:<[^>]+>\s*)*Gugus\s*(?:<[^>]+>\s*)*Depan(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${noGudep}`);
     docContent = docContent.replace(/(Kategori\s*(?:<[^>]+>\s*)*Peserta(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${kategoriPeserta}`);
