@@ -255,6 +255,9 @@ export default function DashboardJuri() {
     cekAuthDanAmbilData();
   }, []);
 
+  // Penilaian raw list state
+  const [penilaianList, setPenilaianList] = useState([]);
+
   // Selected Lomba Object & Rubric Definition
   const currentLombaObj = useMemo(() => {
     if (!selectedLombaId) return null;
@@ -263,11 +266,46 @@ export default function DashboardJuri() {
 
   const currentLombaDef = useMemo(() => {
     if (!currentLombaObj) return OFFICIAL_LOMBA_DEFINITIONS[0];
-    const match = OFFICIAL_LOMBA_DEFINITIONS.find(
-      (d) => d.kode === currentLombaObj.kode_lomba || currentLombaObj.nama_lomba.toLowerCase().includes(d.nama_lomba.toLowerCase())
-    );
+    const objKode = (currentLombaObj.kode_lomba || "").trim().toUpperCase();
+    const objNama = (currentLombaObj.nama_lomba || "").toLowerCase().trim();
+
+    const match = OFFICIAL_LOMBA_DEFINITIONS.find((d) => {
+      const defKode = (d.kode || "").trim().toUpperCase();
+      const defNama = (d.nama_lomba || "").toLowerCase().trim();
+      return (
+        (objKode && defKode && objKode === defKode) ||
+        objNama.includes(defNama) ||
+        defNama.includes(objNama) ||
+        (objNama.includes("pioner") && defKode === "PNR") ||
+        (objNama.includes("administrasi") && defKode === "ADM") ||
+        (objNama.includes("hymne") && defKode === "HMN") ||
+        (objNama.includes("tari") && defKode === "TSB") ||
+        (objNama.includes("ppgd") && defKode === "PGD") ||
+        (objNama.includes("sandi") && defKode === "SND") ||
+        (objNama.includes("taksir") && defKode === "TKS") ||
+        (objNama.includes("semaphore") && defKode === "SMP") ||
+        (objNama.includes("morse") && defKode === "MRS") ||
+        (objNama.includes("kim") && defKode === "KIM") ||
+        (objNama.includes("karnaval") && defKode === "KRN") ||
+        (objNama.includes("pack") && defKode === "PCK") ||
+        (objNama.includes("forum") && defKode === "FRP") ||
+        (objNama.includes("masak") && defKode === "MSK") ||
+        (objNama.includes("navigasi") && defKode === "NAV")
+      );
+    });
     return match || OFFICIAL_LOMBA_DEFINITIONS[0];
   }, [currentLombaObj]);
+
+  // Map skor khusus untuk lomba yang sedang aktif
+  const activeScoresMap = useMemo(() => {
+    const map = {};
+    penilaianList.forEach((s) => {
+      if (!selectedLombaId || s.lomba_id === selectedLombaId) {
+        map[s.peserta_id] = s;
+      }
+    });
+    return map;
+  }, [penilaianList, selectedLombaId]);
 
   // Initialize Rubrik Scores when Lomba Changes
   useEffect(() => {
@@ -293,12 +331,20 @@ export default function DashboardJuri() {
     return Math.min(100, Math.max(0, sum));
   }, [rubrikScores, manualOverrideTotal, currentLombaDef]);
 
-  // Update default selected lomba when kategori changes
+  // Update selected lomba intelligently when kategori changes
   useEffect(() => {
     if (juri && !juri.assigned_lomba_id && lombaList.length > 0) {
-      const matching = lombaList.find((l) => l.kategori === selectedKategori);
-      if (matching) setSelectedLombaId(matching.id);
-      else setSelectedLombaId(lombaList[0]?.id || "");
+      const currentKode = currentLombaDef?.kode;
+      const matchingSameCode = lombaList.find(
+        (l) => l.kategori === selectedKategori && l.kode_lomba === currentKode
+      );
+      if (matchingSameCode) {
+        setSelectedLombaId(matchingSameCode.id);
+      } else {
+        const matchingKategori = lombaList.find((l) => l.kategori === selectedKategori);
+        if (matchingKategori) setSelectedLombaId(matchingKategori.id);
+        else setSelectedLombaId(lombaList[0]?.id || "");
+      }
     }
   }, [selectedKategori, lombaList, juri]);
 
@@ -376,6 +422,7 @@ export default function DashboardJuri() {
     if (pesertaRes.data) setPesertaList(pesertaRes.data);
 
     if (penilaianRes?.data) {
+      setPenilaianList(penilaianRes.data);
       const map = {};
       penilaianRes.data.forEach((s) => {
         map[s.peserta_id] = s;
@@ -405,7 +452,7 @@ export default function DashboardJuri() {
     setSelectedPeserta(pesertaId);
     setPesan({ type: "", text: "" });
 
-    const existing = juriScoresMap[pesertaId];
+    const existing = activeScoresMap[pesertaId];
     if (existing) {
       setManualOverrideTotal(existing.nilai);
       if (currentLombaDef && currentLombaDef.rubrik) {
@@ -514,8 +561,25 @@ export default function DashboardJuri() {
         }
       } catch (_) {}
 
+      // Update local penilaian raw list
+      setPenilaianList((prev) => {
+        const filtered = prev.filter(
+          (item) => !(item.peserta_id === selectedPeserta && item.lomba_id === targetLombaId)
+        );
+        return [
+          {
+            id: Date.now().toString(),
+            peserta_id: selectedPeserta,
+            lomba_id: targetLombaId,
+            nilai: finalScore,
+            updated_at: new Date().toISOString(),
+          },
+          ...filtered,
+        ];
+      });
+
       const updatedScores = {
-        ...juriScoresMap,
+        ...activeScoresMap,
         [selectedPeserta]: { nilai: finalScore, updated_at: new Date().toISOString(), lomba_id: targetLombaId }
       };
       setJuriScoresMap(updatedScores);
@@ -585,12 +649,12 @@ export default function DashboardJuri() {
   }, [pesertaList, selectedKategori]);
 
   const scoredInCategory = useMemo(() => {
-    return availableInCategory.filter((p) => juriScoresMap[p.id]);
-  }, [availableInCategory, juriScoresMap]);
+    return availableInCategory.filter((p) => activeScoresMap[p.id]);
+  }, [availableInCategory, activeScoresMap]);
 
   const unscoredInCategory = useMemo(() => {
-    return availableInCategory.filter((p) => !juriScoresMap[p.id]);
-  }, [availableInCategory, juriScoresMap]);
+    return availableInCategory.filter((p) => !activeScoresMap[p.id]);
+  }, [availableInCategory, activeScoresMap]);
 
   const displayPesertaList = useMemo(() => {
     let list = availableInCategory;
@@ -598,9 +662,9 @@ export default function DashboardJuri() {
       list = list.filter((p) => p.gender === selectedGender);
     }
     if (pesertaFilterTab === "UNSCORED") {
-      list = list.filter((p) => !juriScoresMap[p.id]);
+      list = list.filter((p) => !activeScoresMap[p.id]);
     } else if (pesertaFilterTab === "SCORED") {
-      list = list.filter((p) => juriScoresMap[p.id]);
+      list = list.filter((p) => activeScoresMap[p.id]);
     }
     if (pesertaSearch.trim()) {
       const q = pesertaSearch.toLowerCase();
@@ -611,7 +675,7 @@ export default function DashboardJuri() {
       );
     }
     return list;
-  }, [availableInCategory, selectedGender, pesertaFilterTab, pesertaSearch, juriScoresMap]);
+  }, [availableInCategory, selectedGender, pesertaFilterTab, pesertaSearch, activeScoresMap]);
 
   if (loading) {
     return (
@@ -718,25 +782,136 @@ export default function DashboardJuri() {
       {/* Main Scoring Workspace */}
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-5">
         
-        {/* Top Active Task Strip */}
-        <div className="bg-slate-900/70 border border-amber-500/20 rounded-2xl p-3.5 mb-5 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shadow-lg">
-          <div className="flex items-center gap-2 flex-wrap text-xs">
-            <span className="text-slate-400 font-bold uppercase text-[0.65rem] tracking-wider">Penugasan Saat Ini:</span>
-            <span className="bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black px-2.5 py-1 rounded-lg">
-              🏆 {currentLombaDef?.nama_lomba || "Pos Lomba"}
-            </span>
-            <span className="bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold px-2.5 py-1 rounded-lg">
-              🏫 {selectedKategori === "SD" ? "SD / MI" : "SMP / MTs"}
-            </span>
-            <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold px-2.5 py-1 rounded-lg">
-              {selectedGender === "Laki-laki" ? "👦 Putra (Laki-laki)" : "👧 Putri (Perempuan)"}
-            </span>
-          </div>
+        {/* Top Active Task Strip / Pengawas Quick Switcher */}
+        {!isLockedPos ? (
+          <div className="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 mb-5 backdrop-blur-md shadow-xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black px-2.5 py-1 rounded-lg text-[0.65rem] tracking-wider uppercase shadow">
+                  🔍 AKUN PENGAWAS & PEMERIKSA FORMAT
+                </span>
+                <span className="text-slate-300 font-bold text-xs">
+                  Akses Bebas Semua 15 Mata Lomba, Tingkat & Gender
+                </span>
+              </div>
+              <div className="text-[0.7rem] font-mono text-emerald-400 font-bold">
+                Format Aktif: <span className="underline">{currentLombaDef?.nama_lomba}</span> ({currentLombaDef?.rubrik?.length} Aspek Rubrik)
+              </div>
+            </div>
 
-          <div className="text-[0.68rem] text-slate-400 italic hidden md:block">
-            "Satyaku Kudarmakan Darmaku Kubaktikan"
+            {/* Quick Switcher Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3">
+              <div>
+                <label className="block text-[0.65rem] text-amber-400 font-bold uppercase mb-1 flex items-center gap-1">
+                  <span>🏆</span> 1. Pilih Cabang Perlombaan:
+                </label>
+                <select
+                  value={selectedLombaId}
+                  onChange={(e) => {
+                    setSelectedLombaId(e.target.value);
+                    setSelectedPeserta("");
+                  }}
+                  className="w-full bg-slate-950 border border-amber-500/50 rounded-xl px-3 py-2 text-amber-300 font-black text-xs focus:ring-2 focus:ring-amber-500 outline-none cursor-pointer"
+                >
+                  {filteredLomba.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      [{l.kode_lomba || "LMB"}] {l.nama_lomba}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[0.65rem] text-cyan-400 font-bold uppercase mb-1 flex items-center gap-1">
+                  <span>🏫</span> 2. Tingkat Satuan:
+                </label>
+                <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedKategori("SD"); setSelectedPeserta(""); }}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-black transition-all ${
+                      selectedKategori === "SD"
+                        ? "bg-amber-500 text-slate-950 shadow"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    SD / MI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedKategori("SMP"); setSelectedPeserta(""); }}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-black transition-all ${
+                      selectedKategori === "SMP"
+                        ? "bg-amber-500 text-slate-950 shadow"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    SMP / MTs
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[0.65rem] text-emerald-400 font-bold uppercase mb-1 flex items-center gap-1">
+                  <span>👦👧</span> 3. Gender Peserta:
+                </label>
+                <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedGender("SEMUA"); setSelectedPeserta(""); }}
+                    className={`py-1.5 px-1.5 rounded-lg text-[0.7rem] font-black transition-all ${
+                      selectedGender === "SEMUA"
+                        ? "bg-cyan-500 text-slate-950 shadow"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    Semua
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedGender("Laki-laki"); setSelectedPeserta(""); }}
+                    className={`py-1.5 px-1.5 rounded-lg text-[0.7rem] font-black transition-all ${
+                      selectedGender === "Laki-laki"
+                        ? "bg-blue-500 text-white shadow"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    Putra
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedGender("Perempuan"); setSelectedPeserta(""); }}
+                    className={`py-1.5 px-1.5 rounded-lg text-[0.7rem] font-black transition-all ${
+                      selectedGender === "Perempuan"
+                        ? "bg-rose-500 text-white shadow"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    Putri
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-slate-900/70 border border-amber-500/20 rounded-2xl p-3.5 mb-5 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <span className="text-slate-400 font-bold uppercase text-[0.65rem] tracking-wider">Penugasan Terkunci:</span>
+              <span className="bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black px-2.5 py-1 rounded-lg">
+                🏆 {currentLombaDef?.nama_lomba || "Pos Lomba"}
+              </span>
+              <span className="bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold px-2.5 py-1 rounded-lg">
+                🏫 {selectedKategori === "SD" ? "SD / MI" : "SMP / MTs"}
+              </span>
+              <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold px-2.5 py-1 rounded-lg">
+                {selectedGender === "Laki-laki" ? "👦 Putra (Laki-laki)" : "👧 Putri (Perempuan)"}
+              </span>
+            </div>
+            <div className="text-[0.68rem] text-slate-400 italic hidden md:block">
+              "Satyaku Kudarmakan Darmaku Kubaktikan"
+            </div>
+          </div>
+        )}
 
         {/* Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -1005,7 +1180,7 @@ export default function DashboardJuri() {
                     ) : (
                       displayPesertaList.map((p) => {
                         const isSelected = selectedPeserta === p.id;
-                        const scoreData = juriScoresMap[p.id];
+                        const scoreData = activeScoresMap[p.id];
                         return (
                           <div
                             key={p.id}
@@ -1064,7 +1239,7 @@ export default function DashboardJuri() {
                     >
                       <option value="">— Pilih Regu Melalui Dropdown —</option>
                       {displayPesertaList.map((p) => {
-                        const scoreData = juriScoresMap[p.id];
+                        const scoreData = activeScoresMap[p.id];
                         return (
                           <option key={p.id} value={p.id}>
                             {scoreData ? `[✅ Nilai: ${scoreData.nilai}]` : "[⏳ Belum]"} Kapling {p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"} : {p.nama_regu} ({p.pangkalan} - {p.gender === 'Laki-laki' ? 'Putra' : 'Putri'})
@@ -1078,7 +1253,7 @@ export default function DashboardJuri() {
                   {selectedPeserta && (
                     (() => {
                       const p = pesertaList.find(item => item.id === selectedPeserta);
-                      const existing = juriScoresMap[selectedPeserta];
+                      const existing = activeScoresMap[selectedPeserta];
                       if (!p) return null;
                       return (
                         <div className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
@@ -1210,7 +1385,7 @@ export default function DashboardJuri() {
                   type="submit"
                   disabled={saving || !isOnline || !selectedPeserta}
                   className={`w-full font-black py-4 px-6 rounded-2xl transition-all duration-300 text-slate-950 tracking-wider text-sm uppercase flex items-center justify-center gap-2 ${
-                    selectedPeserta && juriScoresMap[selectedPeserta]
+                    selectedPeserta && activeScoresMap[selectedPeserta]
                       ? "bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-500 hover:from-cyan-300 hover:to-blue-400 shadow-[0_8px_30px_rgba(6,182,212,0.3)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.45)]"
                       : "bg-gradient-to-r from-amber-500 via-amber-600 to-emerald-600 hover:from-amber-400 hover:to-emerald-500 shadow-[0_8px_30px_rgba(245,166,35,0.3)] hover:shadow-[0_12px_40px_rgba(245,166,35,0.45)]"
                   } hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
@@ -1223,10 +1398,10 @@ export default function DashboardJuri() {
                       </svg>
                       MENYIMPAN & MENYINKRONKAN NILAI...
                     </span>
-                  ) : selectedPeserta && juriScoresMap[selectedPeserta] ? (
+                  ) : selectedPeserta && activeScoresMap[selectedPeserta] ? (
                     <>
                       <span>🔄</span>
-                      <span>PERBARUI NILAI REGU INI (REVISI SKOR: {juriScoresMap[selectedPeserta].nilai} ➔ {totalScoreCalculated})</span>
+                      <span>PERBARUI NILAI REGU INI (REVISI SKOR: {activeScoresMap[selectedPeserta].nilai} ➔ {totalScoreCalculated})</span>
                     </>
                   ) : (
                     <>
