@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
 
-// Official 4 Groups of Competition Activities (Kelompok Kegiatan Lomba LT-II 2026)
+// Official 4 Groups of Competition Activities (13 Cabang Lomba Resmi LT-II 2026)
 const OFFICIAL_GROUP_ORDER = {
   HMN: { order: 1, group: "G1", groupName: "1. Agama & Patriotisme", short: "Agama & Patriotisme", color: "amber" },
   TSB: { order: 2, group: "G1", groupName: "1. Agama & Patriotisme", short: "Agama & Patriotisme", color: "amber" },
@@ -20,10 +20,8 @@ const OFFICIAL_GROUP_ORDER = {
   MRS: { order: 9, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
   KIM: { order: 10, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
   KRN: { order: 11, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
-  PCK: { order: 12, group: "G2", groupName: "2. Keterampilan Kepramukaan", short: "Kepramukaan", color: "cyan" },
-  ADM: { order: 13, group: "G3", groupName: "3. Manajemen Regu", short: "Manajemen Regu", color: "emerald" },
-  FRP: { order: 14, group: "G3", groupName: "3. Manajemen Regu", short: "Manajemen Regu", color: "emerald" },
-  MSK: { order: 15, group: "G4", groupName: "4. Keterampilan & Kuliner", short: "Teknologi & Kuliner", color: "purple" },
+  ADM: { order: 12, group: "G3", groupName: "3. Manajemen Regu", short: "Manajemen Regu", color: "emerald" },
+  MSK: { order: 13, group: "G4", groupName: "4. Keterampilan & Kuliner", short: "Teknologi & Kuliner", color: "purple" },
 };
 
 export default function DashboardAdmin() {

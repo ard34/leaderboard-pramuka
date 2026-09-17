@@ -329,33 +329,6 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       { id: "kelengkapan", name: "Kelengkapan (0-50)", min: 0, max: 50, weight: 50, hint: "Kelengkapan Berkas regu" },
     ],
   },
-  {
-    kode: "FRP",
-    nama_lomba: "Forum Penggalang",
-    kategori_kelompok: "Manajemen Regu",
-    rules: {
-      SD: "Musyawarah/Diskusi Penggalang mengenai kepemimpinan regu, evaluasi kegiatan, dan penyampaian gagasan.",
-      SMP: "Musyawarah/Diskusi Penggalang mengenai kepemimpinan regu, evaluasi kegiatan, dan penyampaian gagasan.",
-    },
-    rubrik: [
-      { id: "argumen", name: "Kualitas Argumen (0-40)", min: 0, max: 40, weight: 40, hint: "Bobot ide & usulan" },
-      { id: "keaktifan", name: "Keaktifan (0-30)", min: 0, max: 30, weight: 30, hint: "Partisipasi diskusi" },
-      { id: "etika", name: "Sikap & Etika (0-30)", min: 0, max: 30, weight: 30, hint: "Sopan santun berpendapat" },
-    ],
-  },
-  {
-    kode: "PCK",
-    nama_lomba: "Packing Perlengkapan",
-    kategori_kelompok: "Keterampilan Kepramukaan",
-    rules: {
-      SD: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
-      SMP: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
-    },
-    rubrik: [
-      { id: "kerapihan", name: "Kerapihan (0-60)", min: 0, max: 60, weight: 60, hint: "Kerapihan Packing & penataan barang" },
-      { id: "kecepatan", name: "Ketepatan Waktu (0-40)", min: 0, max: 40, weight: 40, hint: "Kecepatan waktu pengemasan ransel" },
-    ],
-  },
 ];
 
 export default function DashboardJuri() {
@@ -512,13 +485,16 @@ export default function DashboardJuri() {
       const activeRole = profile.role || "juri";
       setJuri(profile);
 
-      let loadedLomba = (lombaRes.data || []).map((l) => {
-        const def = findOfficialLombaDef(l);
-        return {
-          ...l,
-          nama_lomba: def ? def.nama_lomba : l.nama_lomba,
-        };
-      });
+      const official13Codes = new Set(OFFICIAL_LOMBA_DEFINITIONS.map((d) => d.kode));
+      let loadedLomba = (lombaRes.data || [])
+        .filter((l) => official13Codes.has(l.kode_lomba?.toUpperCase()))
+        .map((l) => {
+          const def = findOfficialLombaDef(l);
+          return {
+            ...l,
+            nama_lomba: def ? def.nama_lomba : l.nama_lomba,
+          };
+        });
 
       // If DB has no lomba records yet, build virtual lomba list from definitions
       if (loadedLomba.length === 0) {

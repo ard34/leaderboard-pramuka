@@ -61,14 +61,17 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       setPublishAll(isPubAll);
       setPublishedJuriIds(pubIds);
 
-      // 2. Fetch lomba
+      // 2. Fetch lomba (13 Cabang Lomba Resmi)
+      const official13Codes = new Set(["HMN", "TSB", "PNR", "PGD", "SND", "NAV", "TKS", "SMP", "MRS", "KIM", "KRN", "ADM", "MSK"]);
       const { data: lombaData } = await supabase
         .from("lomba")
         .select("id, nama_lomba, kode_lomba")
         .eq("kategori", kategori)
         .order("nama_lomba", { ascending: true });
 
-      if (lombaData) setLombaList(lombaData);
+      if (lombaData) {
+        setLombaList(lombaData.filter((l) => official13Codes.has(l.kode_lomba?.toUpperCase())));
+      }
 
       // 3. Fetch nilai if there are participants
       if (data && data.length > 0) {

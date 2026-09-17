@@ -211,10 +211,13 @@ export default function CetakRekapPerJuri() {
 
       if (cached) {
         let pesertaData = [...(cached.pesertaList || [])];
+        const validLomba = (cached.lombaList || []).filter((l) =>
+          OFFICIAL_LOMBA_DEFINITIONS.some((d) => d.kode === l.kode_lomba?.toUpperCase())
+        );
 
         if (pesertaData.length > 0) {
           const groups = buildReportGroups(
-            cached.lombaList,
+            validLomba,
             pesertaData,
             cached.juriList,
             cached.penilaianList,
@@ -243,7 +246,9 @@ export default function CetakRekapPerJuri() {
       if (lombaRes.error) throw lombaRes.error;
       if (pesertaRes.error) throw pesertaRes.error;
 
-      const lombaData = lombaRes.data || [];
+      const lombaData = (lombaRes.data || []).filter((l) =>
+        OFFICIAL_LOMBA_DEFINITIONS.some((d) => d.kode === l.kode_lomba?.toUpperCase())
+      );
       const profilesData = profilesRes.data || [];
 
       let pesertaData = [...(pesertaRes.data || [])];

@@ -18,7 +18,7 @@ const ROTATION_SEQUENCE = [
 
 const ROTATION_INTERVAL_MS = 3 * 60 * 1000; // 3 menit (180 detik)
 
-// Official 4 Groups of Competition Activities (Kelompok Kegiatan Lomba LT-II 2026)
+// Official 4 Groups of Competition Activities (13 Cabang Lomba Resmi LT-II 2026)
 const OFFICIAL_GROUP_ORDER = {
   HMN: { order: 1, group: "G1", groupName: "SPIRITUAL" },
   TSB: { order: 2, group: "G1", groupName: "SPIRITUAL" },
@@ -31,10 +31,8 @@ const OFFICIAL_GROUP_ORDER = {
   MRS: { order: 9, group: "G2", groupName: "KEPRAMUKAAN" },
   KIM: { order: 10, group: "G2", groupName: "KEPRAMUKAAN" },
   KRN: { order: 11, group: "G2", groupName: "KEPRAMUKAAN" },
-  PCK: { order: 12, group: "G2", groupName: "KEPRAMUKAAN" },
-  ADM: { order: 13, group: "G3", groupName: "MANAJEMEN" },
-  FRP: { order: 14, group: "G3", groupName: "MANAJEMEN" },
-  MSK: { order: 15, group: "G4", groupName: "TEKNOLOGI" },
+  ADM: { order: 12, group: "G3", groupName: "MANAJEMEN" },
+  MSK: { order: 13, group: "G4", groupName: "TEKNOLOGI" },
 };
 
 
