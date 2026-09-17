@@ -5,61 +5,82 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 
+// Helper untuk mengambil rubrik sesuai tingkat (SD vs SMP)
+export function getLombaRubrik(lombaDef, kategori = "SD") {
+  if (!lombaDef) return [];
+  if (lombaDef.rubrikByKategori && lombaDef.rubrikByKategori[kategori]) {
+    return lombaDef.rubrikByKategori[kategori];
+  }
+  return lombaDef.rubrik || [];
+}
+
 // Official LT-II Kwartir Ranting Mekar Baru 2026 Competition Definitions & Rubrics
 export const OFFICIAL_LOMBA_DEFINITIONS = [
   {
     kode: "HMN",
-    nama_lomba: "Menyanyi Hymne & Mars Tangerang",
+    nama_lomba: "Lomba Paduan Suara",
     kategori_kelompok: "Mental Spiritual & Patriotisme",
     rules: {
-      SD: "8 Orang/Regu. Menyanyikan lagu Hymne Pramuka dan Mars Kabupaten Tangerang. Pakaian Seragam Pramuka Lengkap.",
-      SMP: "8 Orang/Regu. Menyanyikan lagu Hymne Pramuka dan Mars Kabupaten Tangerang. Pakaian Seragam Pramuka Lengkap.",
+      SD: "8 Orang/Regu. Sesuai Juknis: Menyanyikan lagu Hymne Pramuka dan Mars Kabupaten Tangerang. Pakaian Seragam Pramuka Lengkap.",
+      SMP: "8 Orang/Regu. Sesuai Juknis: Menyanyikan lagu Hymne Pramuka dan Mars Kabupaten Tangerang. Pakaian Seragam Pramuka Lengkap.",
     },
     rubrik: [
-      { id: "vokal", name: "Vokal (5-40)", min: 5, max: 40, weight: 40, hint: "Kejelasan artikulasi, intonasi" },
-      { id: "teknik", name: "Teknik (5-20)", min: 5, max: 20, weight: 20, hint: "Pernapasan, tempo, & ritme" },
-      { id: "ekspresi", name: "Ekspresi (5-20)", min: 5, max: 20, weight: 20, hint: "Penjiwaan & pendalaman lagu" },
-      { id: "penampilan", name: "Penampilan (5-20)", min: 5, max: 20, weight: 20, hint: "Kerapihan seragam & keserasian" },
+      { id: "vokal", name: "Vokal (5-40)", min: 5, max: 40, weight: 40, hint: "Kejelasan artikulasi, intonasi & harmoni vokal" },
+      { id: "teknik", name: "Teknik (5-20)", min: 5, max: 20, weight: 20, hint: "Pernapasan, tempo, birama & ritme" },
+      { id: "ekspresi", name: "Ekspresi (5-20)", min: 5, max: 20, weight: 20, hint: "Penjiwaan, dinamika, & pendalaman lagu" },
+      { id: "penampilan", name: "Penampilan (5-20)", min: 5, max: 20, weight: 20, hint: "Kerapihan seragam & keserasian panggung" },
     ],
   },
   {
     kode: "TSB",
-    nama_lomba: "Pentas Seni Budaya (Tari Kreasi)",
+    nama_lomba: "Lomba Tari Nusantara",
     kategori_kelompok: "Mental Spiritual & Patriotisme",
     rules: {
-      SD: "Menampilkan Tarian Nusantara Propinsi. Menyiapkan & mengonfirmasi file musik saat registrasi.",
-      SMP: "Menampilkan Tarian Nusantara Propinsi. Menyiapkan & mengonfirmasi file musik saat registrasi.",
+      SD: "Sesuai Juknis: Menampilkan Tarian Nusantara Propinsi. Menyiapkan & mengonfirmasi file musik saat registrasi.",
+      SMP: "Sesuai Juknis: Menampilkan Tarian Nusantara Propinsi. Menyiapkan & mengonfirmasi file musik saat registrasi.",
     },
     rubrik: [
       { id: "wiraga", name: "Wiraga (5-20)", min: 5, max: 20, weight: 20, hint: "Keluwesan & ketepatan gerak tari" },
-      { id: "wirama", name: "Wirama (5-20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian gerak dengan tempo irama" },
-      { id: "wirasa", name: "Wirasa (5-20)", min: 5, max: 20, weight: 20, hint: "Ekspresi & penjiwaan karakter" },
-      { id: "wirupa", name: "Wirupa (5-20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian kostum & rias" },
-      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Keunikan Pola lantai & variasi" },
+      { id: "wirama", name: "Wirama (5-20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian gerak dengan tempo & irama musik" },
+      { id: "wirasa", name: "Wirasa (5-20)", min: 5, max: 20, weight: 20, hint: "Ekspresi wajah & penjiwaan karakter" },
+      { id: "wirupa", name: "Wirupa (5-20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian busana daerah & tata rias" },
+      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Keunikan koreografi & pola lantai" },
     ],
   },
   {
     kode: "PNR",
-    nama_lomba: "Pionering & Tali-Temali",
+    nama_lomba: "Lomba Pionering",
     kategori_kelompok: "Keterampilan Kepramukaan",
     rules: {
-      SD: "4 orang/Regu. Membuat tiang bendera 10 tongkat TANPA PASAK. Waktu maksimal 15 Menit.",
-      SMP: "4 orang/Regu. Membuat Pionering dari 3 model pilihan panitia (diumumkan saat TM). Waktu maksimal 30 Menit.",
+      SD: "4 orang/Regu. Sesuai Juknis: Membuat tiang bendera 10 tongkat TANPA PASAK. Waktu maksimal 15 Menit.",
+      SMP: "4 orang/Regu. Sesuai Juknis: Membuat Pionering dari model pilihan panitia. Waktu maksimal 30 Menit.",
     },
     rubrik: [
-      { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Kebenaran ikatan pangkal, jangkar" },
-      { id: "kekuatan", name: "Kekuatan (5-30)", min: 5, max: 30, weight: 30, hint: "Kekokohan & kestabilan bangunan" },
-      { id: "kerapihan", name: "Kerapihan (5-25)", min: 5, max: 25, weight: 25, hint: "Kerapihan gulungan & simpul akhir" },
-      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Kreativitas & keserasian proporsi" },
+      { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Kebenaran ikatan pangkal, jangkar, palang, & silang" },
+      { id: "kekuatan", name: "Kekuatan (5-30)", min: 5, max: 30, weight: 30, hint: "Kekokohan ikatan & kestabilan bangunan" },
+      { id: "kerapihan", name: "Kerapihan (5-25)", min: 5, max: 25, weight: 25, hint: "Kerapihan gulungan & kuncian simpul akhir" },
+      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Keindahan proporsi & keserasian bangunan" },
     ],
   },
   {
     kode: "PGD",
-    nama_lomba: "PPPK / PPGD",
+    nama_lomba: "PPGD",
     kategori_kelompok: "Keterampilan Kepramukaan",
     rules: {
-      SD: "3 orang/Regu (1 korban, 2 penolong). Penanganan Korban Kecelakaan TANPA membuat tandu darurat.",
-      SMP: "5 orang/Regu (1 korban, 2 penolong, 2 pembuat tandu). Penanganan korban + Tandu darurat + Laporan kejadian.",
+      SD: "3 orang/Regu (1 korban, 2 penolong). Sesuai Juknis: Penanganan Korban Kecelakaan TANPA membuat tandu darurat (Catatan: Tidak ada ketepatan simpul dan kekuatan).",
+      SMP: "5 orang/Regu (1 korban, 2 penolong, 2 pembuat tandu). Sesuai Juknis: Penanganan korban + Tandu darurat + Laporan kejadian.",
+    },
+    rubrikByKategori: {
+      SD: [
+        { id: "kerapihan", name: "Kerapihan & Kebersihan Balutan (0-50)", min: 0, max: 50, weight: 50, hint: "Kerapihan & ketepatan posisi balutan mitela" },
+        { id: "pembidaian", name: "Pembidaian & Penanganan Korban (0-50)", min: 0, max: 50, weight: 50, hint: "Ketepatan bidai fraktur patah tulang & ketenangan penanganan" },
+      ],
+      SMP: [
+        { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Ketepatan ikatan mitela & simpul tandu darurat" },
+        { id: "kekuatan", name: "Kekuatan (5-20)", min: 5, max: 20, weight: 20, hint: "Kekuatan fisik tandu & ketenangan evakuasi korban" },
+        { id: "kerapihan", name: "Kerapihan (5-25)", min: 5, max: 25, weight: 25, hint: "Kerapihan & kebersihan balutan luka" },
+        { id: "pembidaian", name: "Pembidaian (5-30)", min: 5, max: 30, weight: 30, hint: "Ketepatan posisi bidai patah tulang melingkupi dua sendi" },
+      ],
     },
     rubrik: [
       { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Ketepatan ikatan mitela & balutan" },
@@ -70,111 +91,179 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
   },
   {
     kode: "SND",
-    nama_lomba: "Sandi-Sandi",
+    nama_lomba: "Sandi - Sandi",
     kategori_kelompok: "Keterampilan Kepramukaan",
+    hasTimeInput: true,
     rules: {
       SD: "2 orang/Regu. Memecahkan 3 soal sandi (Kotak 2, A-N, Angka). Waktu maksimal 15 Menit.",
       SMP: "2 orang/Regu. Memecahkan 3 soal sandi (Kimia, A-Z, Jam). Waktu maksimal 15 Menit.",
     },
+    rubrikByKategori: {
+      SD: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
+      ],
+      SMP: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
+      ],
+    },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Kebenaran terjemahan sandi" },
-      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Bonus kecepatan penyelesaian" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0-30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
+      { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
     ],
   },
   {
     kode: "NAV",
     nama_lomba: "Orienteering Navigasi",
     kategori_kelompok: "Keterampilan Kepramukaan",
+    hasTimeInput: true,
     rules: {
       SD: "2 orang/Regu. Mengerjakan tugas dengan titik kontrol/sudut yang diberikan Panitia (Kartu Kontrol).",
       SMP: "2 orang/Regu. Menggunakan Peta & Kartu Kontrol dari Panitia untuk mencari titik kontrol/sudut.",
     },
+    rubrikByKategori: {
+      SD: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu tempuh di lapangan dalam menit (diisi mandiri oleh juri)" },
+      ],
+      SMP: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu tempuh di lapangan dalam menit (diisi mandiri oleh juri)" },
+      ],
+    },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Akurasi plot sudut azimuth" },
-      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Waktu tempuh di lapangan" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0-40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
+      { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu tempuh di lapangan dalam menit (diisi mandiri oleh juri)" },
     ],
   },
   {
     kode: "TKS",
     nama_lomba: "Menaksir",
     kategori_kelompok: "Keterampilan Kepramukaan",
+    hasTimeInput: true,
     rules: {
       SD: "2 orang/Regu. Memperkirakan ukuran TINGGI benda dari panitia. Toleransi 10 cm. Waktu 15 Menit.",
       SMP: "2 orang/Regu. Memperkirakan ukuran LEBAR benda dari panitia. Toleransi 10 cm. Waktu 15 Menit.",
     },
+    rubrikByKategori: {
+      SD: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi 10cm (Skor 0 - 10)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
+      ],
+      SMP: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi 10cm (Skor 0 - 10)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
+      ],
+    },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan (Toleransi 10cm)", min: 0, max: 70, weight: 70, hint: "Kebenaran perhitungan rumus" },
-      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Efisiensi pengerjaan" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi 10cm (Skor 0 - 10)" },
+      { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
     ],
   },
   {
     kode: "SMP",
     nama_lomba: "Semaphore",
     kategori_kelompok: "Keterampilan Kepramukaan",
+    hasTimeInput: true,
     rules: {
       SD: "2 orang/Regu. Menjawab soal semaphore jumlah 10 kotak (huruf & angka).",
       SMP: "2 orang/Regu. Menjawab soal semaphore jumlah 15 kotak (huruf & angka).",
     },
+    rubrikByKategori: {
+      SD: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Jumlah huruf/angka benar (Skor 0 - 10 untuk SD)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
+      ],
+      SMP: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-15)", min: 0, max: 15, weight: 15, isScore: true, hint: "Jumlah huruf/angka benar (Skor 0 - 15 untuk SMP)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
+      ],
+    },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Jumlah huruf/angka benar" },
-      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Waktu penyelesaian" },
+      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 15, weight: 15, isScore: true, hint: "Jumlah huruf/angka benar" },
+      { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
     ],
   },
   {
     kode: "MRS",
-    nama_lomba: "Morse Pluit",
+    nama_lomba: "Morse",
     kategori_kelompok: "Keterampilan Kepramukaan",
+    hasTimeInput: true,
     rules: {
       SD: "2 orang/Regu. Menjawab soal sandi Morse bunyi pluit jumlah 10 kotak.",
       SMP: "2 orang/Regu. Menjawab soal sandi Morse bunyi pluit jumlah 25 kotak.",
     },
+    rubrikByKategori: {
+      SD: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Jumlah kode Morse benar (Skor 0 - 10 untuk SD)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyerahan lembar jawaban dalam menit (diisi mandiri oleh juri)" },
+      ],
+      SMP: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-25)", min: 0, max: 25, weight: 25, isScore: true, hint: "Jumlah kode Morse benar (Skor 0 - 25 untuk SMP)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyerahan lembar jawaban dalam menit (diisi mandiri oleh juri)" },
+      ],
+    },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 70, weight: 70, hint: "Kode Morse benar" },
-      { id: "kecepatan", name: "Kecepatan Waktu", min: 0, max: 30, weight: 30, hint: "Waktu penyerahan" },
+      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 25, weight: 25, isScore: true, hint: "Jumlah kode Morse benar" },
+      { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyerahan lembar jawaban dalam menit (diisi mandiri oleh juri)" },
     ],
   },
   {
     kode: "KIM",
-    nama_lomba: "Obat Tradisional & KIM",
+    nama_lomba: "Lomba KIM",
     kategori_kelompok: "Keterampilan Kepramukaan",
+    hasTimeInput: true,
     rules: {
       SD: "2 orang/Regu. Mengamati KIM Penglihat 15 Benda & mengenali obat tradisional.",
       SMP: "2 orang/Regu. Mengamati KIM Penglihat 25 Benda & mengenali obat tradisional.",
     },
+    rubrikByKategori: {
+      SD: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-15)", min: 0, max: 15, weight: 15, isScore: true, hint: "Ketepatan tebakan benda KIM & obat (Skor 0 - 15 untuk SD)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
+      ],
+      SMP: [
+        { id: "ketepatan", name: "Ketepatan Jawaban (0-25)", min: 0, max: 25, weight: 25, isScore: true, hint: "Ketepatan tebakan benda KIM & obat (Skor 0 - 25 untuk SMP)" },
+        { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
+      ],
+    },
     rubrik: [
-      { id: "ketepatan_kim", name: "Ketepatan KIM", min: 0, max: 40, weight: 40, hint: "Tebak Benda KIM" },
-      { id: "presentasi", name: "Ketepatan Presentasi", min: 0, max: 30, weight: 30, hint: "Kelancaran presentasi" },
-      { id: "obat_tradisional", name: "Obat Tradisional", min: 0, max: 30, weight: 30, hint: "Mengenali Obat Tradisional" },
+      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 25, weight: 25, isScore: true, hint: "Ketepatan tebakan benda KIM" },
+      { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
     ],
   },
   {
     kode: "KRN",
-    nama_lomba: "Karnaval",
+    nama_lomba: "Lomba Karnaval",
     kategori_kelompok: "Keterampilan Kepramukaan",
     rules: {
-      SD: "7 orang/Regu. Menggunakan kostum yang telah dibuat di pangkalan masing-masing.",
-      SMP: "7 orang/Regu. Menggunakan kostum yang telah dibuat di pangkalan masing-masing.",
+      SD: "7 orang/Regu. Sesuai Juknis: Menggunakan kostum yang telah dibuat di pangkalan masing-masing.",
+      SMP: "7 orang/Regu. Sesuai Juknis: Menggunakan kostum yang telah dibuat di pangkalan masing-masing.",
     },
     rubrik: [
-      { id: "bahan", name: "Komposisi Bahan (5-30)", min: 5, max: 30, weight: 30, hint: "Kreativitas pemanfaatan bahan" },
-      { id: "kreativitas", name: "Kreativitas (5-30)", min: 5, max: 30, weight: 30, hint: "Keunikan & estetika bentuk" },
-      { id: "kesulitan", name: "Kesulitan (5-20)", min: 5, max: 20, weight: 20, hint: "Kerumitan detail" },
-      { id: "kerapihan", name: "Kerapihan (5-20)", min: 5, max: 20, weight: 20, hint: "Peragaan & kekompakan" },
+      { id: "bahan", name: "Komposisi Bahan (5-30)", min: 5, max: 30, weight: 30, hint: "Kreativitas pemanfaatan bahan & estetika" },
+      { id: "kreativitas", name: "Kreativitas (5-30)", min: 5, max: 30, weight: 30, hint: "Keunikan rancangan & keserasian tema" },
+      { id: "kesulitan", name: "Kesulitan (5-20)", min: 5, max: 20, weight: 20, hint: "Kerumitan detail kostum & aksesoris" },
+      { id: "kerapihan", name: "Kerapihan (5-20)", min: 5, max: 20, weight: 20, hint: "Peragaan jalan, kekompakan barisan & keselarasan" },
     ],
   },
   {
-    kode: "PCK",
-    nama_lomba: "Packing Perlengkapan",
-    kategori_kelompok: "Keterampilan Kepramukaan",
+    kode: "MSK",
+    nama_lomba: "Masak Nusantara",
+    kategori_kelompok: "Keterampilan Teknologi",
     rules: {
-      SD: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
-      SMP: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
+      SD: "2 orang/Regu. Sesuai Juknis: Membuat NASI GORENG. Dilarang membawa catatan resep.",
+      SMP: "2 orang/Regu. Sesuai Juknis: Memasak Masakan Nusantara Lengkap (Nasi, Lauk Pauk, Sayur). DILARANG BUMBU INSTAN.",
     },
     rubrik: [
-      { id: "kerapihan", name: "Kerapihan", min: 0, max: 60, weight: 60, hint: "Kerapihan Packing" },
-      { id: "kecepatan", name: "Ketepatan Waktu", min: 0, max: 40, weight: 40, hint: "Kecepatan & Ketepatan Waktu" },
+      { id: "rasa", name: "Cita Rasa (5-30)", min: 5, max: 30, weight: 30, hint: "Kelezatan cita rasa masakan & kematangan" },
+      { id: "penampilan", name: "Penampilan / Tekstur (5-30)", min: 5, max: 30, weight: 30, hint: "Platting garnish, kebersihan & tekstur" },
+      { id: "kekompakan", name: "Kekompakan Tim (5-20)", min: 5, max: 20, weight: 20, hint: "Kerjasama tim & kebersihan area masak" },
+      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Inovasi olahan rempah & variasi hidangan" },
     ],
   },
+  // Lomba Manajemen Regu & Ketangkasan
   {
     kode: "ADM",
     nama_lomba: "Administrasi Regu",
@@ -184,8 +273,8 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "Dikumpulkan maks 4 hari sebelum acara. Menggunakan MAP MERAH. Berisi data anggota, notulen, logbook, iuran, SK LT-I.",
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan", min: 0, max: 50, weight: 50, hint: "Ketepatan Berkas" },
-      { id: "kelengkapan", name: "Kelengkapan", min: 0, max: 50, weight: 50, hint: "Kelengkapan Berkas" },
+      { id: "ketepatan", name: "Ketepatan (0-50)", min: 0, max: 50, weight: 50, hint: "Ketepatan Berkas administrasi" },
+      { id: "kelengkapan", name: "Kelengkapan (0-50)", min: 0, max: 50, weight: 50, hint: "Kelengkapan Berkas regu" },
     ],
   },
   {
@@ -197,24 +286,22 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "Musyawarah/Diskusi Penggalang mengenai kepemimpinan regu, evaluasi kegiatan, dan penyampaian gagasan.",
     },
     rubrik: [
-      { id: "argumen", name: "Kualitas Argumen", min: 0, max: 40, weight: 40, hint: "Bobot usulan" },
-      { id: "keaktifan", name: "Keaktifan", min: 0, max: 30, weight: 30, hint: "Partisipasi" },
-      { id: "etika", name: "Sikap & Etika", min: 0, max: 30, weight: 30, hint: "Sikap saat forum" },
+      { id: "argumen", name: "Kualitas Argumen (0-40)", min: 0, max: 40, weight: 40, hint: "Bobot ide & usulan" },
+      { id: "keaktifan", name: "Keaktifan (0-30)", min: 0, max: 30, weight: 30, hint: "Partisipasi diskusi" },
+      { id: "etika", name: "Sikap & Etika (0-30)", min: 0, max: 30, weight: 30, hint: "Sopan santun berpendapat" },
     ],
   },
   {
-    kode: "MSK",
-    nama_lomba: "Masak Nusantara",
-    kategori_kelompok: "Keterampilan Teknologi",
+    kode: "PCK",
+    nama_lomba: "Packing Perlengkapan",
+    kategori_kelompok: "Keterampilan Kepramukaan",
     rules: {
-      SD: "2 orang/Regu. Membuat NASI GORENG. Dilarang membawa catatan resep.",
-      SMP: "2 orang/Regu. Memasak Masakan Nusantara Lengkap (Nasi, Lauk Pauk, Sayur). DILARANG BUMBU INSTAN (Hanya sasa, garam, royco/masako).",
+      SD: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
+      SMP: "Mengemas ransel & perlengkapan regu dengan rapi, efisien, kedap air, dan seimbang.",
     },
     rubrik: [
-      { id: "rasa", name: "Cita Rasa", min: 5, max: 30, weight: 30, hint: "Kelezatan" },
-      { id: "penampilan", name: "Penampilan/Tekstur", min: 5, max: 30, weight: 30, hint: "Platting & Tekstur" },
-      { id: "kekompakan", name: "Kekompakan Tim", min: 5, max: 20, weight: 20, hint: "Kerjasama Tim" },
-      { id: "kreativitas", name: "Kreativitas", min: 5, max: 20, weight: 20, hint: "Inovasi Masakan" },
+      { id: "kerapihan", name: "Kerapihan (0-60)", min: 0, max: 60, weight: 60, hint: "Kerapihan Packing & penataan barang" },
+      { id: "kecepatan", name: "Ketepatan Waktu (0-40)", min: 0, max: 40, weight: 40, hint: "Kecepatan waktu pengemasan ransel" },
     ],
   },
 ];
@@ -307,29 +394,45 @@ export default function DashboardJuri() {
     return map;
   }, [penilaianList, selectedLombaId]);
 
-  // Initialize Rubrik Scores when Lomba Changes
+  // Initialize Rubrik Scores when Lomba or Kategori Changes
   useEffect(() => {
     if (currentLombaDef) {
+      const activeRubriks = getLombaRubrik(currentLombaDef, selectedKategori);
       const initialRubrik = {};
-      currentLombaDef.rubrik.forEach((r) => {
-        initialRubrik[r.id] = Math.round(r.weight * 0.7); // default ~70% score
+      activeRubriks.forEach((r) => {
+        if (r.isTime) {
+          initialRubrik[r.id] = ""; // default kosong agar diisi mandiri oleh dewan juri
+        } else {
+          const maxVal = r.max || r.weight || 100;
+          initialRubrik[r.id] = Math.round(maxVal * 0.7); // default ~70% score
+        }
       });
       setRubrikScores(initialRubrik);
       setManualOverrideTotal(null);
     }
-  }, [currentLombaDef]);
+  }, [currentLombaDef, selectedKategori]);
 
   // Calculate Total Score dynamically from Rubrik Breakdown
   const totalScoreCalculated = useMemo(() => {
     if (manualOverrideTotal !== null) return manualOverrideTotal;
     if (!currentLombaDef) return 0;
     
+    const activeRubriks = getLombaRubrik(currentLombaDef, selectedKategori);
+    const hasTime = activeRubriks.some((r) => r.isTime);
+
+    if (hasTime) {
+      // Untuk lomba dengan Kecepatan Waktu: Skor utama dihitung dari aspek Ketepatan Jawaban
+      const scoreItem = activeRubriks.find((r) => r.isScore) || activeRubriks[0];
+      const ketepatanVal = Number(rubrikScores[scoreItem?.id] || 0);
+      return Math.min(scoreItem?.max || 100, Math.max(0, ketepatanVal));
+    }
+
     let sum = 0;
-    currentLombaDef.rubrik.forEach((r) => {
+    activeRubriks.forEach((r) => {
       sum += Number(rubrikScores[r.id] || 0);
     });
     return Math.min(100, Math.max(0, sum));
-  }, [rubrikScores, manualOverrideTotal, currentLombaDef]);
+  }, [rubrikScores, manualOverrideTotal, currentLombaDef, selectedKategori]);
 
   // Update selected lomba intelligently when kategori changes
   useEffect(() => {
@@ -453,38 +556,49 @@ export default function DashboardJuri() {
     setPesan({ type: "", text: "" });
 
     const existing = activeScoresMap[pesertaId];
+    const activeRubriks = getLombaRubrik(currentLombaDef, selectedKategori);
+
     if (existing) {
       setManualOverrideTotal(existing.nilai);
-      if (currentLombaDef && currentLombaDef.rubrik) {
+      if (currentLombaDef && activeRubriks) {
         let loadedRubrik = null;
         try {
           const saved = typeof window !== "undefined" ? localStorage.getItem(`rubrik_scores_${pesertaId}_${existing.lomba_id || selectedLombaId}`) : null;
           if (saved) {
-            const parsed = JSON.parse(saved);
-            const sum = Object.values(parsed).reduce((a, b) => a + b, 0);
-            if (sum === Number(existing.nilai)) {
-              loadedRubrik = parsed;
-            }
+            loadedRubrik = JSON.parse(saved);
           }
         } catch (_) {}
 
         if (loadedRubrik) {
           setRubrikScores(loadedRubrik);
         } else {
-          const ratio = Math.min(1, Math.max(0, existing.nilai / 100));
+          const hasTime = activeRubriks.some((r) => r.isTime);
           const updatedRubrik = {};
-          currentLombaDef.rubrik.forEach((r) => {
-            updatedRubrik[r.id] = Math.round(r.weight * ratio);
-          });
+          if (hasTime) {
+            const scoreItem = activeRubriks.find((r) => r.isScore) || activeRubriks[0];
+            updatedRubrik[scoreItem.id] = Math.min(scoreItem.max, Number(existing.nilai));
+            const timeItem = activeRubriks.find((r) => r.isTime);
+            if (timeItem) updatedRubrik[timeItem.id] = "";
+          } else {
+            const ratio = Math.min(1, Math.max(0, existing.nilai / 100));
+            activeRubriks.forEach((r) => {
+              updatedRubrik[r.id] = Math.round((r.weight || r.max) * ratio);
+            });
+          }
           setRubrikScores(updatedRubrik);
         }
       }
     } else {
       setManualOverrideTotal(null);
-      if (currentLombaDef && currentLombaDef.rubrik) {
+      if (currentLombaDef && activeRubriks) {
         const initialRubrik = {};
-        currentLombaDef.rubrik.forEach((r) => {
-          initialRubrik[r.id] = Math.round(r.weight * 0.7);
+        activeRubriks.forEach((r) => {
+          if (r.isTime) {
+            initialRubrik[r.id] = "";
+          } else {
+            const maxVal = r.max || r.weight || 100;
+            initialRubrik[r.id] = Math.round(maxVal * 0.7);
+          }
         });
         setRubrikScores(initialRubrik);
       }
@@ -492,12 +606,20 @@ export default function DashboardJuri() {
   };
 
   const handleRubrikChange = (rubrikId, value, maxVal) => {
-    const num = Math.min(maxVal, Math.max(0, Number(value)));
-    setRubrikScores((prev) => ({
-      ...prev,
-      [rubrikId]: num,
-    }));
-    setManualOverrideTotal(null); // Clear override when adjusting rubriks
+    if (maxVal === undefined || maxVal === null) {
+      // Input waktu (menit) bebas diisi sendiri oleh juri
+      setRubrikScores((prev) => ({
+        ...prev,
+        [rubrikId]: value,
+      }));
+    } else {
+      const num = Math.min(maxVal, Math.max(0, Number(value)));
+      setRubrikScores((prev) => ({
+        ...prev,
+        [rubrikId]: num,
+      }));
+      setManualOverrideTotal(null); // Clear override when adjusting rubriks
+    }
   };
 
   const handleSimpanNilai = async (e) => {
@@ -605,10 +727,16 @@ export default function DashboardJuri() {
       if (nextUnscored) {
         setSelectedPeserta(nextUnscored.id);
         setManualOverrideTotal(null);
-        if (currentLombaDef && currentLombaDef.rubrik) {
+        if (currentLombaDef) {
+          const activeRubriks = getLombaRubrik(currentLombaDef, selectedKategori);
           const initialRubrik = {};
-          currentLombaDef.rubrik.forEach((r) => {
-            initialRubrik[r.id] = Math.round(r.weight * 0.7);
+          activeRubriks.forEach((r) => {
+            if (r.isTime) {
+              initialRubrik[r.id] = "";
+            } else {
+              const maxVal = r.max || r.weight || 100;
+              initialRubrik[r.id] = Math.round(maxVal * 0.7);
+            }
           });
           setRubrikScores(initialRubrik);
         }
@@ -1291,94 +1419,214 @@ export default function DashboardJuri() {
                   )}
                 </div>
 
-                {/* 2. Rubrik Aspek Penilaian */}
-                {currentLombaDef && (
-                  <div className="space-y-3 pt-1">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                      <h3 className="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                        <span>📊</span> Rubrik Aspek Penilaian (JUKLAK)
-                      </h3>
-                      <span className="text-[0.65rem] text-slate-400">
-                        Geser slider atau masukkan angka langsung
-                      </span>
-                    </div>
+                {/* 2. Rubrik Aspek Penilaian & Form Waktu */}
+                {currentLombaDef && (() => {
+                  const activeRubrikList = getLombaRubrik(currentLombaDef, selectedKategori);
+                  const scoreRubriks = activeRubrikList.filter((r) => !r.isTime);
+                  const timeRubriks = activeRubrikList.filter((r) => r.isTime);
+                  const maxScorePossible = scoreRubriks.reduce((acc, r) => acc + (r.max || 0), 0) || 100;
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                      {currentLombaDef.rubrik.map((r) => {
-                        const val = rubrikScores[r.id] ?? Math.round(r.weight * 0.7);
+                  return (
+                    <div className="space-y-4 pt-1">
+                      {/* Header Rubrik */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                        <h3 className="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                          <span>📊</span> Format Penilaian Tingkat {selectedKategori} (Juknis Resmi)
+                        </h3>
+                        <span className="text-[0.68rem] text-amber-400 font-mono">
+                          Maksimal Skor Ketepatan: {maxScorePossible} Poin
+                        </span>
+                      </div>
+
+                      {/* Card Penilaian Aspek / Ketepatan Jawaban */}
+                      {scoreRubriks.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                          {scoreRubriks.map((r) => {
+                            const val = rubrikScores[r.id] ?? Math.round((r.max || 100) * 0.7);
+                            return (
+                              <div key={r.id} className="bg-slate-950/70 border border-slate-800/90 hover:border-amber-500/40 p-3.5 rounded-2xl space-y-2 transition-all shadow-sm">
+                                <div className="flex justify-between items-center">
+                                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                                    <span>🎯</span>
+                                    <span>{r.name}</span>
+                                  </label>
+                                  <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-lg border border-amber-500/20 font-mono">
+                                    {val} / {r.max}
+                                  </span>
+                                </div>
+                                
+                                <p className="text-[0.65rem] text-slate-400 italic line-clamp-2">
+                                  {r.hint}
+                                </p>
+
+                                <div className="flex items-center gap-2.5 pt-1">
+                                  <input
+                                    type="range"
+                                    min={r.min || 0}
+                                    max={r.max}
+                                    value={val}
+                                    onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
+                                    className="w-full accent-amber-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+                                  />
+                                  <input
+                                    type="number"
+                                    min={r.min || 0}
+                                    max={r.max}
+                                    value={val}
+                                    onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
+                                    className="w-14 bg-slate-900 border border-slate-700 rounded-xl py-1 text-center text-xs text-amber-300 font-black focus:border-amber-500 outline-none font-mono"
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Card Khusus Form Isi Sendiri Kecepatan Waktu */}
+                      {timeRubriks.map((tr) => {
+                        const timeVal = rubrikScores[tr.id] ?? "";
                         return (
-                          <div key={r.id} className="bg-slate-950/70 border border-slate-800/90 hover:border-amber-500/40 p-3.5 rounded-2xl space-y-2 transition-all">
-                            <div className="flex justify-between items-center">
-                              <label className="text-xs font-bold text-white">
-                                {r.name}
-                              </label>
-                              <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
-                                {val} / {r.max}
-                              </span>
+                          <div key={tr.id} className="bg-gradient-to-br from-blue-950/60 via-slate-950 to-indigo-950/40 border-2 border-blue-500/40 rounded-2xl p-4 md:p-5 shadow-lg space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/40 flex items-center justify-center text-xl shadow-inner">
+                                  ⏱️
+                                </div>
+                                <div>
+                                  <h4 className="text-xs md:text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                                    <span>{tr.name}</span>
+                                    <span className="bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[0.62rem] px-2 py-0.5 rounded-full font-mono uppercase font-bold">
+                                      Form Diisi Mandiri Oleh Juri
+                                    </span>
+                                  </h4>
+                                  <p className="text-[0.68rem] text-slate-300 mt-0.5">
+                                    {tr.hint || "Catat perolehan waktu tempuh atau penyelesaian tugas regu (dalam satuan menit)."}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                            
-                            <p className="text-[0.65rem] text-slate-400 italic line-clamp-1">
-                              {r.hint}
-                            </p>
 
-                            <div className="flex items-center gap-2.5 pt-1">
-                              <input
-                                type="range"
-                                min={r.min || 0}
-                                max={r.max}
-                                value={val}
-                                onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
-                                className="w-full accent-amber-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
-                              />
-                              <input
-                                type="number"
-                                min={r.min || 0}
-                                max={r.max}
-                                value={val}
-                                onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
-                                className="w-14 bg-slate-900 border border-slate-700 rounded-xl py-1 text-center text-xs text-amber-300 font-black focus:border-amber-500 outline-none"
-                              />
+                            <div className="flex flex-wrap items-center gap-3 bg-slate-900/90 border border-blue-500/30 p-3.5 rounded-xl">
+                              <div className="relative flex-1 min-w-[170px]">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0.0"
+                                  value={timeVal}
+                                  onChange={(e) => handleRubrikChange(tr.id, e.target.value)}
+                                  className="w-full bg-slate-950 border-2 border-blue-500/60 focus:border-blue-400 rounded-xl py-2 px-3.5 pr-16 text-lg font-black text-blue-300 tracking-wider outline-none transition-all placeholder:text-slate-600 placeholder:font-normal placeholder:text-xs font-mono"
+                                />
+                                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-black text-blue-400/90 uppercase pointer-events-none">
+                                  Menit
+                                </div>
+                              </div>
+
+                              {/* Tombol Preset Waktu Cepat */}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[0.65rem] text-slate-400 font-bold uppercase mr-1">Preset:</span>
+                                {[3, 5, 8, 10, 15, 20, 25, 30].map((t) => (
+                                  <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => handleRubrikChange(tr.id, String(t))}
+                                    className={`text-[0.68rem] font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
+                                      String(timeVal) === String(t)
+                                        ? "bg-blue-500 text-slate-950 border-blue-400 shadow"
+                                        : "bg-slate-800/90 hover:bg-slate-700 text-slate-300 border-slate-700"
+                                    }`}
+                                  >
+                                    {t}m
+                                  </button>
+                                ))}
+                                {timeVal !== "" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRubrikChange(tr.id, "")}
+                                    className="text-[0.65rem] font-bold px-2 py-1.5 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30"
+                                    title="Kosongkan nilai waktu"
+                                  >
+                                    Reset
+                                  </button>
+                                )}
+                              </div>
                             </div>
+
+                            {timeVal !== "" ? (
+                              <div className="text-[0.7rem] text-blue-300 font-bold flex items-center gap-2 bg-blue-950/50 border border-blue-500/30 px-3 py-1.5 rounded-lg">
+                                <span>⏱️ Catatan Waktu:</span>
+                                <span className="font-mono text-emerald-400 font-black">{timeVal} Menit</span>
+                                <span className="text-slate-400 text-[0.65rem]">— Waktu akan tersimpan dan direkap bersama skor ketepatan.</span>
+                              </div>
+                            ) : (
+                              <div className="text-[0.68rem] text-amber-400/90 italic flex items-center gap-1">
+                                <span>⚠️ Kecepatan waktu belum diisi. Masukkan catatan menit di atas (bisa desimal, misal: 8.5).</span>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* 3. Total Skor & Ringkasan */}
-                <div className="bg-gradient-to-br from-slate-950/90 to-amber-950/20 border border-amber-500/30 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-inner">
-                  <div className="space-y-1 w-full sm:w-auto">
-                    <span className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest block">
-                      Total Nilai Terkalkulasi
-                    </span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl md:text-4xl font-black text-amber-400 drop-shadow-[0_0_12px_rgba(245,166,35,0.4)]">
-                        {totalScoreCalculated}
-                      </span>
-                      <span className="text-xs text-slate-500 font-bold">/ 100 Poin</span>
-                    </div>
-                    <div className="w-48 bg-slate-800 rounded-full h-2 overflow-hidden mt-1">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300"
-                        style={{ width: `${totalScoreCalculated}%` }}
-                      />
-                    </div>
-                  </div>
+                {(() => {
+                  const activeRubrikList = currentLombaDef ? getLombaRubrik(currentLombaDef, selectedKategori) : [];
+                  const scoreRubriks = activeRubrikList.filter((r) => !r.isTime);
+                  const timeRubrik = activeRubrikList.find((r) => r.isTime);
+                  const maxScorePossible = scoreRubriks.reduce((acc, r) => acc + (r.max || 0), 0) || 100;
+                  const currentTimeVal = timeRubrik ? rubrikScores[timeRubrik.id] : null;
 
-                  <div className="w-full sm:flex-1 sm:max-w-xs space-y-1">
-                    <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider block">
-                      Catatan Juri (Opsional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Catatan pengerjaan regu..."
-                      value={catatanJuri}
-                      onChange={(e) => setCatatanJuri(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-amber-500/60 outline-none"
-                    />
-                  </div>
-                </div>
+                  return (
+                    <div className="bg-gradient-to-br from-slate-950/90 to-amber-950/20 border border-amber-500/30 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-inner">
+                      <div className="space-y-1 w-full sm:w-auto">
+                        <span className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest block">
+                          Total Nilai Terkalkulasi
+                        </span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl md:text-4xl font-black text-amber-400 drop-shadow-[0_0_12px_rgba(245,166,35,0.4)] font-mono">
+                            {totalScoreCalculated}
+                          </span>
+                          <span className="text-xs text-slate-500 font-bold">
+                            / {maxScorePossible} Poin {timeRubrik ? "Ketepatan" : ""}
+                          </span>
+                        </div>
+                        
+                        {/* Status Durasi Waktu Jika Ada */}
+                        {timeRubrik && (
+                          <div className="text-[0.68rem] text-blue-300 font-medium flex items-center gap-1.5 pt-0.5">
+                            <span>⏱️ Waktu Pengerjaan:</span>
+                            <span className="font-mono font-black text-emerald-400">
+                              {currentTimeVal ? `${currentTimeVal} Menit` : "Belum Diisi"}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="w-48 bg-slate-800 rounded-full h-2 overflow-hidden mt-1">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300"
+                            style={{ width: `${Math.min(100, Math.round((totalScoreCalculated / maxScorePossible) * 100))}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="w-full sm:flex-1 sm:max-w-xs space-y-1">
+                        <label className="text-[0.65rem] font-bold text-slate-400 uppercase tracking-wider block">
+                          Catatan Juri (Opsional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Catatan pengerjaan regu..."
+                          value={catatanJuri}
+                          onChange={(e) => setCatatanJuri(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-amber-500/60 outline-none"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* 4. Tombol Kunci & Simpan */}
                 <button

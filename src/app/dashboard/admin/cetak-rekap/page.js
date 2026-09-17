@@ -2,19 +2,21 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { OFFICIAL_LOMBA_DEFINITIONS } from "@/app/dashboard/juri/page";
+import { OFFICIAL_LOMBA_DEFINITIONS, getLombaRubrik } from "@/app/dashboard/juri/page";
 
 // Helper untuk menghitung/mendistribusikan poin rubrik agar pas dengan Total Nilai
 function getRubrikPoints(totalScore, rubriks) {
   if (!rubriks || rubriks.length === 0 || totalScore === undefined || totalScore === null) {
     return {};
   }
+  // Hanya distribusikan skor ke rubrik yang bertipe nilai/skor (bukan waktu)
+  const scoreRubriks = rubriks.filter((r) => !r.isTime);
   const score = Number(totalScore);
-  const totalWeight = rubriks.reduce((sum, r) => sum + (r.weight || r.max || 0), 0);
+  const totalWeight = scoreRubriks.reduce((sum, r) => sum + (r.weight || r.max || 0), 0);
   if (totalWeight <= 0) return {};
 
   const ratio = Math.min(1, Math.max(0, score / totalWeight));
-  const rawScores = rubriks.map((r) => {
+  const rawScores = scoreRubriks.map((r) => {
     const w = r.weight || r.max || 0;
     const raw = w * ratio;
     const floored = Math.floor(raw);
@@ -54,7 +56,7 @@ function getRubrikPoints(totalScore, rubriks) {
   let finalSum = Object.values(result).reduce((a, b) => a + b, 0);
   let finalDiff = score - finalSum;
   if (finalDiff !== 0) {
-    for (const r of rubriks) {
+    for (const r of scoreRubriks) {
       if (finalDiff === 0) break;
       if (finalDiff > 0 && result[r.id] < (r.max || 100)) {
         result[r.id]++;
@@ -289,8 +291,12 @@ export default function CetakRekapPerJuri() {
 
           {/* TABEL NILAI */}
           {(() => {
-            const def = OFFICIAL_LOMBA_DEFINITIONS.find(d => d.nama_lomba.toLowerCase() === group.lomba.nama_lomba.toLowerCase() || group.lomba.nama_lomba.toLowerCase().includes(d.nama_lomba.toLowerCase()));
-            const rubriks = def ? def.rubrik : [];
+            const def = OFFICIAL_LOMBA_DEFINITIONS.find(
+              (d) =>
+                d.nama_lomba.toLowerCase() === group.lomba.nama_lomba.toLowerCase() ||
+                group.lomba.nama_lomba.toLowerCase().includes(d.nama_lomba.toLowerCase())
+            );
+            const rubriks = def ? getLombaRubrik(def, group.kategori) : [];
             
             return (
               <table className="w-full border-collapse border border-black mb-8 text-[11pt]">
@@ -299,9 +305,12 @@ export default function CetakRekapPerJuri() {
                     <th className="border border-black p-2 text-center w-12 font-bold">No</th>
                     <th className="border border-black p-2 text-center font-bold">Nama Regu</th>
                     <th className="border border-black p-2 text-center font-bold">Pangkalan</th>
-                    {rubriks.map(r => (
-                      <th key={r.id} className="border border-black p-2 text-center font-bold w-24">
-                        {r.name}
+                    {rubriks.map((r) => (
+                      <th key={r.id} className="border border-black p-2 text-center font-bold w-28">
+                        <div>{r.name}</div>
+                        <div className="text-[9pt] font-normal text-gray-600">
+                          {r.isTime ? "(Menit)" : `(Maks ${r.max})`}
+                        </div>
                       </th>
                     ))}
                     <th className="border border-black p-2 text-center font-bold w-24">Total Nilai</th>
@@ -311,13 +320,12 @@ export default function CetakRekapPerJuri() {
                   {group.peserta.map((peserta, idx) => {
                     let rubrikPoints = {};
                     try {
-                      const saved = typeof window !== "undefined" ? localStorage.getItem(`rubrik_scores_${peserta.id}_${group.lomba.id}`) : null;
+                      const saved =
+                        typeof window !== "undefined"
+                          ? localStorage.getItem(`rubrik_scores_${peserta.id}_${group.lomba.id}`)
+                          : null;
                       if (saved) {
-                        const parsed = JSON.parse(saved);
-                        const sum = Object.values(parsed).reduce((a, b) => a + b, 0);
-                        if (sum === Number(peserta.nilai_lomba)) {
-                          rubrikPoints = parsed;
-                        }
+                        rubrikPoints = JSON.parse(saved);
                       }
                     } catch (_) {}
 
@@ -334,11 +342,18 @@ export default function CetakRekapPerJuri() {
                         <td className="border border-black p-2 text-[10pt] text-gray-700">
                           {peserta.pangkalan}
                         </td>
-                        {rubriks.map(r => (
-                          <td key={r.id} className="border border-black p-2 text-center font-bold text-[11pt]">
-                            {rubrikPoints[r.id] !== undefined ? rubrikPoints[r.id] : "—"}
-                          </td>
-                        ))}
+                        {rubriks.map((r) => {
+                          const val = rubrikPoints[r.id];
+                          let displayVal = "—";
+                          if (val !== undefined && val !== null && val !== "") {
+                            displayVal = r.isTime ? `${val} Menit` : val;
+                          }
+                          return (
+                            <td key={r.id} className="border border-black p-2 text-center font-bold text-[11pt]">
+                              {displayVal}
+                            </td>
+                          );
+                        })}
                         <td className="border border-black p-2 text-center font-bold text-[12pt] bg-gray-50">
                           {peserta.nilai_lomba}
                         </td>
