@@ -164,31 +164,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (role) => {
-    if (role === "admin") {
-      sessionStorage.setItem("_profile_cache", JSON.stringify({
-        id: "da882421-cecc-48ea-a032-8b6db1bf9697",
-        role: "admin",
-        nama_lengkap: "Admin Utama (Akses Penuh)",
-        assigned_lomba_id: null,
-        assigned_kategori: null,
-        assigned_gender: "SEMUA",
-        ts: Date.now(),
-      }));
-      router.replace("/dashboard/admin");
-    } else {
-      sessionStorage.setItem("_profile_cache", JSON.stringify({
-        id: "d784f966-1ba3-47d8-8a19-4d5b21338008",
-        role: "juri",
-        nama_lengkap: "Dewan Juri (Akses Semua Lomba & Format)",
-        assigned_lomba_id: null,
-        assigned_kategori: null,
-        assigned_gender: "SEMUA",
-        ts: Date.now(),
-      }));
-      router.replace("/dashboard/juri");
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-200 relative overflow-hidden" style={{
@@ -287,54 +262,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Access Testing Card */}
-          <div className="mt-6 pt-5 border-t border-slate-800/80 space-y-3">
-            <div className="text-[0.68rem] text-amber-400 font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5 bg-amber-500/10 py-1 px-3 rounded-lg border border-amber-500/20">
-              <span>⚡</span> AKSES 1-KLIK TESTING LOKAL
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("admin")}
-                className="w-full bg-slate-900/90 hover:bg-cyan-950/40 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 font-bold py-2.5 px-3 rounded-xl text-xs flex flex-col items-center justify-center gap-0.5 transition-all shadow-sm group"
-              >
-                <span className="flex items-center gap-1.5 font-black">
-                  <span>🛡️</span> Admin Utama
-                </span>
-                <span className="text-[0.62rem] text-slate-400 group-hover:text-cyan-200">Akses Penuh Kelola Data</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("juri")}
-                className="w-full bg-slate-900/90 hover:bg-amber-950/40 border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold py-2.5 px-3 rounded-xl text-xs flex flex-col items-center justify-center gap-0.5 transition-all shadow-sm group"
-              >
-                <span className="flex items-center gap-1.5 font-black">
-                  <span>⚖️</span> Dewan Juri
-                </span>
-                <span className="text-[0.62rem] text-slate-400 group-hover:text-amber-200">Semua Lomba SD & SMP</span>
-              </button>
-            </div>
-
-            <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-[0.68rem] space-y-1.5 text-slate-400">
-              <div className="font-bold text-slate-300 flex items-center justify-between border-b border-slate-800/80 pb-1">
-                <span>Kredensial Login Manual:</span>
-                <span className="text-[0.6rem] text-emerald-400 font-mono">Bebas Akses</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 pt-0.5">
-                <div>
-                  <div className="text-cyan-400 font-bold">🛡️ Akun Admin:</div>
-                  <div>User: <span className="text-white font-mono">admin</span></div>
-                  <div>Sandi: <span className="text-amber-400 font-mono">admin</span> / <span className="text-amber-400 font-mono">Pramuka2026!</span></div>
-                </div>
-                <div>
-                  <div className="text-amber-400 font-bold">⚖️ Akun Dewan Juri:</div>
-                  <div>User: <span className="text-white font-mono">juri</span></div>
-                  <div>Sandi: <span className="text-amber-400 font-mono">juri</span> / <span className="text-amber-400 font-mono">Pramuka2026!</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div className="mt-6 text-center">
             <a
