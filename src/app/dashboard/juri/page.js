@@ -470,124 +470,129 @@ export default function DashboardJuri() {
   }, [selectedKategori, lombaList, juri]);
 
   const cekAuthDanAmbilData = async () => {
-    // 1. Verifikasi sesi autentikasi resmi dari Supabase Auth
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
-      router.replace("/login");
-      return;
-    }
-
-    const userId = session.user.id;
-
-    const [profileRes, lombaRes, pesertaRes, penilaianRes] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba, kode_lomba)")
-        .eq("id", userId)
-        .maybeSingle(),
-      supabase
-        .from("lomba")
-        .select("id, nama_lomba, kode_lomba, kategori")
-        .order("nama_lomba", { ascending: true }),
-      supabase
-        .from("peserta")
-        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
-        .eq("is_verified", true)
-        .order("nomor_dada", { ascending: true }),
-      supabase
-        .from("penilaian")
-        .select("id, peserta_id, lomba_id, nilai, updated_at")
-        .eq("juri_id", userId),
-    ]);
-
-    const profile = profileRes?.data;
-    if (!profile || (profile.role !== "juri" && profile.role !== "admin")) {
-      try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
-      await supabase.auth.signOut();
-      router.replace("/login");
-      return;
-    }
-
-    setJuri(profile);
-
-    let loadedLomba = (lombaRes.data || []).map((l) => {
-      const def = findOfficialLombaDef(l);
-      return {
-        ...l,
-        nama_lomba: def ? def.nama_lomba : l.nama_lomba,
-      };
-    });
-
-    // If DB has no lomba records yet, build virtual lomba list from definitions
-    if (loadedLomba.length === 0) {
-      loadedLomba = OFFICIAL_LOMBA_DEFINITIONS.flatMap((def) => [
-        { id: `def-sd-${def.kode}`, nama_lomba: def.nama_lomba, kode_lomba: def.kode, kategori: "SD" },
-        { id: `def-smp-${def.kode}`, nama_lomba: def.nama_lomba, kode_lomba: def.kode, kategori: "SMP" },
-      ]);
-    }
-
-    setLombaList(loadedLomba);
-    if (loadedLomba.length > 0) {
-      const matching = loadedLomba.find((l) => l.kategori === selectedKategori);
-      setSelectedLombaId(matching ? matching.id : loadedLomba[0].id);
-    }
-
-    // Populate participant list with DB records
-    let combinedPeserta = [...(pesertaRes.data || [])];
-    if (combinedPeserta.length === 0) {
-      combinedPeserta = [...ALL_TEST_PESERTA];
-    }
-    setPesertaList(combinedPeserta);
-
-    // Merge DB scores and local offline scores
-    let offlineScores = [];
     try {
-      if (typeof window !== "undefined") {
-        offlineScores = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+      // 1. Verifikasi sesi autentikasi resmi dari Supabase Auth
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+        router.replace("/login");
+        return;
       }
-    } catch (_) {}
 
-    let allScores = [...(penilaianRes?.data || [])];
-    if (activeRole === "admin" || allScores.length === 0) {
-      const [c1, c2] = await Promise.all([
-        supabase.from("penilaian").select("id, peserta_id, lomba_id, nilai, updated_at").range(0, 999),
-        supabase.from("penilaian").select("id, peserta_id, lomba_id, nilai, updated_at").range(1000, 1999),
+      const userId = session.user.id;
+
+      const [profileRes, lombaRes, pesertaRes, penilaianRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba, kode_lomba)")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabase
+          .from("lomba")
+          .select("id, nama_lomba, kode_lomba, kategori")
+          .order("nama_lomba", { ascending: true }),
+        supabase
+          .from("peserta")
+          .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
+          .eq("is_verified", true)
+          .order("nomor_dada", { ascending: true }),
+        supabase
+          .from("penilaian")
+          .select("id, peserta_id, lomba_id, nilai, updated_at")
+          .eq("juri_id", userId),
       ]);
-      const fetchedScores = [...(c1.data || []), ...(c2.data || [])];
-      if (fetchedScores.length > 0) {
-        allScores = fetchedScores;
-      }
-    }
-    offlineScores.forEach((off) => {
-      if (!allScores.some((s) => s.peserta_id === off.peserta_id && s.lomba_id === off.lomba_id)) {
-        allScores.push(off);
-      }
-    });
 
-    setPenilaianList(allScores);
-    const map = {};
-    allScores.forEach((s) => {
-      map[s.peserta_id] = s;
-    });
-    setJuriScoresMap(map);
+      const profile = profileRes?.data;
+      if (!profile || (profile.role !== "juri" && profile.role !== "admin")) {
+        try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+        await supabase.auth.signOut();
+        router.replace("/login");
+        return;
+      }
 
-    const recentRiwayat = allScores
-      .slice(0, 10)
-      .map((s) => {
-        const pesertaData = combinedPeserta.find((p) => p.id === s.peserta_id);
-        const lombaData = loadedLomba.find((l) => l.id === s.lomba_id);
+      const activeRole = profile.role || "juri";
+      setJuri(profile);
+
+      let loadedLomba = (lombaRes.data || []).map((l) => {
+        const def = findOfficialLombaDef(l);
         return {
-          id: s.id,
-          regu: pesertaData ? pesertaData.nama_regu : "Regu",
-          pos: lombaData ? lombaData.nama_lomba : "Pos Lomba",
-          nilai: s.nilai,
-          time: s.updated_at ? new Date(s.updated_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—",
+          ...l,
+          nama_lomba: def ? def.nama_lomba : l.nama_lomba,
         };
       });
-    setRiwayat(recentRiwayat);
 
-    setLoading(false);
+      // If DB has no lomba records yet, build virtual lomba list from definitions
+      if (loadedLomba.length === 0) {
+        loadedLomba = OFFICIAL_LOMBA_DEFINITIONS.flatMap((def) => [
+          { id: `def-sd-${def.kode}`, nama_lomba: def.nama_lomba, kode_lomba: def.kode, kategori: "SD" },
+          { id: `def-smp-${def.kode}`, nama_lomba: def.nama_lomba, kode_lomba: def.kode, kategori: "SMP" },
+        ]);
+      }
+
+      setLombaList(loadedLomba);
+      if (loadedLomba.length > 0) {
+        const matching = loadedLomba.find((l) => l.kategori === selectedKategori);
+        setSelectedLombaId(matching ? matching.id : loadedLomba[0].id);
+      }
+
+      // Populate participant list with DB records
+      let combinedPeserta = [...(pesertaRes.data || [])];
+      if (combinedPeserta.length === 0) {
+        combinedPeserta = [...ALL_TEST_PESERTA];
+      }
+      setPesertaList(combinedPeserta);
+
+      // Merge DB scores and local offline scores
+      let offlineScores = [];
+      try {
+        if (typeof window !== "undefined") {
+          offlineScores = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+        }
+      } catch (_) {}
+
+      let allScores = [...(penilaianRes?.data || [])];
+      if (activeRole === "admin") {
+        const [c1, c2] = await Promise.all([
+          supabase.from("penilaian").select("id, peserta_id, lomba_id, nilai, updated_at").range(0, 999),
+          supabase.from("penilaian").select("id, peserta_id, lomba_id, nilai, updated_at").range(1000, 1999),
+        ]);
+        const fetchedScores = [...(c1.data || []), ...(c2.data || [])];
+        if (fetchedScores.length > 0) {
+          allScores = fetchedScores;
+        }
+      }
+      offlineScores.forEach((off) => {
+        if (!allScores.some((s) => s.peserta_id === off.peserta_id && s.lomba_id === off.lomba_id)) {
+          allScores.push(off);
+        }
+      });
+
+      setPenilaianList(allScores);
+      const map = {};
+      allScores.forEach((s) => {
+        map[s.peserta_id] = s;
+      });
+      setJuriScoresMap(map);
+
+      const recentRiwayat = allScores
+        .slice(0, 10)
+        .map((s) => {
+          const pesertaData = combinedPeserta.find((p) => p.id === s.peserta_id);
+          const lombaData = loadedLomba.find((l) => l.id === s.lomba_id);
+          return {
+            id: s.id,
+            regu: pesertaData ? pesertaData.nama_regu : "Regu",
+            pos: lombaData ? lombaData.nama_lomba : "Pos Lomba",
+            nilai: s.nilai,
+            time: s.updated_at ? new Date(s.updated_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—",
+          };
+        });
+      setRiwayat(recentRiwayat);
+    } catch (err) {
+      console.error("Gagal memuat data juri:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSelectPeserta = (pesertaId) => {
