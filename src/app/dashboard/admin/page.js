@@ -91,6 +91,48 @@ export default function DashboardAdmin() {
   const [seedingPeserta, setSeedingPeserta] = useState(false);
   const [clearingData, setClearingData] = useState(false);
 
+  // State Ganti Password Admin
+  const [modalPasswordOpen, setModalPasswordOpen] = useState(false);
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [confirmAdminPassword, setConfirmAdminPassword] = useState("");
+  const [adminPasswordSaving, setAdminPasswordSaving] = useState(false);
+  const [adminPasswordMsg, setAdminPasswordMsg] = useState({ type: "", text: "" });
+
+  const handleChangeAdminPassword = async (e) => {
+    e.preventDefault();
+    if (!newAdminPassword || newAdminPassword.length < 6) {
+      setAdminPasswordMsg({ type: "error", text: "Kata sandi baru minimal 6 karakter." });
+      return;
+    }
+    if (newAdminPassword !== confirmAdminPassword) {
+      setAdminPasswordMsg({ type: "error", text: "Konfirmasi kata sandi tidak cocok." });
+      return;
+    }
+    setAdminPasswordSaving(true);
+    setAdminPasswordMsg({ type: "", text: "" });
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newAdminPassword,
+      });
+      if (updateError) {
+        setAdminPasswordMsg({ type: "error", text: updateError.message || "Gagal mengubah kata sandi." });
+      } else {
+        setAdminPasswordMsg({ type: "success", text: "Kata sandi Admin berhasil diperbarui!" });
+        showPesan("success", "🔑 Kata sandi akun Admin berhasil diperbarui!");
+        setTimeout(() => {
+          setModalPasswordOpen(false);
+          setNewAdminPassword("");
+          setConfirmAdminPassword("");
+          setAdminPasswordMsg({ type: "", text: "" });
+        }, 1500);
+      }
+    } catch (err) {
+      setAdminPasswordMsg({ type: "error", text: "Kesalahan: " + err.message });
+    } finally {
+      setAdminPasswordSaving(false);
+    }
+  };
+
   const handleToggleShowWinners = async () => {
     const nextState = !showWinners;
     setShowWinners(nextState);
@@ -1314,6 +1356,19 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
               title="Klik untuk mengaktifkan/menonaktifkan pengumuman juara & total akumulasi di layar utama broadcast"
             >
               <span>{showWinners ? "🏆 MODE JUARA: AKTIF" : "🔒 MODE JUARA: NON-AKTIF"}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setModalPasswordOpen(true);
+                setNewAdminPassword("");
+                setConfirmAdminPassword("");
+                setAdminPasswordMsg({ type: "", text: "" });
+              }}
+              className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 transition-all shadow-sm flex items-center gap-1.5"
+              title="Ganti kata sandi akun Admin"
+            >
+              <span>🔑 Ganti Password</span>
             </button>
 
             <button
@@ -2721,6 +2776,96 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
           </div>
         )}
       </main>
+
+      {/* MODAL GANTI PASSWORD ADMIN */}
+      {modalPasswordOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
+          <div className="glass-card max-w-md w-full p-6 md:p-8 border border-amber-500/30 shadow-2xl relative">
+            <button
+              type="button"
+              onClick={() => setModalPasswordOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors"
+            >
+              ✕
+            </button>
+
+            <div className="text-center space-y-2 mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 mb-1">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-black tracking-wider text-white uppercase">
+                Ganti Kata Sandi Admin
+              </h2>
+              <p className="text-xs text-slate-400">
+                Perbarui kata sandi login Admin Utama untuk keamanan sistem
+              </p>
+            </div>
+
+            {adminPasswordMsg.text && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-semibold mb-4 text-center ${
+                  adminPasswordMsg.type === "error"
+                    ? "bg-red-500/10 border border-red-500/30 text-red-400"
+                    : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                }`}
+              >
+                {adminPasswordMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleChangeAdminPassword} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">
+                  Kata Sandi Baru
+                </label>
+                <input
+                  type="password"
+                  value={newAdminPassword}
+                  onChange={(e) => setNewAdminPassword(e.target.value)}
+                  required
+                  placeholder="Minimal 6 karakter"
+                  autoComplete="new-password"
+                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">
+                  Konfirmasi Kata Sandi Baru
+                </label>
+                <input
+                  type="password"
+                  value={confirmAdminPassword}
+                  onChange={(e) => setConfirmAdminPassword(e.target.value)}
+                  required
+                  placeholder="Ketik ulang kata sandi baru"
+                  autoComplete="new-password"
+                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setModalPasswordOpen(false)}
+                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold py-3 px-4 rounded-xl text-xs transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={adminPasswordSaving}
+                  className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 px-4 rounded-xl text-xs transition-all shadow-md disabled:opacity-50 uppercase tracking-wider"
+                >
+                  {adminPasswordSaving ? "Menyimpan..." : "Simpan Sandi"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

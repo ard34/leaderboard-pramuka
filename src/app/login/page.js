@@ -16,7 +16,10 @@ export default function LoginPage() {
   const [isLockedOut, setIsLockedOut] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
   const loginAttemptsRef = useRef(0);
-  const lockoutTimerRef = useRef(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState({ type: "", text: "" });
   const router = useRouter();
   const isOnline = useOnlineStatus();
 
@@ -41,6 +44,35 @@ export default function LoginPage() {
         return prev - 1;
       });
     }, 1000);
+  };
+
+  const handleRequestReset = async (e) => {
+    e.preventDefault();
+    const cleanEmail = resetEmail.trim().toLowerCase();
+    if (!cleanEmail) {
+      setResetMessage({ type: "error", text: "Silakan masukkan email akun Anda." });
+      return;
+    }
+    setResetLoading(true);
+    setResetMessage({ type: "", text: "" });
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : "https://www.siloti-kwaranmekarbaru.my.id";
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: `${origin}/reset-password`,
+      });
+      if (resetErr) {
+        setResetMessage({ type: "error", text: resetErr.message || "Gagal mengirim link reset kata sandi." });
+      } else {
+        setResetMessage({
+          type: "success",
+          text: "Link reset kata sandi telah dikirim ke email Anda! Silakan periksa kotak masuk atau spam email Anda.",
+        });
+      }
+    } catch (err) {
+      setResetMessage({ type: "error", text: "Terjadi kesalahan: " + err.message });
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -192,9 +224,22 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[0.7rem] font-bold text-slate-500 uppercase tracking-[0.15em]">
-                Kata Sandi
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-[0.7rem] font-bold text-slate-500 uppercase tracking-[0.15em]">
+                  Kata Sandi
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEmail(email || "");
+                    setResetMessage({ type: "", text: "" });
+                    setShowResetModal(true);
+                  }}
+                  className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium"
+                >
+                  Lupa kata sandi?
+                </button>
+              </div>
               <input
                 type="password"
                 value={password}
@@ -239,6 +284,81 @@ export default function LoginPage() {
           Server-Side Validated • End-to-End Encrypted
         </p>
       </div>
+
+      {/* Modal Lupa / Reset Password */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="glass-card max-w-md w-full p-6 md:p-8 border border-amber-500/30 shadow-2xl relative">
+            <button
+              type="button"
+              onClick={() => setShowResetModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors"
+            >
+              ✕
+            </button>
+
+            <div className="text-center space-y-2 mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 mb-1">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-black tracking-wider text-white uppercase">
+                Reset Kata Sandi
+              </h2>
+              <p className="text-xs text-slate-400">
+                Masukkan email akun Anda. Kami akan mengirimkan tautan aman untuk membuat kata sandi baru.
+              </p>
+            </div>
+
+            {resetMessage.text && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-semibold mb-4 text-center ${
+                  resetMessage.type === "error"
+                    ? "bg-red-500/10 border border-red-500/30 text-red-400"
+                    : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                }`}
+              >
+                {resetMessage.text}
+              </div>
+            )}
+
+            <form onSubmit={handleRequestReset} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">
+                  Email Terdaftar
+                </label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  placeholder="admin@email.com"
+                  autoComplete="email"
+                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold py-3 px-4 rounded-xl text-xs transition-colors"
+                >
+                  Tutup
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 px-4 rounded-xl text-xs transition-all shadow-md disabled:opacity-50"
+                >
+                  {resetLoading ? "Mengirim..." : "Kirim Link Reset"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
