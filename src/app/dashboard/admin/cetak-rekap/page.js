@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { OFFICIAL_LOMBA_DEFINITIONS, getLombaRubrik } from "@/app/dashboard/juri/page";
+import { OFFICIAL_LOMBA_DEFINITIONS, getLombaRubrik, findOfficialLombaDef } from "@/app/dashboard/juri/page";
 
 // Helper untuk menghitung/mendistribusikan poin rubrik agar pas dengan Total Nilai
 function getRubrikPoints(totalScore, rubriks) {
@@ -277,7 +277,7 @@ export default function CetakRekapPerJuri() {
             <h3 className="font-bold text-[14pt] mb-6 uppercase">KWARTIR RANTING MEKAR BARU</h3>
             
             {(() => {
-              const def = OFFICIAL_LOMBA_DEFINITIONS.find(d => d.nama_lomba.toLowerCase() === group.lomba.nama_lomba.toLowerCase() || group.lomba.nama_lomba.toLowerCase().includes(d.nama_lomba.toLowerCase()));
+              const def = findOfficialLombaDef(group.lomba);
               return (
                 <div className="text-left">
                   <h4 className="font-bold text-[13pt] mb-2">{def ? `Kelompok ${def.kategori_kelompok}` : ""}</h4>
@@ -291,12 +291,8 @@ export default function CetakRekapPerJuri() {
 
           {/* TABEL NILAI */}
           {(() => {
-            const def = OFFICIAL_LOMBA_DEFINITIONS.find(
-              (d) =>
-                d.nama_lomba.toLowerCase() === group.lomba.nama_lomba.toLowerCase() ||
-                group.lomba.nama_lomba.toLowerCase().includes(d.nama_lomba.toLowerCase())
-            );
-            const rubriks = def ? getLombaRubrik(def, group.kategori) : [];
+            const def = findOfficialLombaDef(group.lomba);
+            const rubriks = getLombaRubrik(def, group.kategori);
             
             return (
               <table className="w-full border-collapse border border-black mb-8 text-[11pt]">

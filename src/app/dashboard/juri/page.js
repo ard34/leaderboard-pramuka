@@ -14,6 +14,43 @@ export function getLombaRubrik(lombaDef, kategori = "SD") {
   return lombaDef.rubrik || [];
 }
 
+// Helper untuk mencocokkan objek lomba (dari DB / penugasan) dengan Definisi Rubrik Resmi
+export function findOfficialLombaDef(lombaObj) {
+  if (!lombaObj) return OFFICIAL_LOMBA_DEFINITIONS[0];
+  const objKode = (lombaObj.kode_lomba || lombaObj.kode || "").trim().toUpperCase();
+  const objNama = (lombaObj.nama_lomba || "").toLowerCase().trim();
+
+  const match = OFFICIAL_LOMBA_DEFINITIONS.find((d) => {
+    const defKode = (d.kode || "").trim().toUpperCase();
+    const defNama = (d.nama_lomba || "").toLowerCase().trim();
+    return (
+      (objKode && defKode && objKode === defKode) ||
+      objNama.includes(defNama) ||
+      defNama.includes(objNama) ||
+      (objNama.includes("pioner") && defKode === "PNR") ||
+      (objNama.includes("administrasi") && defKode === "ADM") ||
+      (objNama.includes("hymne") && defKode === "HMN") ||
+      (objNama.includes("suara") && defKode === "HMN") ||
+      (objNama.includes("tari") && defKode === "TSB") ||
+      (objNama.includes("seni") && defKode === "TSB") ||
+      (objNama.includes("ppgd") && defKode === "PGD") ||
+      (objNama.includes("pppk") && defKode === "PGD") ||
+      (objNama.includes("sandi") && defKode === "SND") ||
+      (objNama.includes("taksir") && defKode === "TKS") ||
+      (objNama.includes("semaphore") && defKode === "SMP") ||
+      (objNama.includes("morse") && defKode === "MRS") ||
+      (objNama.includes("kim") && defKode === "KIM") ||
+      (objNama.includes("karnaval") && defKode === "KRN") ||
+      (objNama.includes("pack") && defKode === "PCK") ||
+      (objNama.includes("forum") && defKode === "FRP") ||
+      (objNama.includes("masak") && defKode === "MSK") ||
+      (objNama.includes("navigasi") && defKode === "NAV") ||
+      (objNama.includes("orienteering") && defKode === "NAV")
+    );
+  });
+  return match || OFFICIAL_LOMBA_DEFINITIONS[0];
+}
+
 // Official LT-II Kwartir Ranting Mekar Baru 2026 Competition Definitions & Rubrics
 export const OFFICIAL_LOMBA_DEFINITIONS = [
   {
@@ -352,35 +389,7 @@ export default function DashboardJuri() {
   }, [selectedLombaId, lombaList]);
 
   const currentLombaDef = useMemo(() => {
-    if (!currentLombaObj) return OFFICIAL_LOMBA_DEFINITIONS[0];
-    const objKode = (currentLombaObj.kode_lomba || "").trim().toUpperCase();
-    const objNama = (currentLombaObj.nama_lomba || "").toLowerCase().trim();
-
-    const match = OFFICIAL_LOMBA_DEFINITIONS.find((d) => {
-      const defKode = (d.kode || "").trim().toUpperCase();
-      const defNama = (d.nama_lomba || "").toLowerCase().trim();
-      return (
-        (objKode && defKode && objKode === defKode) ||
-        objNama.includes(defNama) ||
-        defNama.includes(objNama) ||
-        (objNama.includes("pioner") && defKode === "PNR") ||
-        (objNama.includes("administrasi") && defKode === "ADM") ||
-        (objNama.includes("hymne") && defKode === "HMN") ||
-        (objNama.includes("tari") && defKode === "TSB") ||
-        (objNama.includes("ppgd") && defKode === "PGD") ||
-        (objNama.includes("sandi") && defKode === "SND") ||
-        (objNama.includes("taksir") && defKode === "TKS") ||
-        (objNama.includes("semaphore") && defKode === "SMP") ||
-        (objNama.includes("morse") && defKode === "MRS") ||
-        (objNama.includes("kim") && defKode === "KIM") ||
-        (objNama.includes("karnaval") && defKode === "KRN") ||
-        (objNama.includes("pack") && defKode === "PCK") ||
-        (objNama.includes("forum") && defKode === "FRP") ||
-        (objNama.includes("masak") && defKode === "MSK") ||
-        (objNama.includes("navigasi") && defKode === "NAV")
-      );
-    });
-    return match || OFFICIAL_LOMBA_DEFINITIONS[0];
+    return findOfficialLombaDef(currentLombaObj);
   }, [currentLombaObj]);
 
   // Map skor khusus untuk lomba yang sedang aktif
