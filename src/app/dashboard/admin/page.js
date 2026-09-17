@@ -5,7 +5,6 @@ import React, { useEffect, useState, useCallback, useMemo, Fragment } from "reac
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
-import { ALL_TEST_PESERTA } from "@/lib/testSchools";
 import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
 
 // Official 4 Groups of Competition Activities (Kelompok Kegiatan Lomba LT-II 2026)
@@ -200,27 +199,7 @@ export default function DashboardAdmin() {
     }
   };
 
-  const handleSeedPeserta = async (kategori = "ALL") => {
-    setSeedingPeserta(true);
-    try {
-      const res = await fetch("/api/admin/seed-peserta", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kategori }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showPesan("success", data.message);
-        await fetchAllData();
-      } else {
-        showPesan("error", "Gagal memuat peserta: " + (data.error || "Terjadi kesalahan"));
-      }
-    } catch (err) {
-      showPesan("error", "Kesalahan: " + err.message);
-    } finally {
-      setSeedingPeserta(false);
-    }
-  };
+
 
   const handleBersihkanDataPeserta = async () => {
     if (!confirm("⚠️ PERINGATAN PEMBERSIHAN DATA:\nApakah Anda yakin ingin MENGHAPUS SELURUH data peserta dan penilaian uji coba? Seluruh peserta akan dikosongkan.")) {
@@ -378,11 +357,8 @@ export default function DashboardAdmin() {
     }
 
     if (pesertaRes.error) console.error("Error fetching peserta:", pesertaRes.error);
-    let combinedPeserta = [...(pesertaRes.data || [])];
-    if (combinedPeserta.length === 0) {
-      combinedPeserta = [...ALL_TEST_PESERTA];
-    }
-    setPesertaList(combinedPeserta);
+    const dbPeserta = pesertaRes.data || [];
+    setPesertaList(dbPeserta);
     
     if (jurisRes.error) console.error("Error fetching juri:", jurisRes.error);
     if (jurisRes.data) setJuriList(jurisRes.data);
@@ -393,8 +369,9 @@ export default function DashboardAdmin() {
     let allPenilaian = [...(penilaianRes?.data || [])];
     try {
       if (typeof window !== "undefined") {
-        const offlineScores = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
-        offlineScores.forEach((off) => {
+        const rawOffline = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+        const validOffline = rawOffline.filter((off) => dbPeserta.some((p) => p.id === off.peserta_id));
+        validOffline.forEach((off) => {
           if (!allPenilaian.some((s) => s.peserta_id === off.peserta_id && s.lomba_id === off.lomba_id)) {
             allPenilaian.push(off);
           }
@@ -1568,15 +1545,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                     <option value="VERIFIED">✅ Aktif (Verified)</option>
                     <option value="PENDING">⏳ Menunggu Verifikasi</option>
                   </select>
-                  <button
-                    type="button"
-                    onClick={handleSeedPeserta}
-                    disabled={seedingPeserta || clearingData}
-                    className="bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap"
-                    title="Muat data master 52 regu test (19 SD Putra, 19 SD Putri, 7 SMP Putra, 7 SMP Putri) langsung aktif dan terverifikasi"
-                  >
-                    {seedingPeserta ? "Memuat..." : "📥 Muat 52 Regu (19 SD & 7 SMP)"}
-                  </button>
+
                   <button
                     type="button"
                     onClick={handleBersihkanDataPeserta}

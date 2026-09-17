@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
-import { ALL_TEST_PESERTA } from "@/lib/testSchools";
 import { generateExampleTime } from "@/lib/timeUtils";
 
 // Helper untuk mengambil rubrik sesuai tingkat (SD vs SMP)
@@ -535,18 +534,18 @@ export default function DashboardJuri() {
         setSelectedLombaId(matching ? matching.id : loadedLomba[0].id);
       }
 
-      // Populate participant list with DB records
-      let combinedPeserta = [...(pesertaRes.data || [])];
-      if (combinedPeserta.length === 0) {
-        combinedPeserta = [...ALL_TEST_PESERTA];
-      }
+      // Ambil data peserta resmi yang terverifikasi langsung dari database Supabase
+      const combinedPeserta = [...(pesertaRes?.data || [])];
       setPesertaList(combinedPeserta);
 
-      // Merge DB scores and local offline scores
+      // Merge DB scores and local offline scores (hanya untuk peserta yang benar-benar ada di DB)
       let offlineScores = [];
       try {
         if (typeof window !== "undefined") {
-          offlineScores = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+          const rawOffline = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+          offlineScores = rawOffline.filter((off) =>
+            combinedPeserta.some((p) => p.id === off.peserta_id)
+          );
         }
       } catch (_) {}
 

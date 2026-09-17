@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { OFFICIAL_LOMBA_DEFINITIONS, getLombaRubrik, findOfficialLombaDef } from "@/app/dashboard/juri/page";
-import { ALL_TEST_PESERTA } from "@/lib/testSchools";
 import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
 
 // Helper untuk menghitung/mendistribusikan poin rubrik secara proporsional & aman (bebas infinite loop)
@@ -212,23 +211,22 @@ export default function CetakRekapPerJuri() {
 
       if (cached) {
         let pesertaData = [...(cached.pesertaList || [])];
-        if (pesertaData.length === 0) {
-          pesertaData = [...ALL_TEST_PESERTA];
-        }
 
-        const groups = buildReportGroups(
-          cached.lombaList,
-          pesertaData,
-          cached.juriList,
-          cached.penilaianList,
-          targetJuriName,
-          targetJuriId
-        );
+        if (pesertaData.length > 0) {
+          const groups = buildReportGroups(
+            cached.lombaList,
+            pesertaData,
+            cached.juriList,
+            cached.penilaianList,
+            targetJuriName,
+            targetJuriId
+          );
 
-        if (groups.length > 0) {
-          setGroupedData(groups);
-          setLoading(false);
-          return;
+          if (groups.length > 0) {
+            setGroupedData(groups);
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -249,9 +247,6 @@ export default function CetakRekapPerJuri() {
       const profilesData = profilesRes.data || [];
 
       let pesertaData = [...(pesertaRes.data || [])];
-      if (pesertaData.length === 0) {
-        pesertaData = [...ALL_TEST_PESERTA];
-      }
 
       // 2. High-speed Penilaian Fetch
       let penilaianData = [];
@@ -276,7 +271,8 @@ export default function CetakRekapPerJuri() {
       // 3. Merge local offline scores if any
       try {
         if (typeof window !== "undefined") {
-          const offlineScores = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+          const rawOffline = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+          const offlineScores = rawOffline.filter((off) => pesertaData.some((p) => p.id === off.peserta_id));
           offlineScores.forEach((off) => {
             if (!penilaianData.some((p) => p.peserta_id === off.peserta_id && p.lomba_id === off.lomba_id && p.juri_id === off.juri_id)) {
               if (!effectiveJuriId || off.juri_id === effectiveJuriId) {
