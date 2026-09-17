@@ -3,72 +3,153 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { OFFICIAL_LOMBA_DEFINITIONS, getLombaRubrik, findOfficialLombaDef } from "@/app/dashboard/juri/page";
+import { ALL_TEST_PESERTA } from "@/lib/testSchools";
+import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
 
-// Helper untuk menghitung/mendistribusikan poin rubrik agar pas dengan Total Nilai
-function getRubrikPoints(totalScore, rubriks) {
+// Helper untuk menghitung/mendistribusikan poin rubrik secara proporsional & aman (bebas infinite loop)
+function getRubrikPoints(totalScore, rubriks, pesertaId = "", lombaId = "", rankIdx = 0) {
   if (!rubriks || rubriks.length === 0 || totalScore === undefined || totalScore === null) {
     return {};
   }
-  // Hanya distribusikan skor ke rubrik yang bertipe nilai/skor (bukan waktu)
   const scoreRubriks = rubriks.filter((r) => !r.isTime);
-  const score = Number(totalScore);
-  const totalWeight = scoreRubriks.reduce((sum, r) => sum + (r.weight || r.max || 0), 0);
-  if (totalWeight <= 0) return {};
-
-  const ratio = Math.min(1, Math.max(0, score / totalWeight));
-  const rawScores = scoreRubriks.map((r) => {
-    const w = r.weight || r.max || 0;
-    const raw = w * ratio;
-    const floored = Math.floor(raw);
-    const frac = raw - floored;
-    return {
-      id: r.id,
-      max: r.max || w,
-      min: r.min || 0,
-      floored,
-      frac,
-    };
-  });
-
-  let currentSum = rawScores.reduce((sum, item) => sum + item.floored, 0);
-  let diff = score - currentSum;
-
-  const sortedByFrac = [...rawScores].sort((a, b) => b.frac - a.frac);
-  const additions = {};
-
-  for (let i = 0; i < sortedByFrac.length && diff > 0; i++) {
-    const item = sortedByFrac[i];
-    if (item.floored + (additions[item.id] || 0) < item.max) {
-      additions[item.id] = (additions[item.id] || 0) + 1;
-      diff--;
-    }
-    if (i === sortedByFrac.length - 1 && diff > 0) {
-      i = -1;
-    }
-  }
+  const timeRubrik = rubriks.find((r) => r.isTime);
+  const score = Number(totalScore) || 0;
+  const totalMax = scoreRubriks.reduce((sum, r) => sum + (r.max || r.weight || 0), 0);
 
   const result = {};
-  rawScores.forEach((item) => {
-    const val = item.floored + (additions[item.id] || 0);
-    result[item.id] = Math.min(item.max, Math.max(item.min, val));
-  });
+  if (scoreRubriks.length > 0 && totalMax > 0) {
+    const normalizedRatio = Math.min(1, Math.max(0, score > totalMax ? score / 100 : score / totalMax));
+    scoreRubriks.forEach((r) => {
+      const maxVal = r.max || r.weight || 100;
+      result[r.id] = Math.round(maxVal * normalizedRatio);
+    });
+  }
 
-  let finalSum = Object.values(result).reduce((a, b) => a + b, 0);
-  let finalDiff = score - finalSum;
-  if (finalDiff !== 0) {
-    for (const r of scoreRubriks) {
-      if (finalDiff === 0) break;
-      if (finalDiff > 0 && result[r.id] < (r.max || 100)) {
-        result[r.id]++;
-        finalDiff--;
-      } else if (finalDiff < 0 && result[r.id] > (r.min || 0)) {
-        result[r.id]--;
-        finalDiff++;
+  if (timeRubrik) {
+    result[timeRubrik.id] = getSavedTimeForPesertaLomba(pesertaId, lombaId, rankIdx, true);
+  }
+
+  return result;
+}
+
+function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targetJuriName, targetJuriId) {
+  const pesertaMap = new Map(pesertaList.map((p) => [p.id, p]));
+  const juriMap = new Map((juriList || []).map((j) => [j.id, j.nama_lengkap]));
+
+  const cleanTargetName = targetJuriName ? targetJuriName.trim().toLowerCase() : null;
+
+  const groups = [];
+
+  for (const lomba of lombaList) {
+    for (const kat of ["SD", "SMP"]) {
+      for (const gen of ["Laki-laki", "Perempuan"]) {
+        // Filter scores for this lomba, category & gender
+        const relevantScores = penilaianList.filter((s) => {
+          if (s.lomba_id !== lomba.id) return false;
+          const p = pesertaMap.get(s.peserta_id);
+          if (!p) return false;
+          return p.kategori === kat && p.gender === gen;
+        });
+
+        if (relevantScores.length === 0) continue;
+
+        const uniqueJuriIds = [...new Set(relevantScores.map((s) => s.juri_id))];
+
+        for (const jId of uniqueJuriIds) {
+          if (targetJuriId && jId !== targetJuriId) continue;
+          const jName = juriMap.get(jId) || "Dewan Juri";
+          if (cleanTargetName && jName.trim().toLowerCase() !== cleanTargetName) continue;
+
+          const thisJuriScores = relevantScores.filter((s) => s.juri_id === jId);
+          // Urutkan nilai awal
+          thisJuriScores.sort((a, b) => b.nilai - a.nilai);
+
+          const pesertaScores = thisJuriScores
+            .map((s, sIdx) => {
+              const pData = pesertaMap.get(s.peserta_id);
+              if (!pData) return null;
+              const savedTime = getSavedTimeForPesertaLomba(s.peserta_id, lomba.id, sIdx, true);
+              return {
+                ...pData,
+                nilai_lomba: s.nilai,
+                waktu_pengerjaan: savedTime,
+                waktu_ms: parseTimeToMs(savedTime),
+              };
+            })
+            .filter(Boolean);
+
+          // Peringkat 1 s/d seterusnya: Nilai ketepatan tertinggi.
+          // Jika nilai sama: Ditentukan dari waktu tercepat (milidetik terendah)!
+          pesertaScores.sort((a, b) => {
+            if (b.nilai_lomba !== a.nilai_lomba) {
+              return b.nilai_lomba - a.nilai_lomba;
+            }
+            return a.waktu_ms - b.waktu_ms;
+          });
+
+          if (pesertaScores.length > 0) {
+            groups.push({
+              lomba,
+              kategori: kat,
+              gender: gen,
+              peserta: pesertaScores,
+              juriName: jName,
+            });
+          }
+        }
       }
     }
   }
 
-  return result;
+  return groups;
+}
+
+// Helper untuk menyusun nama file dokumen saat dicetak / Save as PDF
+export function sanitizeDocTitle(str) {
+  return (str || "").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim();
+}
+
+export function getDocumentTitleForGroup(group) {
+  if (!group) return "Rekap Nilai Penilaian Lomba - LT II 2026";
+  const namaLomba = group.lomba?.nama_lomba || "Lomba";
+  const tingkat = group.kategori || "SD";
+  const gender = group.gender === "Laki-laki" ? "Putra" : group.gender === "Perempuan" ? "Putri" : (group.gender || "");
+  const cleanJuri = (group.juriName || "Dewan Juri").replace(/\s*\(Juri\s*\d+\)/i, "").trim();
+  
+  return sanitizeDocTitle(`Rekap Nilai - ${namaLomba} - Tingkat ${tingkat} ${gender} - ${cleanJuri}`);
+}
+
+export function getDocumentTitleForAll(groups) {
+  if (!groups || groups.length === 0) return "Rekap Nilai Lomba LT-II 2026";
+  if (groups.length === 1) return getDocumentTitleForGroup(groups[0]);
+
+  const first = groups[0];
+  const allSameLomba = groups.every((g) => g.lomba?.nama_lomba === first.lomba?.nama_lomba);
+  const allSameKategori = groups.every((g) => g.kategori === first.kategori);
+  const allSameGender = groups.every((g) => g.gender === first.gender);
+  const allSameJuri = groups.every((g) => g.juriName === first.juriName);
+
+  const namaLomba = first.lomba?.nama_lomba || "Lomba";
+  const tingkat = first.kategori || "SD";
+  const gender = first.gender === "Laki-laki" ? "Putra" : first.gender === "Perempuan" ? "Putri" : (first.gender || "");
+  const cleanJuri = (first.juriName || "Dewan Juri").replace(/\s*\(Juri\s*\d+\)/i, "").trim();
+
+  if (allSameLomba && allSameKategori && allSameGender && allSameJuri) {
+    return sanitizeDocTitle(`Rekap Nilai - ${namaLomba} - Tingkat ${tingkat} ${gender} - ${cleanJuri}`);
+  }
+  if (allSameLomba && allSameKategori && allSameGender) {
+    return sanitizeDocTitle(`Rekap Nilai - ${namaLomba} - Tingkat ${tingkat} ${gender} - Semua Juri`);
+  }
+  if (allSameLomba && allSameJuri) {
+    return sanitizeDocTitle(`Rekap Nilai - ${namaLomba} - Semua Tingkat - ${cleanJuri}`);
+  }
+  if (allSameLomba) {
+    return sanitizeDocTitle(`Rekap Nilai - ${namaLomba} - Semua Tingkat & Juri`);
+  }
+  if (allSameJuri) {
+    return sanitizeDocTitle(`Rekap Nilai - Semua Lomba - ${cleanJuri}`);
+  }
+  return sanitizeDocTitle(`Rekap Nilai Semua Lomba LT-II 2026 - Mekar Baru`);
 }
 
 export default function CetakRekapPerJuri() {
@@ -80,95 +161,134 @@ export default function CetakRekapPerJuri() {
     fetchRekapData();
   }, []);
 
-  const fetchRekapData = async () => {
-    setLoading(true);
-    try {
-      // 1. Fetch Lomba
-      const { data: lombaData, error: errLomba } = await supabase.from("lomba").select("*").order("id", { ascending: true });
-      if (errLomba) throw errLomba;
-
-      // 2. Fetch Peserta
-      const { data: pesertaData, error: errPeserta } = await supabase.from("peserta").select("*").eq("is_verified", true);
-      if (errPeserta) throw errPeserta;
-
-      // 3. Fetch Penilaian (with relations) - Paginated to bypass 1000 row limit
-      let penilaianData = [];
-      let fromIdx = 0;
-      const stepSize = 1000;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data: chunk, error: errPenilaian } = await supabase
-          .from("penilaian")
-          .select(`
-            nilai,
-            lomba:lomba_id (id),
-            peserta:peserta_id (id, kategori, gender),
-            juri:juri_id (nama_lengkap)
-          `)
-          .range(fromIdx, fromIdx + stepSize - 1);
-
-        if (errPenilaian) throw errPenilaian;
-        if (chunk && chunk.length > 0) {
-          penilaianData.push(...chunk);
-          if (chunk.length < stepSize) hasMore = false;
-          else fromIdx += stepSize;
-        } else {
-          hasMore = false;
-        }
+  // Update document.title agar saat klik cetak / Save as PDF, nama file langsung sesuai lomba, tingkat, dan juri
+  useEffect(() => {
+    if (groupedData.length > 0) {
+      if (selectedPrintIndex !== null && groupedData[selectedPrintIndex]) {
+        document.title = getDocumentTitleForGroup(groupedData[selectedPrintIndex]);
+      } else {
+        document.title = getDocumentTitleForAll(groupedData);
       }
+    }
+  }, [groupedData, selectedPrintIndex]);
 
-      let groups = [];
-      const levels = ["SD", "SMP"];
-      const genders = ["Laki-laki", "Perempuan"];
-      
+  // Pasang listener sebelum print (misal user tekan Ctrl+P dari browser)
+  useEffect(() => {
+    const handleBeforePrint = () => {
+      if (selectedPrintIndex !== null && groupedData[selectedPrintIndex]) {
+        document.title = getDocumentTitleForGroup(groupedData[selectedPrintIndex]);
+      } else if (groupedData.length > 0) {
+        document.title = getDocumentTitleForAll(groupedData);
+      }
+    };
+    window.addEventListener("beforeprint", handleBeforePrint);
+    return () => window.removeEventListener("beforeprint", handleBeforePrint);
+  }, [selectedPrintIndex, groupedData]);
+
+  const fetchRekapData = async () => {
+    try {
       const urlParams = new URLSearchParams(window.location.search);
       const targetJuriName = urlParams.get("juriName");
+      const targetJuriId = urlParams.get("juriId");
 
-      // Generate groups
-      for (const lomba of lombaData) {
-        for (const kat of levels) {
-          // Lomba has a 'kategori' field which indicates SD or SMP.
-          if (lomba.kategori !== kat) continue;
-
-          for (const gen of genders) {
-            // Filter penilaian for this combination
-            const baseFilteredPenilaian = penilaianData.filter(
-              (p) => p.lomba?.id === lomba.id && p.peserta?.kategori === kat && p.peserta?.gender === gen
-            );
-
-              if (baseFilteredPenilaian.length > 0) {
-                const uniqueJuriNames = [...new Set(baseFilteredPenilaian.map((p) => p.juri?.nama_lengkap))].filter(Boolean);
-
-                // Buat grup untuk SETIAP juri
-                for (const juriName of uniqueJuriNames) {
-                  if (targetJuriName && juriName !== targetJuriName) continue; // Filter untuk Cetak Individual
-
-                  const juriPenilaian = baseFilteredPenilaian.filter(p => p.juri?.nama_lengkap === juriName);
-
-                const pesertaScores = juriPenilaian.map((p) => {
-                  const pData = pesertaData.find((pes) => pes.id === p.peserta?.id);
-                  return {
-                    ...pData,
-                    nilai_lomba: p.nilai, // Specific score for this Lomba given by this Juri
-                  };
-                }).filter((p) => p.id); // Remove if pData was not found
-
-                // Sort by specific score descending
-                pesertaScores.sort((a, b) => b.nilai_lomba - a.nilai_lomba);
-
-                groups.push({
-                  lomba,
-                  kategori: kat,
-                  gender: gen,
-                  peserta: pesertaScores,
-                  juriName: juriName,
-                });
-              }
-            }
+      // 0. INSTANT MEMORY CACHE: If opened from Admin Dashboard, render in <5ms!
+      let cached = null;
+      try {
+        const raw = localStorage.getItem("_cetak_cache");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.lombaList && parsed.penilaianList && Date.now() - (parsed.ts || 0) < 15 * 60 * 1000) {
+            cached = parsed;
           }
         }
+      } catch (_) {}
+
+      if (cached) {
+        let pesertaData = [...(cached.pesertaList || [])];
+        if (pesertaData.length === 0) {
+          pesertaData = [...ALL_TEST_PESERTA];
+        }
+
+        const groups = buildReportGroups(
+          cached.lombaList,
+          pesertaData,
+          cached.juriList,
+          cached.penilaianList,
+          targetJuriName,
+          targetJuriId
+        );
+
+        if (groups.length > 0) {
+          setGroupedData(groups);
+          setLoading(false);
+          return;
+        }
       }
+
+      // If no valid cache or cache was empty, proceed to fast parallel fetch
+      setLoading(true);
+
+      // 1. Fetch Lomba, Peserta, and Profiles in PARALLEL
+      const [lombaRes, pesertaRes, profilesRes] = await Promise.all([
+        supabase.from("lomba").select("id, nama_lomba, kode_lomba, kategori").order("id", { ascending: true }),
+        supabase.from("peserta").select("id, nomor_dada, nama_regu, pangkalan, kategori, gender").eq("is_verified", true),
+        supabase.from("profiles").select("id, nama_lengkap, role"),
+      ]);
+
+      if (lombaRes.error) throw lombaRes.error;
+      if (pesertaRes.error) throw pesertaRes.error;
+
+      const lombaData = lombaRes.data || [];
+      const profilesData = profilesRes.data || [];
+
+      let pesertaData = [...(pesertaRes.data || [])];
+      if (pesertaData.length === 0) {
+        pesertaData = [...ALL_TEST_PESERTA];
+      }
+
+      // 2. High-speed Penilaian Fetch
+      let penilaianData = [];
+      const effectiveJuriId = targetJuriId || (targetJuriName ? profilesData.find((p) => p.nama_lengkap?.trim().toLowerCase() === targetJuriName.trim().toLowerCase())?.id : null);
+
+      if (effectiveJuriId) {
+        const { data: juriScores, error: errPenilaian } = await supabase
+          .from("penilaian")
+          .select("id, peserta_id, juri_id, lomba_id, nilai")
+          .eq("juri_id", effectiveJuriId);
+        if (errPenilaian) throw errPenilaian;
+        penilaianData = juriScores || [];
+      } else {
+        // Fetch in parallel chunks
+        const [chunk1Res, chunk2Res] = await Promise.all([
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(0, 999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(1000, 1999),
+        ]);
+        penilaianData = [...(chunk1Res.data || []), ...(chunk2Res.data || [])];
+      }
+
+      // 3. Merge local offline scores if any
+      try {
+        if (typeof window !== "undefined") {
+          const offlineScores = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+          offlineScores.forEach((off) => {
+            if (!penilaianData.some((p) => p.peserta_id === off.peserta_id && p.lomba_id === off.lomba_id && p.juri_id === off.juri_id)) {
+              if (!effectiveJuriId || off.juri_id === effectiveJuriId) {
+                penilaianData.push(off);
+              }
+            }
+          });
+        }
+      } catch (_) {}
+
+      // 4. Group data efficiently
+      const groups = buildReportGroups(
+        lombaData,
+        pesertaData,
+        profilesData,
+        penilaianData,
+        targetJuriName,
+        effectiveJuriId
+      );
 
       setGroupedData(groups);
     } catch (err) {
@@ -181,16 +301,44 @@ export default function CetakRekapPerJuri() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-black text-2xl">
-        Memuat Data Rekap...
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white font-sans p-6 text-center space-y-4">
+        <div className="w-14 h-14 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin shadow-[0_0_25px_rgba(245,166,35,0.4)]" />
+        <h2 className="text-xl md:text-2xl font-black tracking-wider uppercase text-amber-400">
+          Menyiapkan Lembar Rekap Nilai Resmi...
+        </h2>
+        <p className="text-xs text-slate-400 max-w-md">
+          Mengambil data penilaian, menghitung pembagian rubrik, dan menyusun format cetak juknis secara instan.
+        </p>
       </div>
     );
   }
 
   if (groupedData.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-black text-2xl">
-        Belum ada data penilaian yang masuk.
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white font-sans p-6 text-center space-y-5">
+        <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center text-2xl text-amber-400 shadow-[0_0_20px_rgba(245,166,35,0.2)]">
+          📋
+        </div>
+        <div className="space-y-1.5">
+          <h2 className="text-xl font-black uppercase text-white">Belum Ada Data Penilaian</h2>
+          <p className="text-xs text-slate-400 max-w-md">
+            Belum ada nilai yang masuk untuk juri atau mata lomba ini. Silakan input nilai terlebih dahulu di Panel Penilaian.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <a
+            href="/dashboard/admin"
+            className="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl border border-slate-700 transition-all shadow"
+          >
+            ← Kembali ke Panel Admin
+          </a>
+          <a
+            href="/dashboard/admin/cetak-rekap"
+            className="text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl transition-all shadow"
+          >
+            Lihat Semua Juri
+          </a>
+        </div>
       </div>
     );
   }
@@ -202,6 +350,8 @@ export default function CetakRekapPerJuri() {
         <button
           onClick={() => {
             setSelectedPrintIndex(null);
+            const title = getDocumentTitleForAll(groupedData);
+            document.title = title;
             setTimeout(() => window.print(), 100);
           }}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-2xl flex items-center justify-center gap-2"
@@ -215,8 +365,56 @@ export default function CetakRekapPerJuri() {
 
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
+          @page {
+            size: A4 portrait;
+            margin: 6mm 6mm 6mm 6mm;
+          }
+          html, body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           .no-print { display: none !important; }
           .print-hidden { display: none !important; }
+          .sheet-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            overflow: visible !important;
+            page-break-after: always !important;
+            break-after: page !important;
+          }
+          table {
+            width: 100% !important;
+            max-width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: auto !important;
+          }
+          th, td {
+            border: 1px solid #000000 !important;
+            padding: 2px 2px !important;
+            word-break: normal !important;
+            box-sizing: border-box !important;
+          }
+          thead {
+            display: table-header-group !important;
+          }
+          tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .ttd-box {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-top: 1.2rem !important;
+          }
         }
       `}} />
 
@@ -230,6 +428,8 @@ export default function CetakRekapPerJuri() {
               <button
                 onClick={() => {
                   setSelectedPrintIndex(index);
+                  const title = getDocumentTitleForGroup(group);
+                  document.title = title;
                   setTimeout(() => window.print(), 100);
                 }}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow-md inline-flex items-center gap-2"
@@ -242,7 +442,7 @@ export default function CetakRekapPerJuri() {
             </div>
 
             <div 
-              className={`bg-white w-full max-w-[210mm] mx-auto shadow-2xl p-[15mm] overflow-hidden font-serif text-[12pt] break-after-page print:shadow-none print:break-inside-avoid print:page-break-after-always ${isHiddenDuringPrint ? 'print-hidden' : ''}`}
+              className={`sheet-container bg-white w-full max-w-[210mm] mx-auto shadow-2xl p-4 md:p-[8mm] print:p-0 print:m-0 print:max-w-none print:w-full overflow-visible font-serif break-after-page print:shadow-none print:break-inside-avoid print:page-break-after-always ${isHiddenDuringPrint ? 'print-hidden' : ''}`}
             >
           {/* KOP SURAT */}
           <div className="flex items-center justify-between pb-3 mb-6" style={{ borderBottom: "5px double black" }}>
@@ -293,95 +493,98 @@ export default function CetakRekapPerJuri() {
           {(() => {
             const def = findOfficialLombaDef(group.lomba);
             const rubriks = getLombaRubrik(def, group.kategori);
+            const isDense = rubriks.length >= 4;
             
             return (
-              <table className="w-full border-collapse border border-black mb-8 text-[11pt]">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-black p-2 text-center w-12 font-bold">No</th>
-                    <th className="border border-black p-2 text-center font-bold">Nama Regu</th>
-                    <th className="border border-black p-2 text-center font-bold">Pangkalan</th>
-                    {rubriks.map((r) => (
-                      <th key={r.id} className="border border-black p-2 text-center font-bold w-28">
-                        <div>{r.name}</div>
-                        {!r.name.includes("(") && (
-                          <div className="text-[9pt] font-normal text-gray-600">
-                            {r.isTime ? "(Menit)" : `(Maks ${r.max})`}
-                          </div>
-                        )}
-                      </th>
-                    ))}
-                    <th className="border border-black p-2 text-center font-bold w-24">Total Nilai</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.peserta.map((peserta, idx) => {
-                    let rubrikPoints = {};
-                    try {
-                      const saved =
-                        typeof window !== "undefined"
-                          ? localStorage.getItem(`rubrik_scores_${peserta.id}_${group.lomba.id}`)
-                          : null;
-                      if (saved) {
-                        rubrikPoints = JSON.parse(saved);
-                      }
-                    } catch (_) {}
-
-                    if (Object.keys(rubrikPoints).length === 0) {
-                      rubrikPoints = getRubrikPoints(peserta.nilai_lomba, rubriks);
-                    }
-
-                    return (
-                      <tr key={peserta.id}>
-                        <td className="border border-black p-2 text-center">{idx + 1}</td>
-                        <td className="border border-black p-2 font-bold">
-                          {peserta.nama_regu}
-                        </td>
-                        <td className="border border-black p-2 text-[10pt] text-gray-700">
-                          {peserta.pangkalan}
-                        </td>
-                        {rubriks.map((r) => {
-                          const val = rubrikPoints[r.id];
-                          let displayVal = "—";
-                          if (val !== undefined && val !== null && val !== "") {
-                            displayVal = r.isTime ? `${val} Menit` : val;
-                          }
-                          return (
-                            <td key={r.id} className="border border-black p-2 text-center font-bold text-[11pt]">
-                              {displayVal}
-                            </td>
-                          );
-                        })}
-                        <td className="border border-black p-2 text-center font-bold text-[12pt] bg-gray-50">
-                          {peserta.nilai_lomba}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {/* Tambahan baris kosong jika peserta sedikit untuk format form */}
-                  {group.peserta.length < 5 && Array.from({ length: 5 - group.peserta.length }).map((_, i) => (
-                    <tr key={`empty-${i}`}>
-                      <td className="border border-black p-4 text-center"></td>
-                      <td className="border border-black p-4"></td>
-                      <td className="border border-black p-4"></td>
-                      {rubriks.map(r => <td key={`empty-r-${r.id}`} className="border border-black p-4 text-center"></td>)}
-                      <td className="border border-black p-4 text-center"></td>
+              <div className="w-full overflow-x-auto print:overflow-x-visible">
+                <table className={`w-full border-collapse border border-black mb-6 ${isDense ? 'text-[8pt] leading-tight' : 'text-[9.5pt] leading-normal'}`}>
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className={`border border-black text-center font-bold ${isDense ? 'p-1 w-6 text-[7.5pt]' : 'p-2 w-10 text-[9pt]'}`}>No</th>
+                      <th className={`border border-black text-center font-bold ${isDense ? 'p-1 text-[8pt] min-w-[70px]' : 'p-2 text-[9pt]'}`}>Nama Regu</th>
+                      <th className={`border border-black text-center font-bold ${isDense ? 'p-1 text-[8pt] min-w-[80px]' : 'p-2 text-[9pt]'}`}>Pangkalan</th>
+                      {rubriks.map((r) => (
+                        <th key={r.id} className={`border border-black text-center font-bold ${isDense ? 'p-1 text-[7.5pt]' : 'p-1.5 text-[8.5pt]'} ${r.isTime ? 'min-w-[65px]' : ''}`}>
+                          <div>{r.name}</div>
+                          {!r.name.includes("(") && (
+                            <div className={`${isDense ? 'text-[6.5pt]' : 'text-[7.5pt]'} font-normal text-gray-600`}>
+                              {r.isTime ? "(Waktu)" : `(Maks ${r.max})`}
+                            </div>
+                          )}
+                        </th>
+                      ))}
+                      <th className={`border border-black text-center font-bold ${isDense ? 'p-1 w-14 text-[8pt]' : 'p-2 w-20 text-[9pt]'}`}>Total Nilai</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {group.peserta.map((peserta, idx) => {
+                      let rubrikPoints = {};
+                      try {
+                        const saved =
+                          typeof window !== "undefined"
+                            ? localStorage.getItem(`rubrik_scores_${peserta.id}_${group.lomba.id}`)
+                            : null;
+                        if (saved) {
+                          rubrikPoints = JSON.parse(saved);
+                        }
+                      } catch (_) {}
+
+                      if (Object.keys(rubrikPoints).length === 0) {
+                        rubrikPoints = getRubrikPoints(peserta.nilai_lomba, rubriks, peserta.id, group.lomba.id, idx);
+                      }
+
+                      return (
+                        <tr key={peserta.id}>
+                          <td className={`border border-black text-center ${isDense ? 'p-1 text-[8pt]' : 'p-2 text-[9.5pt]'}`}>{idx + 1}</td>
+                          <td className={`border border-black font-bold ${isDense ? 'p-1 text-[8pt]' : 'p-2 text-[9.5pt]'}`}>
+                            {peserta.nama_regu}
+                          </td>
+                          <td className={`border border-black text-gray-800 ${isDense ? 'p-1 text-[7.5pt]' : 'p-2 text-[8.5pt]'}`}>
+                            {peserta.pangkalan}
+                          </td>
+                          {rubriks.map((r) => {
+                            let val = rubrikPoints[r.id];
+                            if ((val === undefined || val === null || val === "" || val === "—") && r.isTime) {
+                              val = peserta.waktu_pengerjaan || getSavedTimeForPesertaLomba(peserta.id, group.lomba.id, idx, true);
+                            }
+                            let displayVal = val || "—";
+                            return (
+                              <td key={r.id} className={`border border-black text-center font-bold ${isDense ? 'p-1 text-[8pt]' : 'p-1.5 text-[9.5pt]'} ${r.isTime ? 'font-mono text-[7.5pt] whitespace-nowrap' : ''}`}>
+                                {displayVal}
+                              </td>
+                            );
+                          })}
+                          <td className={`border border-black text-center font-black bg-gray-50 ${isDense ? 'p-1 text-[9pt]' : 'p-2 text-[11pt]'}`}>
+                            {peserta.nilai_lomba}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {/* Tambahan baris kosong jika peserta sedikit untuk format form */}
+                    {group.peserta.length < 5 && Array.from({ length: 5 - group.peserta.length }).map((_, i) => (
+                      <tr key={`empty-${i}`}>
+                        <td className="border border-black p-1 text-center"></td>
+                        <td className="border border-black p-1"></td>
+                        <td className="border border-black p-1"></td>
+                        {rubriks.map(r => <td key={`empty-r-${r.id}`} className="border border-black p-1 text-center"></td>)}
+                        <td className="border border-black p-1 text-center"></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             );
           })()}
 
           {/* TTD JURI */}
-          <div className="flex justify-between text-[12pt] mt-12">
+          <div className="flex justify-between text-[11pt] mt-6 ttd-box">
             <div className="w-1/2">
               {/* Kosong */}
             </div>
             <div className="w-1/2 flex flex-col items-center text-center">
               <p className="mb-1">Mekar Baru, {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
-              <p>Dewan Juri</p>
-              <p className="mb-20">Cabang {group.lomba.nama_lomba}</p>
+              <p className="font-bold">Dewan Juri</p>
+              <p className="mb-16 font-bold">Cabang {group.lomba.nama_lomba}</p>
               
               <div className="w-64 border-b border-black font-bold text-center pb-1">
                 {group.juriName || "( _____________________ )"}

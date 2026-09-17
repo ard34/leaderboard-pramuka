@@ -526,10 +526,11 @@ export default function Home() {
       // 2. Process nilai if there are participants
       if (pesertaData && pesertaData.length > 0) {
         const ids = pesertaData.map((p) => p.id);
-        const { data: nilaiData } = await supabase
-          .from("penilaian")
-          .select("peserta_id, lomba_id, nilai, juri_id")
-          .in("peserta_id", ids);
+        const [c1, c2] = await Promise.all([
+          supabase.from("penilaian").select("peserta_id, lomba_id, nilai, juri_id").in("peserta_id", ids).range(0, 999),
+          supabase.from("penilaian").select("peserta_id, lomba_id, nilai, juri_id").in("peserta_id", ids).range(1000, 1999),
+        ]);
+        const nilaiData = [...(c1.data || []), ...(c2.data || [])];
 
         if (nilaiData) {
           const publishedNilai = nilaiData.filter(n => isPubAll || pubIds.includes(n.juri_id));

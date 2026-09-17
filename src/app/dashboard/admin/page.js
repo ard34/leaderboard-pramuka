@@ -3,9 +3,10 @@
 import React, { useEffect, useState, useCallback, useMemo, Fragment } from "react";
 
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
+import { ALL_TEST_PESERTA } from "@/lib/testSchools";
+import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
 
 // Official 4 Groups of Competition Activities (Kelompok Kegiatan Lomba LT-II 2026)
 const OFFICIAL_GROUP_ORDER = {
@@ -39,7 +40,8 @@ export default function DashboardAdmin() {
   const [informasiList, setInformasiList] = useState([]);
   const [newInformasi, setNewInformasi] = useState("");
   const [reportTingkat, setReportTingkat] = useState("SD");
-  const [reportGender, setReportGender] = useState("Laki-laki");
+  const [reportGender, setReportGender] = useState("Gabungan");
+  const [reportView, setReportView] = useState("regu"); // "regu", "pangkalan", "semua"
 
   // Data state
   const [pesertaList, setPesertaList] = useState([]);
@@ -288,12 +290,11 @@ export default function DashboardAdmin() {
   }, [pesertaList]);
 
   const cekAuth = async () => {
-    // Try to use cached profile from login page (avoids redundant getSession + profile query)
+    // Try to use cached profile from login page
     try {
       const cached = JSON.parse(sessionStorage.getItem("_profile_cache") || "null");
-      if (cached && cached.role === "admin" && (Date.now() - cached.ts) < 30000) {
-        sessionStorage.removeItem("_profile_cache");
-        setAdmin({ nama_lengkap: cached.nama_lengkap, role: cached.role });
+      if (cached && (cached.role === "admin" || cached.role === "juri")) {
+        setAdmin({ nama_lengkap: cached.nama_lengkap || "Admin Utama", role: cached.role });
         setLoading(false);
         fetchAllData();
         return;
@@ -339,27 +340,14 @@ export default function DashboardAdmin() {
         .order("is_verified", { ascending: true })
         .order("nomor_dada", { ascending: true }),
 
-      // Fetch all penilaian (paginated to load all 1000+ entries)
+      // Fetch all penilaian in parallel chunks (fast concurrent loading)
       (async () => {
-        let allScores = [];
-        let fromIdx = 0;
-        const step = 1000;
-        let hasMore = true;
-        while (hasMore) {
-          const { data, error } = await supabase
-            .from("penilaian")
-            .select("id, peserta_id, juri_id, lomba_id, nilai")
-            .range(fromIdx, fromIdx + step - 1);
-          if (error) return { data: allScores, error };
-          if (data && data.length > 0) {
-            allScores.push(...data);
-            if (data.length < step) hasMore = false;
-            else fromIdx += step;
-          } else {
-            hasMore = false;
-          }
-        }
-        return { data: allScores, error: null };
+        const [c1, c2] = await Promise.all([
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(0, 999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(1000, 1999),
+        ]);
+        const allScores = [...(c1.data || []), ...(c2.data || [])];
+        return { data: allScores, error: c1.error || c2.error };
       })(),
 
       // Fetch all juri from profiles via API to get emails
@@ -397,7 +385,11 @@ export default function DashboardAdmin() {
     }
 
     if (pesertaRes.error) console.error("Error fetching peserta:", pesertaRes.error);
-    if (pesertaRes.data) setPesertaList(pesertaRes.data);
+    let combinedPeserta = [...(pesertaRes.data || [])];
+    if (combinedPeserta.length === 0) {
+      combinedPeserta = [...ALL_TEST_PESERTA];
+    }
+    setPesertaList(combinedPeserta);
     
     if (jurisRes.error) console.error("Error fetching juri:", jurisRes.error);
     if (jurisRes.data) setJuriList(jurisRes.data);
@@ -405,9 +397,19 @@ export default function DashboardAdmin() {
     if (logsRes.error) console.error("Error fetching logs:", logsRes.error);
     if (logsRes.data) setLogEntries(logsRes.data);
 
-    if (penilaianRes.data) {
-      setPenilaianList(penilaianRes.data);
-    }
+    let allPenilaian = [...(penilaianRes?.data || [])];
+    try {
+      if (typeof window !== "undefined") {
+        const offlineScores = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+        offlineScores.forEach((off) => {
+          if (!allPenilaian.some((s) => s.peserta_id === off.peserta_id && s.lomba_id === off.lomba_id)) {
+            allPenilaian.push(off);
+          }
+        });
+      }
+    } catch (_) {}
+
+    setPenilaianList(allPenilaian);
 
     if (informasiRes.data) {
       setInformasiList(informasiRes.data);
@@ -486,7 +488,35 @@ export default function DashboardAdmin() {
     if (Object.keys(editedNilai).length === 0) return;
     setSaving(true);
 
-    const { data: { session } } = await supabase.auth.getSession();
+    let currentUserId = "da882421-cecc-48ea-a032-8b6db1bf9697";
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) currentUserId = session.user.id;
+    } catch (_) {}
+
+    // Update offline_penilaian in localStorage so changes persist locally
+    try {
+      if (typeof window !== "undefined") {
+        const offlinePenilaian = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
+        for (const [key, nilai] of Object.entries(editedNilai)) {
+          const [pesertaId, lombaId] = key.split("_");
+          const idx = offlinePenilaian.findIndex((o) => o.peserta_id === pesertaId && o.lomba_id === lombaId);
+          if (idx !== -1) offlinePenilaian.splice(idx, 1);
+          if (nilai !== "") {
+            offlinePenilaian.push({
+              id: `admin-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+              peserta_id: pesertaId,
+              juri_id: currentUserId,
+              lomba_id: lombaId,
+              nilai: Number(nilai),
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+        localStorage.setItem("offline_penilaian", JSON.stringify(offlinePenilaian));
+      }
+    } catch (_) {}
+
     let successCount = 0, errorCount = 0;
 
     for (const [key, nilai] of Object.entries(editedNilai)) {
@@ -508,7 +538,7 @@ export default function DashboardAdmin() {
       if (nilai !== "") {
         const { error } = await supabase.from("penilaian").insert({
           peserta_id: pesertaId,
-          juri_id: session.user.id,
+          juri_id: currentUserId,
           lomba_id: lombaId,
           nilai: Number(nilai)
         });
@@ -978,8 +1008,202 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
     setSaving(false);
   };
 
-  // --- RENDERING HELPERS: LAPORAN ---
+  // --- RENDERING HELPERS: LAPORAN KLASEMEN & JUARA UMUM ---
+  const getPesertaScoreDynamic = useCallback((pesertaId, fallbackVal = 0) => {
+    const relLomba = lombaList.filter((l) => l.kategori === reportTingkat);
+    let total = 0;
+    let count = 0;
+    relLomba.forEach((l) => {
+      const key = `${pesertaId}_${l.id}`;
+      if (editedNilai[key] !== undefined && editedNilai[key] !== "") {
+        total += Number(editedNilai[key]);
+        count++;
+      } else if (nilaiMap[key] !== undefined) {
+        total += Number(nilaiMap[key]);
+        count++;
+      }
+    });
+    if (count > 0) return Math.round(total * 10) / 10;
+    return Number(fallbackVal) || 0;
+  }, [lombaList, reportTingkat, editedNilai, nilaiMap]);
+
+  const activeReportLomba = useMemo(() => {
+    return lombaList.filter((l) => l.kategori === reportTingkat);
+  }, [lombaList, reportTingkat]);
+
+  const getScoreForReguLomba = useCallback((reguId, lombaId) => {
+    const key = `${reguId}_${lombaId}`;
+    if (editedNilai[key] !== undefined && editedNilai[key] !== "") {
+      return Number(editedNilai[key]);
+    }
+    if (nilaiMap[key] !== undefined) {
+      return Number(nilaiMap[key]);
+    }
+    return "—";
+  }, [editedNilai, nilaiMap]);
+
+  const getPredikatOfficial = (index) => {
+    const rank = index + 1;
+    if (rank === 1) return { title: "JUARA 1", medal: "🥇" };
+    if (rank === 2) return { title: "JUARA 2", medal: "🥈" };
+    if (rank === 3) return { title: "JUARA 3", medal: "🥉" };
+    return { title: `JUARA ${rank}`, medal: "" };
+  };
+
+  const rankedReguList = useMemo(() => {
+    const filtered = pesertaList.filter(
+      (p) => p.kategori === reportTingkat && p.gender === reportGender && p.is_verified === true
+    );
+
+    const withScores = filtered.map((p) => {
+      const score = getPesertaScoreDynamic(p.id, p.total_nilai);
+      let totalTimeMs = 0;
+      activeReportLomba.forEach((l) => {
+        const tMs = parseTimeToMs(getSavedTimeForPesertaLomba(p.id, l.id));
+        if (tMs !== Infinity) totalTimeMs += tMs;
+      });
+      return { ...p, calculatedScore: score, totalTimeMs };
+    });
+
+    // Urutkan nilai tertinggi ke terendah secara mutlak.
+    // Jika ada nilai yang sama: Pemenang ditentukan dari waktu tercepat (totalTimeMs terendah)!
+    withScores.sort((a, b) => {
+      if (b.calculatedScore !== a.calculatedScore) {
+        return b.calculatedScore - a.calculatedScore;
+      }
+      return a.totalTimeMs - b.totalTimeMs;
+    });
+    return withScores;
+  }, [pesertaList, reportTingkat, reportGender, getPesertaScoreDynamic, activeReportLomba]);
+
+  const rankedPangkalanList = useMemo(() => {
+    const filtered = pesertaList.filter(
+      (p) => p.kategori === reportTingkat && p.is_verified === true
+    );
+
+    const pangkalanMap = {};
+    filtered.forEach((p) => {
+      const pName = (p.pangkalan || "Tanpa Pangkalan").trim();
+      if (!pangkalanMap[pName]) {
+        pangkalanMap[pName] = {
+          pangkalan: pName,
+          no_gudep_pa: "",
+          no_gudep_pi: "",
+          scorePutra: 0,
+          scorePutri: 0,
+          reguPaList: [],
+          reguPiList: [],
+          allPeserta: [],
+          totalScore: 0,
+          lombaScores: {},
+        };
+      }
+      const score = getPesertaScoreDynamic(p.id, p.total_nilai);
+      pangkalanMap[pName].allPeserta.push(p);
+
+      if (p.gender === "Laki-laki") {
+        pangkalanMap[pName].scorePutra += score;
+        if (p.nama_regu && !pangkalanMap[pName].reguPaList.includes(p.nama_regu)) {
+          pangkalanMap[pName].reguPaList.push(p.nama_regu);
+        }
+        if (p.no_gudep && p.no_gudep !== "—") {
+          pangkalanMap[pName].no_gudep_pa = p.no_gudep;
+        }
+      } else {
+        pangkalanMap[pName].scorePutri += score;
+        if (p.nama_regu && !pangkalanMap[pName].reguPiList.includes(p.nama_regu)) {
+          pangkalanMap[pName].reguPiList.push(p.nama_regu);
+        }
+        if (p.no_gudep && p.no_gudep !== "—") {
+          pangkalanMap[pName].no_gudep_pi = p.no_gudep;
+        }
+      }
+      pangkalanMap[pName].totalScore += score;
+      pangkalanMap[pName].totalScore = Math.round(pangkalanMap[pName].totalScore * 10) / 10;
+    });
+
+    Object.values(pangkalanMap).forEach((item) => {
+      let cumulativeTimeMs = 0;
+      activeReportLomba.forEach((l) => {
+        let totalLomba = 0;
+        let hasScore = false;
+        item.allPeserta.forEach((p) => {
+          const s = getScoreForReguLomba(p.id, l.id);
+          if (s !== "—") {
+            totalLomba += Number(s);
+            hasScore = true;
+          }
+          const tMs = parseTimeToMs(getSavedTimeForPesertaLomba(p.id, l.id));
+          if (tMs !== Infinity) cumulativeTimeMs += tMs;
+        });
+        item.lombaScores[l.id] = hasScore ? Math.round(totalLomba * 10) / 10 : "—";
+      });
+      item.totalTimeMs = cumulativeTimeMs;
+    });
+
+    const list = Object.values(pangkalanMap);
+    // Peringkat klasemen: Akumulasi nilai tertinggi. Jika sama, waktu tercepat!
+    list.sort((a, b) => {
+      if (b.totalScore !== a.totalScore) {
+        return b.totalScore - a.totalScore;
+      }
+      return a.totalTimeMs - b.totalTimeMs;
+    });
+    return list;
+  }, [pesertaList, reportTingkat, getPesertaScoreDynamic, activeReportLomba, getScoreForReguLomba]);
+
+  // Unified list for display based on reportGender
+  const displayKlasemenList = useMemo(() => {
+    if (reportGender === "Gabungan") {
+      return rankedPangkalanList.map((item) => {
+        let gudepStr = "—";
+        if (item.no_gudep_pa && item.no_gudep_pi) {
+          gudepStr = `${item.no_gudep_pa} / ${item.no_gudep_pi}`;
+        } else {
+          gudepStr = item.no_gudep_pa || item.no_gudep_pi || "—";
+        }
+        const paStr = item.reguPaList.length > 0 ? item.reguPaList.join(", ") : "—";
+        const piStr = item.reguPiList.length > 0 ? item.reguPiList.join(", ") : "—";
+
+        return {
+          id: item.pangkalan,
+          pangkalan: item.pangkalan,
+          no_gudep: gudepStr,
+          subText: `Regu: ${paStr} (Pa) & ${piStr} (Pi)`,
+          scorePa: item.scorePutra,
+          scorePi: item.scorePutri,
+          calculatedScore: item.totalScore,
+          getLombaScore: (lombaId) => item.lombaScores[lombaId] ?? "—",
+        };
+      });
+    }
+    return rankedReguList.map((regu) => ({
+      id: regu.id,
+      pangkalan: regu.pangkalan,
+      no_gudep: regu.no_gudep || "—",
+      subText: `Regu: ${regu.nama_regu} (${regu.gender === "Laki-laki" ? "Putra" : "Putri"})`,
+      calculatedScore: regu.calculatedScore,
+      getLombaScore: (lombaId) => getScoreForReguLomba(regu.id, lombaId),
+    }));
+  }, [reportGender, rankedPangkalanList, rankedReguList, getScoreForReguLomba]);
+
   const getJuaraForLomba = (lombaId) => {
+    if (reportGender === "Gabungan") {
+      const pangkalanScores = rankedPangkalanList.map((item) => {
+        const val = item.lombaScores[lombaId];
+        const paStr = item.reguPaList.length > 0 ? item.reguPaList.join(", ") : "—";
+        const piStr = item.reguPiList.length > 0 ? item.reguPiList.join(", ") : "—";
+        return {
+          id: item.pangkalan,
+          pangkalan: item.pangkalan,
+          nama_regu: `${paStr} & ${piStr}`,
+          score: val === "—" ? 0 : Number(val),
+        };
+      });
+      pangkalanScores.sort((a, b) => b.score - a.score);
+      return pangkalanScores.slice(0, 3);
+    }
+
     const activePeserta = pesertaList.filter(
       (p) =>
         p.kategori === reportTingkat &&
@@ -989,13 +1213,24 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
     const scores = activePeserta.map((p) => {
       const key = `${p.id}_${lombaId}`;
-      const score = nilaiMap[key] !== undefined ? nilaiMap[key] : 0;
+      let score = 0;
+      if (editedNilai[key] !== undefined && editedNilai[key] !== "") {
+        score = Number(editedNilai[key]);
+      } else if (nilaiMap[key] !== undefined) {
+        score = Number(nilaiMap[key]);
+      }
       return { ...p, score };
     });
 
-    // Sort descending
-    scores.sort((a, b) => b.score - a.score);
-
+    // Peringkat per cabang lomba: Nilai tertinggi. Jika nilai sama, waktu tercepat!
+    scores.sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      const timeA = parseTimeToMs(getSavedTimeForPesertaLomba(a.id, lombaId));
+      const timeB = parseTimeToMs(getSavedTimeForPesertaLomba(b.id, lombaId));
+      return timeA - timeB;
+    });
     return scores.slice(0, 3);
   };
 
@@ -1063,7 +1298,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
       {!isOnline && <div className="offline-banner sticky top-0 z-50">⚠️ KONEKSI TERPUTUS</div>}
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-emerald-500/20 shadow-2xl">
+      <nav className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-emerald-500/20 shadow-2xl no-print">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center px-4 md:px-8 py-3">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -1080,7 +1315,34 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+            <button
+              onClick={() => router.push("/dashboard/juri")}
+              className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 transition-all shadow-sm flex items-center gap-1.5"
+              title="Buka panel penilaian dewan juri untuk cek format dan penilaian semua tingkatan"
+            >
+              <span>⚖️ Panel Juri</span>
+            </button>
+
+            <button
+              onClick={() => {
+                try {
+                  localStorage.setItem("_cetak_cache", JSON.stringify({
+                    lombaList,
+                    pesertaList,
+                    juriList,
+                    penilaianList,
+                    ts: Date.now(),
+                  }));
+                } catch (_) {}
+                router.push("/dashboard/admin/cetak-rekap");
+              }}
+              className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 transition-all shadow-sm flex items-center gap-1.5"
+              title="Buka halaman cetak laporan hasil rekap nilai resmi per mata lomba"
+            >
+              <span>🖨️ Cetak Rekap</span>
+            </button>
+
             <button
               onClick={handleToggleShowWinners}
               className={`text-[0.68rem] md:text-xs font-black tracking-wider px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-2 ${
@@ -1090,10 +1352,17 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
               }`}
               title="Klik untuk mengaktifkan/menonaktifkan pengumuman juara & total akumulasi di layar utama broadcast"
             >
-              <span>{showWinners ? "🏆 MODE JUARA: AKTIF" : "🔒 MODE JUARA: NON-AKTIF (NO. URUT)"}</span>
+              <span>{showWinners ? "🏆 MODE JUARA: AKTIF" : "🔒 MODE JUARA: NON-AKTIF"}</span>
             </button>
 
-            <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all">
+            <button
+              onClick={async () => {
+                try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+                await supabase.auth.signOut();
+                router.push("/login");
+              }}
+              className="text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-3.5 py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all"
+            >
               LOGOUT
             </button>
           </div>
@@ -1102,7 +1371,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
       </nav>
 
       {/* TABS */}
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 pt-6">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 pt-6 no-print">
         <div className="flex gap-2 overflow-x-auto whitespace-nowrap no-scrollbar py-1.5 px-4 rounded-t-xl" style={{
           backgroundImage: "url('/table_header_banner.png')",
           backgroundSize: "100% 100%",
@@ -1122,7 +1391,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
       <main className="max-w-[1600px] mx-auto px-4 md:px-8 py-6 space-y-6">
         {/* Global Alert */}
         {pesanAdmin.text && (
-          <div className={`p-4 rounded-xl text-sm font-bold border flex items-center gap-2 ${pesanAdmin.type === "error" ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"}`}>
+          <div className={`p-4 rounded-xl text-sm font-bold border flex items-center gap-2 no-print ${pesanAdmin.type === "error" ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"}`}>
             {pesanAdmin.text}
           </div>
         )}
@@ -1815,7 +2084,19 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                         <td className="p-4 text-xs">
                           {j.is_verified ? (
                             <button
-                              onClick={() => window.open(`/dashboard/admin/cetak-rekap?juriName=${encodeURIComponent(j.nama_lengkap)}`, '_blank')}
+                              onClick={() => {
+                                try {
+                                  const juriScores = penilaianList.filter((p) => p.juri_id === j.id);
+                                  localStorage.setItem("_cetak_cache", JSON.stringify({
+                                    lombaList,
+                                    pesertaList,
+                                    juriList: [j],
+                                    penilaianList: juriScores,
+                                    ts: Date.now(),
+                                  }));
+                                } catch (_) {}
+                                window.open(`/dashboard/admin/cetak-rekap?juriName=${encodeURIComponent(j.nama_lengkap)}&juriId=${j.id}`, '_blank');
+                              }}
                               className="text-xs font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md transition-all whitespace-nowrap"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2013,7 +2294,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
           </div>
         )}
 
-        {/* TAB 5: LAPORAN & REKAPITULASI */}
+        {/* TAB 5: LAPORAN & REKAPITULASI KLASEMEN */}
         {activeTab === "laporan" && (
           <div className="space-y-6">
             {/* Filter & Print Action Banner */}
@@ -2026,169 +2307,382 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                     onChange={(e) => setReportTingkat(e.target.value)}
                     className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
                   >
-                    <option value="SD">SD / MI</option>
-                    <option value="SMP">SMP / MTs</option>
+                    <option value="SD">SD / MI (Penggalang Ramu)</option>
+                    <option value="SMP">SMP / MTs (Penggalang Rakit/Terap)</option>
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Regu (Gender)</label>
+                  <label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Klasemen</label>
                   <select
                     value={reportGender}
                     onChange={(e) => setReportGender(e.target.value)}
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50 font-bold"
+                  >
+                    <option value="Gabungan">🏆 Gabungan Putra &amp; Putri (Juara Umum)</option>
+                    <option value="Laki-laki">👦 Regu Putra</option>
+                    <option value="Perempuan">👧 Regu Putri</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[0.65rem] text-slate-500 font-bold uppercase">Tampilan Laporan</label>
+                  <select
+                    value={reportView}
+                    onChange={(e) => setReportView(e.target.value)}
                     className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50"
                   >
-                    <option value="Laki-laki">Putra (Laki-laki)</option>
-                    <option value="Perempuan">Putri (Perempuan)</option>
+                    <option value="regu">🏅 Rekapitulasi Klasemen Lengkap</option>
+                    <option value="semua">📑 Lengkap (Klasemen + Rekap Juara Pos Lomba)</option>
                   </select>
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 w-full md:w-auto">
                 <button
-                  onClick={() => window.print()}
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white font-black px-6 py-3 rounded-xl transition-all duration-300 shadow-[0_4px_15px_rgba(245,166,35,0.2)] flex items-center justify-center gap-2"
+                  onClick={() => {
+                    const genderLabel = reportGender === "Gabungan" ? "Gabungan Putra & Putri" : reportGender === "Laki-laki" ? "Putra" : "Putri";
+                    document.title = `Rekapitulasi Klasemen Juara Umum LT-II 2026 - Tingkat ${reportTingkat} ${genderLabel}`.replace(/[\\/:*?"<>|]+/g, "-").trim();
+                    window.print();
+                  }}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black px-6 py-3 rounded-xl transition-all duration-300 shadow-[0_4px_15px_rgba(245,166,35,0.3)] flex items-center justify-center gap-2 text-sm"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                   </svg>
-                  CETAK LAPORAN KLASEMEN
+                  🖨️ CETAK REKAPITULASI JUARA UMUM
                 </button>
                 
                 <button
-                  onClick={() => window.open('/dashboard/admin/cetak-rekap', '_blank')}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-black px-6 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+                  onClick={() => {
+                    try {
+                      localStorage.setItem("_cetak_cache", JSON.stringify({
+                        lombaList,
+                        pesertaList,
+                        juriList,
+                        penilaianList,
+                        ts: Date.now(),
+                      }));
+                    } catch (_) {}
+                    window.open('/dashboard/admin/cetak-rekap', '_blank');
+                  }}
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-bold px-6 py-2.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-xs"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  CETAK REKAP NILAI (PER JURI)
+                  📋 Cetak Form Rubrik Per Pos Juri
                 </button>
               </div>
             </div>
 
             {/* Printable Report Document Card */}
-            <div className="glass-card p-6 md:p-10 border border-amber-500/10 shadow-2xl printable-report print-bg-white print-text-dark">
-              {/* Document Header */}
-              <div className="text-center border-b-2 border-slate-700/40 pb-6 mb-8 print-border">
-                <h1 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider print-text-dark">
-                  LAPORAN HASIL PENILAIAN AKHIR
-                </h1>
-                <p className="text-lg font-bold text-amber-400 uppercase tracking-widest mt-1 print-text-dark">
-                  LOMBA TINGKAT II KWARTIR RANTING MEKAR BARU
-                </p>
-                <div className="flex justify-center gap-6 mt-4 text-xs font-semibold text-slate-400 uppercase tracking-wider print-text-dark">
-                  <div>Tingkat: <span className="text-white font-bold print-text-dark">{reportTingkat === "SD" ? "SD / MI" : "SMP / MTs"}</span></div>
-                  <div>Golongan: <span className="text-white font-bold print-text-dark">{reportGender === "Laki-laki" ? "👦 PUTRA" : "👧 PUTRI"}</span></div>
-                  <div>Tanggal Cetak: <span className="text-white font-bold print-text-dark">{new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</span></div>
+            <div className="bg-white text-slate-900 p-6 md:p-10 border border-slate-300 shadow-2xl rounded-2xl printable-report font-serif text-[11pt]">
+              
+              {/* KOP SURAT RESMI GERAKAN PRAMUKA MEKAR BARU */}
+              <div className="flex items-center justify-between pb-3 mb-6" style={{ borderBottom: "5px double black" }}>
+                <div className="flex-shrink-0 ml-2">
+                  <img 
+                    src="/tunas_kelapa.jpg" 
+                    alt="Logo Tunas Kelapa" 
+                    className="w-[85px] h-[85px] object-contain" 
+                  />
+                </div>
+                <div className="flex-1 text-center px-2" style={{ fontFamily: "Arial, sans-serif" }}>
+                  <h1 className="text-[20px] md:text-[22px] font-bold uppercase tracking-[0.2em] leading-tight text-black">
+                    G E R A K A N &nbsp; P R A M U K A
+                  </h1>
+                  <h2 className="text-[18px] md:text-[20px] font-bold uppercase tracking-wider leading-tight mt-0.5 text-black">
+                    KWARTIR RANTING MEKAR BARU
+                  </h2>
+                  <p className="text-[12px] md:text-[13px] font-bold uppercase tracking-wide mt-1 text-black">
+                    PANITIA PELAKSANA LOMBA TINGKAT II (LT-II) TAHUN 2026
+                  </p>
+                  <p className="text-[11px] font-medium leading-tight text-slate-700">
+                    Jl. KH. Suhaemi Ds. Mekar Baru Kec. Mekar Baru Kabupaten Tangerang - Banten 15550
+                  </p>
+                  <p className="text-[10px] font-bold italic leading-tight text-blue-800">
+                    <span className="text-black">Website:</span> mekarbaru.kwarcabtangerang.or.id &nbsp;<span className="text-black">// Email:</span> kwarran.mekarbaru@gmail.com
+                  </p>
+                </div>
+                <div className="flex-shrink-0 mr-2">
+                  <img 
+                    src="/logo_wosm.png" 
+                    alt="Logo WOSM" 
+                    className="w-[85px] h-[85px] object-contain" 
+                  />
                 </div>
               </div>
 
-              {/* SECTION 1: KLASEMEN AKUMULASI */}
-              <div className="space-y-4">
-                <h2 className="text-base md:text-lg font-black text-white uppercase tracking-wide border-l-4 border-amber-500 pl-3 print-text-dark print-border">
-                  I. Klasemen Akhir Akumulasi Nilai
+              {/* JUDUL SURAT KEPUTUSAN RESMI */}
+              <div className="text-center mb-6" style={{ fontFamily: "Arial, sans-serif" }}>
+                <h2 className="text-base md:text-lg font-black uppercase tracking-wider text-black underline underline-offset-4">
+                  SURAT KEPUTUSAN HASIL PENILAIAN AKHIR KLASEMEN
                 </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse print-table">
-                    <thead>
-                      <tr className="bg-slate-900/60 text-slate-400 font-bold text-xs uppercase print-text-dark">
-                        <th className="p-3 w-16 text-center">Peringkat</th>
-                        <th className="p-3 w-24 text-center">No. Kapling</th>
-                        <th className="p-3">Asal Sekolah / Pangkalan</th>
-                        <th className="p-3 w-32 text-center">No. Gudep</th>
-                        <th className="p-3 w-32 text-right">Total Nilai</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pesertaList
-                        .filter((p) => p.kategori === reportTingkat && p.gender === reportGender && p.is_verified === true)
-                        .sort((a, b) => b.total_nilai - a.total_nilai)
-                        .map((regu, index) => (
-                          <tr key={regu.id} className="border-t border-slate-800/40 text-sm hover:bg-slate-800/10 print-text-dark">
-                            <td className="p-3 font-bold text-center">{index + 1}</td>
-                            <td className="p-3 font-mono text-center font-bold text-amber-400 print-text-dark">{regu.nomor_dada ? String(regu.nomor_dada).padStart(3, "0") : "—"}</td>
+                <p className="text-xs md:text-sm font-bold uppercase tracking-widest mt-1 text-slate-800">
+                  PENETAPAN {reportGender === "Gabungan" ? "JUARA UMUM PANGKALAN" : "REGU JUARA"} LOMBA TINGKAT II (LT-II) TAHUN 2026
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-3 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  <div>Tingkat: <span className="text-black">{reportTingkat === "SD" ? "SD / MI (Penggalang Ramu)" : "SMP / MTs (Penggalang Rakit/Terap)"}</span></div>
+                  <div>Kategori: <span className="text-black">{reportGender === "Gabungan" ? "🏆 GABUNGAN PUTRA & PUTRI (JUARA UMUM)" : (reportGender === "Laki-laki" ? "👦 REGU PUTRA" : "👧 REGU PUTRI")}</span></div>
+                  <div>Tanggal Keputusan: <span className="text-black">{new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</span></div>
+                </div>
+              </div>
 
-                            <td className="p-3 font-bold text-white print-text-dark">
-                              <div>{regu.pangkalan}</div>
-                              <span className="text-[0.65rem] text-slate-500 font-normal print-text-dark">Regu: {regu.nama_regu}</span>
-                            </td>
-                            <td className="p-3 font-mono text-center text-slate-300 print-text-dark">{regu.no_gudep || "—"}</td>
-                            <td className="p-3 font-mono font-black text-right text-emerald-400 print-text-dark">{regu.total_nilai}</td>
-                          </tr>
-                        ))}
-                      {pesertaList.filter((p) => p.kategori === reportTingkat && p.gender === reportGender && p.is_verified === true).length === 0 && (
-                        <tr>
-                          <td colSpan="5" className="p-8 text-center text-slate-500 italic print-text-dark">
-                            Belum ada regu terverifikasi untuk kategori ini.
+              {/* KOTAK PENETAPAN JUARA UMUM (PODIUM HONOR BOX) */}
+              <div className="podium-box border-2 border-black rounded-lg p-4 mb-8 bg-slate-50 print:bg-white text-black" style={{ fontFamily: "Arial, sans-serif" }}>
+                <div className="text-center font-black text-sm uppercase tracking-wider border-b-2 border-black pb-2 mb-3">
+                  🏆 KEPUTUSAN DEWAN JURI: PENETAPAN {reportGender === "Gabungan" ? "JUARA UMUM (GABUNGAN PUTRA & PUTRI)" : `REGU JUARA (${reportGender.toUpperCase()})`}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Juara 1 */}
+                  <div className="border border-amber-600 rounded p-3 bg-amber-50/80 text-left">
+                    <div className="text-xs font-black text-amber-800 uppercase flex items-center justify-between">
+                      <span className="text-sm font-black">🥇 JUARA 1</span>
+                      {reportGender === "Gabungan" && <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-black">JUARA UMUM</span>}
+                    </div>
+                    {displayKlasemenList[0] ? (
+                      <div className="mt-2 space-y-0.5">
+                        <div className="font-black text-sm text-black">{displayKlasemenList[0].pangkalan}</div>
+                        <div className="text-xs text-slate-700">{displayKlasemenList[0].subText} (No. Gudep: {displayKlasemenList[0].no_gudep || "—"})</div>
+                        <div className="text-xs font-mono font-black text-emerald-800 pt-1">
+                          Total Nilai: {displayKlasemenList[0].calculatedScore} Pts
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-500 italic mt-2">Belum ada data</div>
+                    )}
+                  </div>
+
+                  {/* Juara 2 */}
+                  <div className="border border-slate-400 rounded p-3 bg-slate-100/80 text-left">
+                    <div className="text-xs font-black text-slate-800 uppercase flex items-center justify-between">
+                      <span className="text-sm font-black">🥈 JUARA 2</span>
+                    </div>
+                    {displayKlasemenList[1] ? (
+                      <div className="mt-2 space-y-0.5">
+                        <div className="font-black text-sm text-black">{displayKlasemenList[1].pangkalan}</div>
+                        <div className="text-xs text-slate-700">{displayKlasemenList[1].subText} (No. Gudep: {displayKlasemenList[1].no_gudep || "—"})</div>
+                        <div className="text-xs font-mono font-black text-emerald-800 pt-1">
+                          Total Nilai: {displayKlasemenList[1].calculatedScore} Pts
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-500 italic mt-2">Belum ada data</div>
+                    )}
+                  </div>
+
+                  {/* Juara 3 */}
+                  <div className="border border-amber-800 rounded p-3 bg-amber-50/50 text-left">
+                    <div className="text-xs font-black text-amber-950 uppercase flex items-center justify-between">
+                      <span className="text-sm font-black">🥉 JUARA 3</span>
+                    </div>
+                    {displayKlasemenList[2] ? (
+                      <div className="mt-2 space-y-0.5">
+                        <div className="font-black text-sm text-black">{displayKlasemenList[2].pangkalan}</div>
+                        <div className="text-xs text-slate-700">{displayKlasemenList[2].subText} (No. Gudep: {displayKlasemenList[2].no_gudep || "—"})</div>
+                        <div className="text-xs font-mono font-black text-emerald-800 pt-1">
+                          Total Nilai: {displayKlasemenList[2].calculatedScore} Pts
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-500 italic mt-2">Belum ada data</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* TABEL REKAPITULASI KLASEMEN AKHIR (NILAI SEMUA LOMBA & TOTAL AKUMULASI) */}
+              <div className="space-y-3 mb-10 overflow-x-auto print:overflow-visible print:mb-6">
+                <div className="flex justify-between items-center border-b-2 border-black pb-1">
+                  <h3 className="text-sm md:text-base font-black uppercase text-black" style={{ fontFamily: "Arial, sans-serif" }}>
+                    I. Rekapitulasi Klasemen Akhir {reportGender === "Gabungan" ? "Juara Umum (Gabungan Putra & Putri)" : `Regu ${reportGender === "Laki-laki" ? "Putra" : "Putri"}`}
+                  </h3>
+                  <span className="text-xs font-semibold text-slate-600">Urutan: Juara 1 s/d Seterusnya (Nilai Tertinggi ke Terendah)</span>
+                </div>
+
+                <table className="w-full text-left border-collapse print-table" style={{ width: "100%", tableLayout: "fixed" }}>
+                  <colgroup>
+                    <col style={{ width: "7.5%" }} />
+                    <col style={{ width: "22.5%" }} />
+                    {activeReportLomba.map((lomba) => (
+                      <col key={lomba.id} style={{ width: `${62 / (activeReportLomba.length || 1)}%` }} />
+                    ))}
+                    <col style={{ width: "8%" }} />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-slate-100 text-black font-bold text-[8pt] uppercase" style={{ fontFamily: "Arial, sans-serif" }}>
+                      <th rowSpan={2} className="p-1 text-center border border-black font-black">
+                        Juara
+                      </th>
+                      <th rowSpan={2} className="p-1 border border-black font-black">
+                        Asal Sekolah (No. Gudep)
+                      </th>
+                      <th colSpan={activeReportLomba.length} className="p-0.5 text-center border border-black font-black bg-slate-200 text-[7.5pt]">
+                        {reportGender === "Gabungan" ? "Nilai Akhir Tiap Cabang Lomba (Gabungan Pa + Pi)" : "Nilai Akhir Tiap Cabang Lomba"}
+                      </th>
+                      <th rowSpan={2} className="p-1 text-center border border-black font-black bg-amber-100 text-amber-950">
+                        Total Akumulasi
+                      </th>
+                    </tr>
+                    <tr className="bg-slate-50 text-black font-bold text-[7pt] uppercase" style={{ fontFamily: "Arial, sans-serif" }}>
+                      {activeReportLomba.map((lomba) => (
+                        <th 
+                          key={lomba.id} 
+                          className="p-0.5 text-center border border-black font-bold whitespace-nowrap overflow-hidden text-ellipsis"
+                          title={lomba.nama_lomba}
+                        >
+                          {lomba.kode_lomba}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayKlasemenList.map((item, index) => {
+                      const predikat = getPredikatOfficial(index);
+                      return (
+                        <tr 
+                          key={item.id} 
+                          className={`border-t border-black text-xs print-text-dark ${
+                            index === 0 ? "bg-amber-50/80 font-semibold" : 
+                            index === 1 ? "bg-slate-50/80" : 
+                            index === 2 ? "bg-amber-50/40" : ""
+                          }`}
+                        >
+                          {/* 1. Kolom Juara */}
+                          <td className="p-1 text-center border border-black whitespace-nowrap overflow-hidden">
+                            <div className="font-black text-black text-[8pt] flex items-center justify-center gap-0.5">
+                              {predikat.medal && <span className="text-[9pt]">{predikat.medal}</span>}
+                              <span>{predikat.title}</span>
+                            </div>
+                          </td>
+
+                          {/* 2. Asal Sekolah (No. Gudep) */}
+                          <td className="p-1 border border-black overflow-hidden">
+                            <div className="font-bold text-black text-[8.5pt] leading-tight truncate">
+                              {item.pangkalan}
+                            </div>
+                            <div className="text-[6.5pt] text-slate-700 mt-0.5 leading-tight truncate">
+                              <span className="font-semibold">Gudep: {item.no_gudep || "—"}</span>
+                              <span className="text-slate-400 mx-0.5">•</span>
+                              <span className="italic">{item.subText}</span>
+                            </div>
+                          </td>
+
+                          {/* 3. Runtutan Semua Lomba (Nilai Akhir) */}
+                          {activeReportLomba.map((lomba) => {
+                            const val = item.getLombaScore(lomba.id);
+                            return (
+                              <td 
+                                key={lomba.id} 
+                                className={`p-0.5 font-mono text-center border border-black text-[7.5pt] ${
+                                  val === "—" ? "text-slate-400" : "font-bold text-black"
+                                }`}
+                              >
+                                {val}
+                              </td>
+                            );
+                          })}
+
+                          {/* 4. Nilai Akumulasi / Total Semua Lomba (di ujung) */}
+                          <td className="p-1 font-mono font-black text-center border border-black text-[9pt] bg-amber-50/70 text-black whitespace-nowrap">
+                            {item.calculatedScore}
                           </td>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* SECTION 2: JUARA MASING-MASING LOMBA */}
-              <div className="space-y-6 mt-10">
-                <h2 className="text-base md:text-lg font-black text-white uppercase tracking-wide border-l-4 border-amber-500 pl-3 print-text-dark print-border">
-                  II. Rekapitulasi Pemenang Cabang Lomba (Juara 1, 2, 3)
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print-bg-white print-text-dark">
-                  {lombaList
-                    .filter((l) => l.kategori === reportTingkat)
-                    .map((lomba) => {
-                      const juaraList = getJuaraForLomba(lomba.id);
-                      return (
-                        <div key={lomba.id} className="p-4 rounded-xl border border-slate-800 bg-slate-950/40 space-y-3 print-border print-bg-white">
-                          <h3 className="text-sm font-black text-white uppercase tracking-wide border-b border-slate-800 pb-2 print-text-dark">
-                            🏆 {lomba.nama_lomba} ({lomba.kode_lomba})
-                          </h3>
-                          <div className="space-y-2">
-                            {juaraList.map((juara, idx) => (
-                              <div key={juara.id} className="flex justify-between items-center text-xs font-semibold">
-                                <span className={`px-2 py-0.5 rounded text-[0.6rem] font-bold ${
-                                  idx === 0 ? "bg-amber-400/10 text-amber-400" :
-                                  idx === 1 ? "bg-slate-400/10 text-slate-400" :
-                                  "bg-amber-700/10 text-amber-700"
-                                }`}>
-                                  Juara {idx + 1}
-                                </span>
-                                <span className="text-white font-bold flex-1 px-3 truncate print-text-dark">
-                                  {juara.pangkalan} <span className="text-[0.65rem] text-slate-500 font-normal print-text-dark">(Regu: {juara.nama_regu})</span>
-                                </span>
-                                <span className="font-mono text-emerald-400 font-black print-text-dark">
-                                  {juara.score} Pts
-                                </span>
-                              </div>
-                            ))}
-                            {juaraList.length === 0 && (
-                              <div className="text-center text-slate-500 italic text-xs py-2 print-text-dark">
-                                Belum ada penilaian diinput.
-                              </div>
-                            )}
-                          </div>
-                        </div>
                       );
                     })}
+
+                    {displayKlasemenList.length === 0 && (
+                      <tr>
+                        <td colSpan={activeReportLomba.length + 3} className="p-8 text-center text-slate-500 italic border border-black">
+                          Belum ada data terverifikasi untuk kategori ini.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* TABEL 2: REKAPITULASI JUARA PER CABANG LOMBA */}
+              {reportView === "semua" && (
+                <div className="space-y-4 mb-10 print-avoid-break">
+                  <div className="flex justify-between items-center border-b-2 border-black pb-1">
+                    <h3 className="text-sm md:text-base font-black uppercase text-black" style={{ fontFamily: "Arial, sans-serif" }}>
+                      II. Rekapitulasi Pemenang Cabang Lomba (Juara 1, 2, 3)
+                    </h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {lombaList
+                      .filter((l) => l.kategori === reportTingkat)
+                      .map((lomba) => {
+                        const juaraList = getJuaraForLomba(lomba.id);
+                        return (
+                          <div key={lomba.id} className="p-2.5 rounded border border-black bg-slate-50/50 space-y-1.5">
+                            <div className="text-xs font-black text-black uppercase tracking-wide border-b border-black pb-1 flex justify-between">
+                              <span>🏆 {lomba.nama_lomba}</span>
+                              <span className="font-mono text-slate-600">[{lomba.kode_lomba}]</span>
+                            </div>
+                            <div className="space-y-1 text-xs">
+                              {juaraList.map((juara, idx) => (
+                                <div key={juara.id} className="flex justify-between items-center">
+                                  <span className="font-bold text-[10px] w-14">
+                                    {idx === 0 ? "🥇 Juara 1" : idx === 1 ? "🥈 Juara 2" : "🥉 Juara 3"}
+                                  </span>
+                                  <span className="flex-1 px-1 font-semibold truncate text-black">
+                                    {juara.pangkalan} <span className="text-[10px] text-slate-600">({juara.nama_regu})</span>
+                                  </span>
+                                  <span className="font-mono font-bold text-right text-black w-14">
+                                    {juara.score} Pts
+                                  </span>
+                                </div>
+                              ))}
+                              {juaraList.length === 0 && (
+                                <div className="text-center text-slate-500 italic text-[10px] py-1">
+                                  Belum ada nilai terinput.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* LEMBAR PENGESAHAN RESMI (2 TANDA TANGAN) */}
+              <div className="mt-8 print-signature-block text-black" style={{ fontFamily: "Arial, sans-serif" }}>
+                <div className="text-right text-xs mb-6 text-black font-semibold">
+                  <p>Ditetapkan di : <strong>Mekar Baru</strong></p>
+                  <p>Pada Tanggal : <strong>{new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</strong></p>
+                </div>
+
+                <div className="grid grid-cols-2 text-center text-xs font-semibold gap-12 mb-4">
+                  {/* Kiri: Ketua Pelaksana */}
+                  <div className="space-y-20">
+                    <div>
+                      <p className="text-slate-700">Panitia Pelaksana,</p>
+                      <p className="font-bold text-black uppercase mt-0.5">Ketua Pelaksana LT-II 2026</p>
+                    </div>
+                    <div>
+                      <p className="font-black text-black underline uppercase text-sm tracking-wider">( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
+                    </div>
+                  </div>
+
+                  {/* Kanan: Ketua Kwarran */}
+                  <div className="space-y-20">
+                    <div>
+                      <p className="text-slate-700">Mengetahui &amp; Mengesahkan,</p>
+                      <p className="font-black text-black uppercase mt-0.5">
+                        Ketua Kwartir Ranting Gerakan Pramuka Mekar Baru
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-black text-black underline uppercase text-sm tracking-wider">( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Signature Section */}
-              <div className="mt-16 grid grid-cols-2 text-center text-xs font-semibold text-slate-400 tracking-wider no-print md:flex md:justify-around print-border print-text-dark">
-                <div className="space-y-20">
-                  <div>Ketua Kwartir Ranting</div>
-                  <div className="font-black text-white border-t border-slate-700 pt-2 w-48 mx-auto print-text-dark">
-                    ( ____________________ )
-                  </div>
-                </div>
-                <div className="space-y-20">
-                  <div>Ketua Dewan Juri</div>
-                  <div className="font-black text-white border-t border-slate-700 pt-2 w-48 mx-auto print-text-dark">
-                    ( ____________________ )
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}

@@ -1673,34 +1673,70 @@ input[type="number"] {
 
 /* Print-specific layout optimization for reports */
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 6mm 7mm 7mm 7mm;
+  }
+
   /* Hide navigation, tabs, forms, buttons, and alert banners */
   nav, 
+  header,
+  footer,
   .no-print, 
+  [class*="no-print"],
   button, 
   form, 
   input, 
   select,
   .offline-banner {
     display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
   }
   
-  /* Reset background and layout for print container */
-  body, html, main {
-    background: #ffffff !important;
+  /* Reset background and layout for print container - eliminate dark textures & headers */
+  body, html, main, div, [class*="min-h-screen"] {
+    background-color: #ffffff !important;
+    background-image: none !important;
     color: #000000 !important;
     box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  
-  .printable-report {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+
+  body, html, main {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
     width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .overflow-x-auto,
+  .overflow-hidden,
+  .mobile-table-scroll {
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .printable-report {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
     background: #ffffff !important;
     color: #000000 !important;
     padding: 0 !important;
-    margin: 0 !important;
-    z-index: 99999 !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
   }
   
   .printable-report * {
@@ -1712,30 +1748,59 @@ input[type="number"] {
   .printable-report table {
     border-collapse: collapse !important;
     width: 100% !important;
-    margin-top: 1.5rem !important;
-    margin-bottom: 2rem !important;
+    max-width: 100% !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+    page-break-inside: auto !important;
+  }
+
+  .printable-report thead {
+    display: table-header-group !important;
   }
   
+  .printable-report tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
   .printable-report th, 
   .printable-report td {
     border: 1px solid #000000 !important;
-    padding: 8px 12px !important;
+    padding: 2.5px 3px !important;
     background: transparent !important;
-    font-size: 10pt !important;
+    font-size: 8pt !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
   }
   
   .printable-report th {
     font-weight: bold !important;
     background: #f1f5f9 !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
   .printable-report h1 {
-    font-size: 16pt !important;
+    font-size: 14pt !important;
   }
   
   .printable-report h2 {
-    font-size: 12pt !important;
+    font-size: 11pt !important;
+    margin-top: 0.5rem !important;
+  }
+
+  .printable-report .print-signature-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     margin-top: 1.5rem !important;
+  }
+
+  .printable-report .podium-box {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 0.75rem !important;
+    padding: 0.5rem !important;
   }
 }
 
