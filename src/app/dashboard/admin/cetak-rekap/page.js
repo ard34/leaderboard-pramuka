@@ -304,9 +304,11 @@ export default function CetakRekapPerJuri() {
                     {rubriks.map((r) => (
                       <th key={r.id} className="border border-black p-2 text-center font-bold w-28">
                         <div>{r.name}</div>
-                        <div className="text-[9pt] font-normal text-gray-600">
-                          {r.isTime ? "(Menit)" : `(Maks ${r.max})`}
-                        </div>
+                        {!r.name.includes("(") && (
+                          <div className="text-[9pt] font-normal text-gray-600">
+                            {r.isTime ? "(Menit)" : `(Maks ${r.max})`}
+                          </div>
+                        )}
                       </th>
                     ))}
                     <th className="border border-black p-2 text-center font-bold w-24">Total Nilai</th>

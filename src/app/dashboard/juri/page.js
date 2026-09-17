@@ -62,10 +62,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "8 Orang/Regu. Sesuai Juknis: Menyanyikan lagu Hymne Pramuka dan Mars Kabupaten Tangerang. Pakaian Seragam Pramuka Lengkap.",
     },
     rubrik: [
-      { id: "vokal", name: "Vokal (5-40)", min: 5, max: 40, weight: 40, hint: "Kejelasan artikulasi, intonasi & harmoni vokal" },
-      { id: "teknik", name: "Teknik (5-20)", min: 5, max: 20, weight: 20, hint: "Pernapasan, tempo, birama & ritme" },
-      { id: "ekspresi", name: "Ekspresi (5-20)", min: 5, max: 20, weight: 20, hint: "Penjiwaan, dinamika, & pendalaman lagu" },
-      { id: "penampilan", name: "Penampilan (5-20)", min: 5, max: 20, weight: 20, hint: "Kerapihan seragam & keserasian panggung" },
+      { id: "vokal", name: "Vokal (5–40)", min: 5, max: 40, weight: 40, hint: "Kejelasan artikulasi, intonasi & harmoni vokal" },
+      { id: "teknik", name: "Teknik Menyanyi (5–20)", min: 5, max: 20, weight: 20, hint: "Pernapasan, tempo, birama & ritme" },
+      { id: "ekspresi", name: "Pembawaan / Ekspresi (5–20)", min: 5, max: 20, weight: 20, hint: "Penjiwaan, dinamika, & pendalaman lagu" },
+      { id: "penampilan", name: "Penampilan (5–20)", min: 5, max: 20, weight: 20, hint: "Kerapihan seragam & keserasian panggung" },
     ],
   },
   {
@@ -77,11 +77,11 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "Sesuai Juknis: Menampilkan Tarian Nusantara Propinsi. Menyiapkan & mengonfirmasi file musik saat registrasi.",
     },
     rubrik: [
-      { id: "wiraga", name: "Wiraga (5-20)", min: 5, max: 20, weight: 20, hint: "Keluwesan & ketepatan gerak tari" },
-      { id: "wirama", name: "Wirama (5-20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian gerak dengan tempo & irama musik" },
-      { id: "wirasa", name: "Wirasa (5-20)", min: 5, max: 20, weight: 20, hint: "Ekspresi wajah & penjiwaan karakter" },
-      { id: "wirupa", name: "Wirupa (5-20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian busana daerah & tata rias" },
-      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Keunikan koreografi & pola lantai" },
+      { id: "wiraga", name: "Wiraga (5–20)", min: 5, max: 20, weight: 20, hint: "Keluwesan & ketepatan gerak tari" },
+      { id: "wirama", name: "Wirama (5–20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian gerak dengan tempo & irama musik" },
+      { id: "wirasa", name: "Wirasa (5–20)", min: 5, max: 20, weight: 20, hint: "Ekspresi wajah & penjiwaan karakter" },
+      { id: "wirupa", name: "Wirupa (5–20)", min: 5, max: 20, weight: 20, hint: "Kesesuaian busana daerah & tata rias" },
+      { id: "kreativitas", name: "Kreativitas (5–20)", min: 5, max: 20, weight: 20, hint: "Keunikan koreografi & pola lantai" },
     ],
   },
   {
@@ -93,10 +93,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "4 orang/Regu. Sesuai Juknis: Membuat Pionering dari model pilihan panitia. Waktu maksimal 30 Menit.",
     },
     rubrik: [
-      { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Kebenaran ikatan pangkal, jangkar, palang, & silang" },
-      { id: "kekuatan", name: "Kekuatan (5-30)", min: 5, max: 30, weight: 30, hint: "Kekokohan ikatan & kestabilan bangunan" },
-      { id: "kerapihan", name: "Kerapihan (5-25)", min: 5, max: 25, weight: 25, hint: "Kerapihan gulungan & kuncian simpul akhir" },
-      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Keindahan proporsi & keserasian bangunan" },
+      { id: "simpul", name: "Ketepatan Simpul dan Ikatan (5–25)", min: 5, max: 25, weight: 25, hint: "Kebenaran ikatan pangkal, jangkar, palang, & silang" },
+      { id: "kekuatan", name: "Kekuatan (5–30)", min: 5, max: 30, weight: 30, hint: "Kekokohan ikatan & kestabilan bangunan" },
+      { id: "kerapihan", name: "Kerapihan (5–25)", min: 5, max: 25, weight: 25, hint: "Kerapihan gulungan & kuncian simpul akhir" },
+      { id: "kreativitas", name: "Nilai Kreativitas (5–20)", min: 5, max: 20, weight: 20, hint: "Keindahan proporsi & keserasian bangunan" },
     ],
   },
   {
@@ -104,26 +104,26 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     nama_lomba: "PPGD",
     kategori_kelompok: "Keterampilan Kepramukaan",
     rules: {
-      SD: "3 orang/Regu (1 korban, 2 penolong). Sesuai Juknis: Penanganan Korban Kecelakaan TANPA membuat tandu darurat (Catatan: Tidak ada ketepatan simpul dan kekuatan).",
+      SD: "3 orang/Regu (1 korban, 2 penolong). Sesuai Juknis: Penanganan Korban Kecelakaan (Pembidaian dan Kerapihan).",
       SMP: "5 orang/Regu (1 korban, 2 penolong, 2 pembuat tandu). Sesuai Juknis: Penanganan korban + Tandu darurat + Laporan kejadian.",
     },
     rubrikByKategori: {
       SD: [
-        { id: "kerapihan", name: "Kerapihan & Kebersihan Balutan (0-50)", min: 0, max: 50, weight: 50, hint: "Kerapihan & ketepatan posisi balutan mitela" },
-        { id: "pembidaian", name: "Pembidaian & Penanganan Korban (0-50)", min: 0, max: 50, weight: 50, hint: "Ketepatan bidai fraktur patah tulang & ketenangan penanganan" },
+        { id: "pembidaian", name: "Pembidaian", min: 0, max: 50, weight: 50, hint: "Ketepatan penanganan bidai & korban patah tulang" },
+        { id: "kerapihan", name: "Kerapihan", min: 0, max: 50, weight: 50, hint: "Kerapihan & kebersihan pembalutan mitela" },
       ],
       SMP: [
-        { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Ketepatan ikatan mitela & simpul tandu darurat" },
-        { id: "kekuatan", name: "Kekuatan (5-20)", min: 5, max: 20, weight: 20, hint: "Kekuatan fisik tandu & ketenangan evakuasi korban" },
-        { id: "kerapihan", name: "Kerapihan (5-25)", min: 5, max: 25, weight: 25, hint: "Kerapihan & kebersihan balutan luka" },
-        { id: "pembidaian", name: "Pembidaian (5-30)", min: 5, max: 30, weight: 30, hint: "Ketepatan posisi bidai patah tulang melingkupi dua sendi" },
+        { id: "simpul", name: "Ketepatan Simpul dan Ikatan (5–25)", min: 5, max: 25, weight: 25, hint: "Ketepatan ikatan mitela & simpul tandu darurat" },
+        { id: "kekuatan", name: "Kekuatan (5–20)", min: 5, max: 20, weight: 20, hint: "Kekuatan fisik tandu & kestabilan evakuasi korban" },
+        { id: "kerapihan", name: "Kerapihan (5–25)", min: 5, max: 25, weight: 25, hint: "Kerapihan & kebersihan balutan luka" },
+        { id: "pembidaian", name: "Pembidaian (5–30)", min: 5, max: 30, weight: 30, hint: "Ketepatan posisi bidai patah tulang melingkupi dua sendi" },
       ],
     },
     rubrik: [
-      { id: "simpul", name: "Ketepatan Simpul (5-25)", min: 5, max: 25, weight: 25, hint: "Ketepatan ikatan mitela & balutan" },
-      { id: "kekuatan", name: "Kekuatan (5-20)", min: 5, max: 20, weight: 20, hint: "Kekuatan fisik tandu & ketenangan" },
-      { id: "kerapihan", name: "Kerapihan (5-25)", min: 5, max: 25, weight: 25, hint: "Kerapihan & kebersihan balutan" },
-      { id: "pembidaian", name: "Pembidaian (5-30)", min: 5, max: 30, weight: 30, hint: "Ketepatan posisi bidai patah tulang" },
+      { id: "simpul", name: "Ketepatan Simpul dan Ikatan (5–25)", min: 5, max: 25, weight: 25, hint: "Ketepatan ikatan mitela & balutan" },
+      { id: "kekuatan", name: "Kekuatan (5–20)", min: 5, max: 20, weight: 20, hint: "Kekuatan fisik tandu & ketenangan" },
+      { id: "kerapihan", name: "Kerapihan (5–25)", min: 5, max: 25, weight: 25, hint: "Kerapihan & kebersihan balutan" },
+      { id: "pembidaian", name: "Pembidaian (5–30)", min: 5, max: 30, weight: 30, hint: "Ketepatan posisi bidai patah tulang" },
     ],
   },
   {
@@ -137,16 +137,16 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     },
     rubrikByKategori: {
       SD: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
       ],
       SMP: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
       ],
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban (0-30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0–30)", min: 0, max: 30, weight: 30, isScore: true, hint: "Kebenaran terjemahan sandi (Skor 0 - 30)" },
       { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
     ],
   },
@@ -161,16 +161,16 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     },
     rubrikByKategori: {
       SD: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu tempuh di lapangan dalam menit (diisi mandiri oleh juri)" },
       ],
       SMP: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu tempuh di lapangan dalam menit (diisi mandiri oleh juri)" },
       ],
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban (0-40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0–40)", min: 0, max: 40, weight: 40, isScore: true, hint: "Akurasi plot sudut azimuth & titik kontrol (Skor 0 - 40)" },
       { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu tempuh di lapangan dalam menit (diisi mandiri oleh juri)" },
     ],
   },
@@ -185,16 +185,16 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     },
     rubrikByKategori: {
       SD: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi 10cm (Skor 0 - 10)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi (Skor 0 - 10)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
       ],
       SMP: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi 10cm (Skor 0 - 10)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi (Skor 0 - 10)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
       ],
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi 10cm (Skor 0 - 10)" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0–10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Kebenaran perhitungan rumus taksir & toleransi (Skor 0 - 10)" },
       { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
     ],
   },
@@ -209,16 +209,16 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     },
     rubrikByKategori: {
       SD: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Jumlah huruf/angka benar (Skor 0 - 10 untuk SD)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Jumlah huruf/angka benar (Skor 0 - 10 untuk SD)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
       ],
       SMP: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-15)", min: 0, max: 15, weight: 15, isScore: true, hint: "Jumlah huruf/angka benar (Skor 0 - 15 untuk SMP)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–15)", min: 0, max: 15, weight: 15, isScore: true, hint: "Jumlah huruf/angka benar (Skor 0 - 15 untuk SMP)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
       ],
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 15, weight: 15, isScore: true, hint: "Jumlah huruf/angka benar" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0–15)", min: 0, max: 15, weight: 15, isScore: true, hint: "Jumlah huruf/angka benar" },
       { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
     ],
   },
@@ -233,16 +233,16 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     },
     rubrikByKategori: {
       SD: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Jumlah kode Morse benar (Skor 0 - 10 untuk SD)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–10)", min: 0, max: 10, weight: 10, isScore: true, hint: "Jumlah kode Morse benar (Skor 0 - 10 untuk SD)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyerahan lembar jawaban dalam menit (diisi mandiri oleh juri)" },
       ],
       SMP: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-25)", min: 0, max: 25, weight: 25, isScore: true, hint: "Jumlah kode Morse benar (Skor 0 - 25 untuk SMP)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–25)", min: 0, max: 25, weight: 25, isScore: true, hint: "Jumlah kode Morse benar (Skor 0 - 25 untuk SMP)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyerahan lembar jawaban dalam menit (diisi mandiri oleh juri)" },
       ],
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 25, weight: 25, isScore: true, hint: "Jumlah kode Morse benar" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0–25)", min: 0, max: 25, weight: 25, isScore: true, hint: "Jumlah kode Morse benar" },
       { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyerahan lembar jawaban dalam menit (diisi mandiri oleh juri)" },
     ],
   },
@@ -257,16 +257,16 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
     },
     rubrikByKategori: {
       SD: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-15)", min: 0, max: 15, weight: 15, isScore: true, hint: "Ketepatan tebakan benda KIM & obat (Skor 0 - 15 untuk SD)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–15)", min: 0, max: 15, weight: 15, isScore: true, hint: "Ketepatan tebakan benda KIM & obat (Skor 0 - 15 untuk SD)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
       ],
       SMP: [
-        { id: "ketepatan", name: "Ketepatan Jawaban (0-25)", min: 0, max: 25, weight: 25, isScore: true, hint: "Ketepatan tebakan benda KIM & obat (Skor 0 - 25 untuk SMP)" },
+        { id: "ketepatan", name: "Ketepatan Jawaban (0–25)", min: 0, max: 25, weight: 25, isScore: true, hint: "Ketepatan tebakan benda KIM & obat (Skor 0 - 25 untuk SMP)" },
         { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
       ],
     },
     rubrik: [
-      { id: "ketepatan", name: "Ketepatan Jawaban", min: 0, max: 25, weight: 25, isScore: true, hint: "Ketepatan tebakan benda KIM" },
+      { id: "ketepatan", name: "Ketepatan Jawaban (0–25)", min: 0, max: 25, weight: 25, isScore: true, hint: "Ketepatan tebakan benda KIM" },
       { id: "waktu", name: "Kecepatan Waktu (Menit)", unit: "Menit", isTime: true, hint: "Waktu penyelesaian regu dalam menit (diisi mandiri oleh juri)" },
     ],
   },
@@ -279,10 +279,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "7 orang/Regu. Sesuai Juknis: Menggunakan kostum yang telah dibuat di pangkalan masing-masing.",
     },
     rubrik: [
-      { id: "bahan", name: "Komposisi Bahan (5-30)", min: 5, max: 30, weight: 30, hint: "Kreativitas pemanfaatan bahan & estetika" },
-      { id: "kreativitas", name: "Kreativitas (5-30)", min: 5, max: 30, weight: 30, hint: "Keunikan rancangan & keserasian tema" },
-      { id: "kesulitan", name: "Kesulitan (5-20)", min: 5, max: 20, weight: 20, hint: "Kerumitan detail kostum & aksesoris" },
-      { id: "kerapihan", name: "Kerapihan (5-20)", min: 5, max: 20, weight: 20, hint: "Peragaan jalan, kekompakan barisan & keselarasan" },
+      { id: "bahan", name: "Komposisi Bahan (5–30)", min: 5, max: 30, weight: 30, hint: "Kreativitas pemanfaatan bahan & estetika" },
+      { id: "kreativitas", name: "Kreativitas (5–30)", min: 5, max: 30, weight: 30, hint: "Keunikan rancangan & keserasian tema" },
+      { id: "kesulitan", name: "Tingkat Kesulitan (5–20)", min: 5, max: 20, weight: 20, hint: "Kerumitan detail kostum & aksesoris" },
+      { id: "kerapihan", name: "Kerapihan (5–20)", min: 5, max: 20, weight: 20, hint: "Peragaan jalan, kekompakan barisan & keselarasan" },
     ],
   },
   {
@@ -294,10 +294,10 @@ export const OFFICIAL_LOMBA_DEFINITIONS = [
       SMP: "2 orang/Regu. Sesuai Juknis: Memasak Masakan Nusantara Lengkap (Nasi, Lauk Pauk, Sayur). DILARANG BUMBU INSTAN.",
     },
     rubrik: [
-      { id: "rasa", name: "Cita Rasa (5-30)", min: 5, max: 30, weight: 30, hint: "Kelezatan cita rasa masakan & kematangan" },
-      { id: "penampilan", name: "Penampilan / Tekstur (5-30)", min: 5, max: 30, weight: 30, hint: "Platting garnish, kebersihan & tekstur" },
-      { id: "kekompakan", name: "Kekompakan Tim (5-20)", min: 5, max: 20, weight: 20, hint: "Kerjasama tim & kebersihan area masak" },
-      { id: "kreativitas", name: "Kreativitas (5-20)", min: 5, max: 20, weight: 20, hint: "Inovasi olahan rempah & variasi hidangan" },
+      { id: "rasa", name: "Cita Rasa", min: 5, max: 30, weight: 30, hint: "Kelezatan cita rasa masakan & kematangan" },
+      { id: "penampilan", name: "Penampilan / Tekstur", min: 5, max: 30, weight: 30, hint: "Platting garnish, kebersihan & tekstur" },
+      { id: "kekompakan", name: "Kekompakan Tim", min: 5, max: 20, weight: 20, hint: "Kerjasama tim & kebersihan area masak" },
+      { id: "kreativitas", name: "Kreativitas", min: 5, max: 20, weight: 20, hint: "Inovasi olahan rempah & variasi hidangan" },
     ],
   },
   // Lomba Manajemen Regu & Ketangkasan
