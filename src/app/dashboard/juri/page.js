@@ -507,7 +507,14 @@ export default function DashboardJuri() {
     }
     setJuri(profile);
 
-    let loadedLomba = lombaRes.data || [];
+    let loadedLomba = (lombaRes.data || []).map((l) => {
+      const def = findOfficialLombaDef(l);
+      return {
+        ...l,
+        nama_lomba: def ? def.nama_lomba : l.nama_lomba,
+      };
+    });
+
     // If DB has no lomba records yet, build virtual lomba list from definitions
     if (loadedLomba.length === 0) {
       loadedLomba = OFFICIAL_LOMBA_DEFINITIONS.flatMap((def) => [
@@ -776,9 +783,17 @@ export default function DashboardJuri() {
   // Locking checks
   const isLockedPos = juri?.assigned_lomba_id != null;
   const isLockedGender = juri?.assigned_gender != null && juri?.assigned_gender !== 'SEMUA';
+  const OFFICIAL_12_KODES = ["HMN", "TSB", "PNR", "PGD", "SND", "NAV", "TKS", "SMP", "MRS", "KIM", "KRN", "MSK"];
   const filteredLomba = isLockedPos 
     ? lombaList.filter((l) => l.id === juri.assigned_lomba_id)
-    : lombaList.filter((l) => l.kategori === selectedKategori);
+    : lombaList
+        .filter((l) => l.kategori === selectedKategori && OFFICIAL_12_KODES.includes(l.kode_lomba))
+        .sort((a, b) => {
+          const idxA = OFFICIAL_12_KODES.indexOf(a.kode_lomba);
+          const idxB = OFFICIAL_12_KODES.indexOf(b.kode_lomba);
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          return a.nama_lomba.localeCompare(b.nama_lomba);
+        });
 
   // Filtered Peserta Calculations
   const availableInCategory = useMemo(() => {
@@ -928,7 +943,7 @@ export default function DashboardJuri() {
                   🔍 AKUN PENGAWAS & PEMERIKSA FORMAT
                 </span>
                 <span className="text-slate-300 font-bold text-xs">
-                  Akses Bebas Semua 15 Mata Lomba, Tingkat & Gender
+                  Akses Bebas Semua 12 Mata Lomba, Tingkat & Gender
                 </span>
               </div>
               <div className="text-[0.7rem] font-mono text-emerald-400 font-bold">
