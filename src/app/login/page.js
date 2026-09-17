@@ -65,45 +65,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    // Special instant access credentials for local testing & full evaluation
-    const validAdminPass = ["pramuka2026!", "adminpassword123!", "admin", "admin123", "123456"];
-    const validJuriPass = ["pramuka2026!", "juripassword123!", "juri", "juri123", "123456"];
 
-    if (
-      (trimmedEmail.includes("admin") || trimmedEmail === "admin@siloti.id" || trimmedEmail === "admin@pramuka.id") &&
-      (validAdminPass.includes(password.toLowerCase()) || password === "Pramuka2026!" || password === "AdminPassword123!")
-    ) {
-      sessionStorage.setItem("_profile_cache", JSON.stringify({
-        id: "da882421-cecc-48ea-a032-8b6db1bf9697",
-        role: "admin",
-        nama_lengkap: "Admin Utama (Akses Penuh)",
-        assigned_lomba_id: null,
-        assigned_kategori: null,
-        assigned_gender: "SEMUA",
-        ts: Date.now(),
-      }));
-      router.replace("/dashboard/admin");
-      setLoading(false);
-      return;
-    }
-
-    if (
-      (trimmedEmail.includes("juri") || trimmedEmail === "juri@siloti.id" || trimmedEmail === "juri@pramuka.id" || trimmedEmail === "juri.pengawas@siloti.id") &&
-      (validJuriPass.includes(password.toLowerCase()) || password === "Pramuka2026!" || password === "JuriPassword123!")
-    ) {
-      sessionStorage.setItem("_profile_cache", JSON.stringify({
-        id: "d784f966-1ba3-47d8-8a19-4d5b21338008",
-        role: "juri",
-        nama_lengkap: "Dewan Juri (Akses Semua Lomba & Format)",
-        assigned_lomba_id: null,
-        assigned_kategori: null,
-        assigned_gender: "SEMUA",
-        ts: Date.now(),
-      }));
-      router.replace("/dashboard/juri");
-      setLoading(false);
-      return;
-    }
 
     try {
       const { data: authData, error: authError } =
@@ -217,15 +179,15 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-[0.7rem] font-bold text-slate-500 uppercase tracking-[0.15em]">
-                Email / Username Akun
+                Email Akun
               </label>
               <input
-                type="text"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="admin / juri atau nama@pramuka.id"
-                autoComplete="username"
+                placeholder="nama@email.com"
+                autoComplete="email"
                 className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
               />
             </div>
