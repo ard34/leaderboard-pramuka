@@ -783,14 +783,14 @@ export default function DashboardJuri() {
   // Locking checks
   const isLockedPos = juri?.assigned_lomba_id != null;
   const isLockedGender = juri?.assigned_gender != null && juri?.assigned_gender !== 'SEMUA';
-  const OFFICIAL_12_KODES = ["HMN", "TSB", "PNR", "PGD", "SND", "NAV", "TKS", "SMP", "MRS", "KIM", "KRN", "MSK"];
+  const OFFICIAL_ACTIVE_KODES = ["HMN", "TSB", "PNR", "PGD", "SND", "NAV", "TKS", "SMP", "MRS", "KIM", "KRN", "MSK", "ADM"];
   const filteredLomba = isLockedPos 
     ? lombaList.filter((l) => l.id === juri.assigned_lomba_id)
     : lombaList
-        .filter((l) => l.kategori === selectedKategori && OFFICIAL_12_KODES.includes(l.kode_lomba))
+        .filter((l) => l.kategori === selectedKategori && OFFICIAL_ACTIVE_KODES.includes(l.kode_lomba))
         .sort((a, b) => {
-          const idxA = OFFICIAL_12_KODES.indexOf(a.kode_lomba);
-          const idxB = OFFICIAL_12_KODES.indexOf(b.kode_lomba);
+          const idxA = OFFICIAL_ACTIVE_KODES.indexOf(a.kode_lomba);
+          const idxB = OFFICIAL_ACTIVE_KODES.indexOf(b.kode_lomba);
           if (idxA !== -1 && idxB !== -1) return idxA - idxB;
           return a.nama_lomba.localeCompare(b.nama_lomba);
         });
@@ -943,7 +943,7 @@ export default function DashboardJuri() {
                   🔍 AKUN PENGAWAS & PEMERIKSA FORMAT
                 </span>
                 <span className="text-slate-300 font-bold text-xs">
-                  Akses Bebas Semua 12 Mata Lomba, Tingkat & Gender
+                  Akses Bebas Semua 13 Mata Lomba, Tingkat & Gender
                 </span>
               </div>
               <div className="text-[0.7rem] font-mono text-emerald-400 font-bold">

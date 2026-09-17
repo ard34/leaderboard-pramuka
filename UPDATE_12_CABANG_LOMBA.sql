@@ -14,6 +14,7 @@ UPDATE public.lomba SET nama_lomba = 'Morse' WHERE kode_lomba = 'MRS';
 UPDATE public.lomba SET nama_lomba = 'Lomba KIM' WHERE kode_lomba = 'KIM';
 UPDATE public.lomba SET nama_lomba = 'Lomba Karnaval' WHERE kode_lomba = 'KRN';
 UPDATE public.lomba SET nama_lomba = 'Masak Nusantara' WHERE kode_lomba = 'MSK';
+UPDATE public.lomba SET nama_lomba = 'Administrasi Regu' WHERE kode_lomba = 'ADM';
 
 -- Verifikasi hasil update
 SELECT id, kode_lomba, nama_lomba, kategori FROM public.lomba ORDER BY kategori, kode_lomba;

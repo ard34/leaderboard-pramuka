@@ -27,6 +27,7 @@ export async function GET() {
       { kode: "KIM", nama: "Lomba KIM" },
       { kode: "KRN", nama: "Lomba Karnaval" },
       { kode: "MSK", nama: "Masak Nusantara" },
+      { kode: "ADM", nama: "Administrasi Regu" },
     ];
 
     const results = [];
