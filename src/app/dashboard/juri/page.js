@@ -470,32 +470,22 @@ export default function DashboardJuri() {
   }, [selectedKategori, lombaList, juri]);
 
   const cekAuthDanAmbilData = async () => {
-    let cached = null;
-    try {
-      cached = JSON.parse(sessionStorage.getItem("_profile_cache") || "null");
-    } catch (_) { /* ignore */ }
-
-    let userId = cached?.id || null;
-
-    if (!userId) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/login");
-        return;
-      }
-      userId = session.user.id;
+    // 1. Verifikasi sesi autentikasi resmi dari Supabase Auth
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+      router.replace("/login");
+      return;
     }
 
-    const isValidUUID = typeof userId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    const userId = session.user.id;
 
     const [profileRes, lombaRes, pesertaRes, penilaianRes] = await Promise.all([
-      isValidUUID
-        ? supabase
-            .from("profiles")
-            .select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba, kode_lomba)")
-            .eq("id", userId)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
+      supabase
+        .from("profiles")
+        .select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender, lomba(nama_lomba, kode_lomba)")
+        .eq("id", userId)
+        .maybeSingle(),
       supabase
         .from("lomba")
         .select("id, nama_lomba, kode_lomba, kategori")
@@ -505,38 +495,21 @@ export default function DashboardJuri() {
         .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
         .eq("is_verified", true)
         .order("nomor_dada", { ascending: true }),
-      isValidUUID
-        ? supabase
-            .from("penilaian")
-            .select("id, peserta_id, lomba_id, nilai, updated_at")
-            .eq("juri_id", userId)
-        : Promise.resolve({ data: [] }),
+      supabase
+        .from("penilaian")
+        .select("id, peserta_id, lomba_id, nilai, updated_at")
+        .eq("juri_id", userId),
     ]);
 
-    let profile = profileRes?.data || cached;
-    if (!profile) {
-      router.push("/login");
+    const profile = profileRes?.data;
+    if (!profile || (profile.role !== "juri" && profile.role !== "admin")) {
+      try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+      await supabase.auth.signOut();
+      router.replace("/login");
       return;
     }
 
-    // Allow both juri and admin to evaluate competitions
-    const activeRole = profile.role || "juri";
-    if (activeRole !== "juri" && activeRole !== "admin") {
-      router.push("/login");
-      return;
-    }
-
-    // Unrestricted access for all competitions, levels, and genders
-    const fullAccessProfile = {
-      ...profile,
-      id: profile.id || "d784f966-1ba3-47d8-8a19-4d5b21338008",
-      nama_lengkap: profile.nama_lengkap || (activeRole === "admin" ? "Admin Utama (Akses Juri Penuh)" : "Dewan Juri (Akses Semua Lomba)"),
-      role: activeRole,
-      assigned_lomba_id: null,
-      assigned_kategori: null,
-      assigned_gender: "SEMUA",
-    };
-    setJuri(fullAccessProfile);
+    setJuri(profile);
 
     let loadedLomba = (lombaRes.data || []).map((l) => {
       const def = findOfficialLombaDef(l);
@@ -742,10 +715,12 @@ export default function DashboardJuri() {
     }
 
 
-    // Ensure valid UUID for juri_id
-    let targetJuriId = juri?.id;
-    if (!targetJuriId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetJuriId)) {
-      targetJuriId = "d784f966-1ba3-47d8-8a19-4d5b21338008";
+    // Pastikan session ID juri sah
+    const targetJuriId = juri?.id;
+    if (!targetJuriId) {
+      setPesan({ type: "error", text: "Sesi juri tidak valid. Silakan login kembali." });
+      setSaving(false);
+      return;
     }
 
     // Upsert score in Supabase
@@ -1033,33 +1008,10 @@ export default function DashboardJuri() {
             </button>
 
             <button
-              onClick={() => {
-                if (juri?.role !== "admin") {
-                  try {
-                    sessionStorage.setItem("_profile_cache", JSON.stringify({
-                      id: "da882421-cecc-48ea-a032-8b6db1bf9697",
-                      role: "admin",
-                      nama_lengkap: "Admin Utama (Akses Penuh)",
-                      assigned_lomba_id: null,
-                      assigned_kategori: null,
-                      assigned_gender: "SEMUA",
-                      ts: Date.now(),
-                    }));
-                  } catch (_) {}
-                }
-                router.push("/dashboard/admin");
-              }}
-              className="text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500 border border-cyan-500/30 hover:border-cyan-500 text-cyan-400 hover:text-slate-950 px-3.5 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-sm"
-              title="Buka Panel Administrator (Akses Penuh)"
-            >
-              <span>🛡️ PANEL ADMIN</span>
-            </button>
-
-            <button
               onClick={async () => {
                 try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
                 await supabase.auth.signOut();
-                router.push("/login");
+                router.replace("/login");
               }}
               className="text-xs font-bold bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 text-red-400 hover:text-white px-3.5 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-sm"
               title="Keluar dari panel juri"

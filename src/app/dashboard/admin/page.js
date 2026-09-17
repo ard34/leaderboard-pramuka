@@ -290,32 +290,25 @@ export default function DashboardAdmin() {
   }, [pesertaList]);
 
   const cekAuth = async () => {
-    // Try to use cached profile from login page
-    try {
-      const cached = JSON.parse(sessionStorage.getItem("_profile_cache") || "null");
-      if (cached && (cached.role === "admin" || cached.role === "juri")) {
-        setAdmin({ nama_lengkap: cached.nama_lengkap || "Admin Utama", role: cached.role });
-        setLoading(false);
-        fetchAllData();
-        return;
-      }
-    } catch (_) { /* ignore parse errors */ }
-
-    // Fallback: normal auth check
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      router.push("/login");
+    // Verifikasi sesi autentikasi resmi dari Supabase Auth
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+      router.replace("/login");
       return;
     }
 
-    const { data: profile } = await supabase
+    // Ambil profil resmi berdasarkan session.user.id
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("nama_lengkap, role")
+      .select("id, nama_lengkap, role")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
 
-    if (profile?.role !== "admin") {
-      router.push("/dashboard/juri");
+    if (profileError || !profile || profile.role !== "admin") {
+      try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+      await supabase.auth.signOut();
+      router.replace("/login");
       return;
     }
 
@@ -1316,13 +1309,6 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
           </div>
 
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-            <button
-              onClick={() => router.push("/dashboard/juri")}
-              className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 transition-all shadow-sm flex items-center gap-1.5"
-              title="Buka panel penilaian dewan juri untuk cek format dan penilaian semua tingkatan"
-            >
-              <span>⚖️ Panel Juri</span>
-            </button>
 
             <button
               onClick={() => {

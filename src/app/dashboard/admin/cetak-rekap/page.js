@@ -187,6 +187,13 @@ export default function CetakRekapPerJuri() {
 
   const fetchRekapData = async () => {
     try {
+      // Autentikasi sesi resmi dari Supabase Auth
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = "/login";
+        return;
+      }
+
       const urlParams = new URLSearchParams(window.location.search);
       const targetJuriName = urlParams.get("juriName");
       const targetJuriId = urlParams.get("juriId");
