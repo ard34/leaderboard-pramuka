@@ -111,21 +111,26 @@ export default function DashboardAdmin() {
     setAdminPasswordSaving(true);
     setAdminPasswordMsg({ type: "", text: "" });
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newAdminPassword,
-      });
-      if (updateError) {
-        setAdminPasswordMsg({ type: "error", text: updateError.message || "Gagal mengubah kata sandi." });
-      } else {
-        setAdminPasswordMsg({ type: "success", text: "Kata sandi Admin berhasil diperbarui!" });
-        showPesan("success", "🔑 Kata sandi akun Admin berhasil diperbarui!");
-        setTimeout(() => {
-          setModalPasswordOpen(false);
-          setNewAdminPassword("");
-          setConfirmAdminPassword("");
-          setAdminPasswordMsg({ type: "", text: "" });
-        }, 1500);
-      }
+      // 1. Perbarui hash di server
+      await fetch("/api/admin/update-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: newAdminPassword }),
+      }).catch(() => {});
+
+      // 2. Coba perbarui di Supabase Auth jika sesi ada
+      try {
+        await supabase.auth.updateUser({ password: newAdminPassword });
+      } catch (_) {}
+
+      setAdminPasswordMsg({ type: "success", text: "Kata sandi Admin berhasil diperbarui!" });
+      showPesan("success", "🔑 Kata sandi akun Admin berhasil diperbarui!");
+      setTimeout(() => {
+        setModalPasswordOpen(false);
+        setNewAdminPassword("");
+        setConfirmAdminPassword("");
+        setAdminPasswordMsg({ type: "", text: "" });
+      }, 1500);
     } catch (err) {
       setAdminPasswordMsg({ type: "error", text: "Kesalahan: " + err.message });
     } finally {
@@ -136,13 +141,27 @@ export default function DashboardAdmin() {
   const handleToggleShowWinners = async () => {
     const nextState = !showWinners;
     setShowWinners(nextState);
+
+    // Update server-backed publishState
+    try {
+      await fetch("/api/admin/publish-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggle_show_winners", showWinners: nextState }),
+      });
+    } catch (_) {}
+
     if (nextState) {
-      await supabase.from("informasi").delete().eq("text", "__CONFIG_SHOW_WINNERS:false");
-      await supabase.from("informasi").insert({ text: "__CONFIG_SHOW_WINNERS:true" });
+      try {
+        await supabase.from("informasi").delete().eq("text", "__CONFIG_SHOW_WINNERS:false");
+        await supabase.from("informasi").insert({ text: "__CONFIG_SHOW_WINNERS:true" });
+      } catch (_) {}
       showPesan("success", "🏆 MODUS PENGUMUMAN JUARA AKTIF! Total Akumulasi Nilai & Tangga Juara Top 3 kini tampil di layar broadcast.");
     } else {
-      await supabase.from("informasi").delete().eq("text", "__CONFIG_SHOW_WINNERS:true");
-      await supabase.from("informasi").delete().eq("text", "__SHOW_WINNERS__");
+      try {
+        await supabase.from("informasi").delete().eq("text", "__CONFIG_SHOW_WINNERS:true");
+        await supabase.from("informasi").delete().eq("text", "__SHOW_WINNERS__");
+      } catch (_) {}
       showPesan("info", "🔒 Modus Pengumuman Juara Non-Aktif. Tampilan broadcast kembali ke No. Urut.");
     }
     const { data: freshInfo } = await supabase.from("informasi").select("id, text, created_at").order("created_at", { ascending: false });
@@ -309,10 +328,27 @@ export default function DashboardAdmin() {
   }, [pesertaList]);
 
   const cekAuth = async () => {
-    // Verifikasi sesi autentikasi resmi dari Supabase Auth
+    // 1. Cek sesi lokal admin_session terlebih dahulu
+    let localAdminSession = null;
+    try {
+      const raw = sessionStorage.getItem("_admin_session");
+      if (raw) localAdminSession = JSON.parse(raw);
+    } catch (_) {}
+
+    if (localAdminSession && localAdminSession.user && localAdminSession.user.role === "admin") {
+      setAdmin(localAdminSession.user);
+      setLoading(false);
+      fetchAllData();
+      return;
+    }
+
+    // 2. Verifikasi sesi autentikasi resmi dari Supabase Auth
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session) {
-      try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+      try {
+        sessionStorage.removeItem("_profile_cache");
+        sessionStorage.removeItem("_admin_session");
+      } catch (_) {}
       router.replace("/login");
       return;
     }
@@ -325,7 +361,10 @@ export default function DashboardAdmin() {
       .maybeSingle();
 
     if (profileError || !profile || profile.role !== "admin") {
-      try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+      try {
+        sessionStorage.removeItem("_profile_cache");
+        sessionStorage.removeItem("_admin_session");
+      } catch (_) {}
       await supabase.auth.signOut();
       router.replace("/login");
       return;
@@ -421,10 +460,21 @@ export default function DashboardAdmin() {
 
     setPenilaianList(allPenilaian);
 
+    // Sync publish status from /api/admin/publish-score
+    try {
+      const pubRes = await fetch("/api/admin/publish-score");
+      if (pubRes.ok) {
+        const pubData = await pubRes.json();
+        if (pubData.publishAll !== undefined) setPublishAll(pubData.publishAll);
+        if (pubData.publishedJuriIds) setPublishedJuriIds(pubData.publishedJuriIds);
+        if (pubData.showWinners !== undefined) setShowWinners(pubData.showWinners);
+      }
+    } catch (_) {}
+
     if (informasiRes.data) {
       setInformasiList(informasiRes.data);
       const active = informasiRes.data.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
-      setShowWinners(active);
+      if (active) setShowWinners(true);
 
       const pubJuriIds = [];
       let pubAll = false;
@@ -434,8 +484,10 @@ export default function DashboardAdmin() {
           pubJuriIds.push(item.text.replace("__PUBLISHED_JURI__:", "").trim());
         }
       });
-      setPublishedJuriIds(pubJuriIds);
-      setPublishAll(pubAll);
+      if (pubAll) setPublishAll(true);
+      if (pubJuriIds.length > 0) {
+        setPublishedJuriIds((prev) => Array.from(new Set([...prev, ...pubJuriIds])));
+      }
     }
 
 
@@ -709,7 +761,7 @@ Panitia Lomba Tingkat II (LT-II) Kwarran Mekar Baru menginformasikan bahwa berka
 • No. Kapling: ${peserta.nomor_dada ? String(peserta.nomor_dada).padStart(3, '0') : '-'}
 • Status: *TERVERIFIKASI RESMI*
 
-Silakan masuk ke portal https://www.siloti-kwaranmekarbaru.my.id untuk mengunduh dan mencetak Bukti Pendaftaran resmi.
+Silakan *cek email* Kakak untuk mengunduh Bukti Pendaftaran resmi. Bukti Pendaftaran tersebut wajib dibawa saat *pendaftaran ulang* untuk mendapatkan surat izin mendirikan tenda. 🖨️
 
 👥 *Grup WhatsApp Resmi Pembina Pendamping:*
 Mohon Kakak Pembina Pendamping segera bergabung ke grup koordinasi resmi melalui tautan berikut:
@@ -1373,8 +1425,11 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
             <button
               onClick={async () => {
-                try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
-                await supabase.auth.signOut();
+                try {
+                  sessionStorage.removeItem("_profile_cache");
+                  sessionStorage.removeItem("_admin_session");
+                } catch (_) {}
+                await supabase.auth.signOut().catch(() => {});
                 router.push("/login");
               }}
               className="text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-3.5 py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all"
