@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
-import fs from "fs";
-import path from "path";
+import { generatePdfBukti } from "@/lib/generatePdfBukti";
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -262,32 +261,12 @@ export async function POST(request) {
           }
 
           let docBuffer = null;
-          let filename = "Bukti_Pendaftaran.doc";
+          const safeFilenameName = (peserta.nama_regu || "regu").replace(/[^a-z0-9]/gi, '_').toLowerCase();
+          let filename = `Bukti_Pendaftaran_${safeFilenameName}.pdf`;
           try {
-            const templatePath = path.join(process.cwd(), 'Template_Bukti_Pendaftaran.doc');
-            let docContent = fs.readFileSync(templatePath, 'utf16le');
-            
-            const namaRegu = peserta.nama_regu || "—";
-            const pangkalan = peserta.pangkalan || "—";
-            const noGudep = peserta.no_gudep || "—";
-            const kategoriPeserta = peserta.kategori || "—";
-            const jenisKelamin = peserta.gender || "—";
-            const tglDaftar = new Date(peserta.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
-            docContent = docContent.replace(/(No\.\s*(?:<[^>]+>\s*)*Registrasi\s*(?:<[^>]+>\s*)*\:)/i, `$1 ${peserta_id.slice(0, 8).toUpperCase()}`);
-            docContent = docContent.replace(/(…………….)/g, tglDaftar);
-            docContent = docContent.replace(/(Nama\s*(?:<[^>]+>\s*)*Regu(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${namaRegu} (Kapling #${kaplingFormatted})`);
-            docContent = docContent.replace(/(Pangkalan\s*(?:<[^>]+>\s*)*\/\s*(?:<[^>]+>\s*)*Sekolah(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${pangkalan}`);
-            docContent = docContent.replace(/(No\.\s*(?:<[^>]+>\s*)*Gugus\s*(?:<[^>]+>\s*)*Depan(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${noGudep}`);
-            docContent = docContent.replace(/(Kategori\s*(?:<[^>]+>\s*)*Peserta(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${kategoriPeserta}`);
-            docContent = docContent.replace(/(Jenis\s*(?:<[^>]+>\s*)*Kelamin(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${jenisKelamin}`);
-            docContent = docContent.replace(/(Tanggal\s*(?:<[^>]+>\s*)*Daftar(?:<[^>]+>\s*)*\:\s*(?:<[^>]+>\s*)*)(&nbsp;)/i, `$1${tglDaftar}`);
-
-            docBuffer = Buffer.from(docContent, 'utf16le');
-            const safeFilenameName = namaRegu.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            filename = `Bukti_Pendaftaran_${safeFilenameName}.doc`;
+            docBuffer = await generatePdfBukti(peserta, peserta_id, kaplingFormatted);
           } catch (e) {
-            console.error("Gagal melampirkan file DOC: ", e);
+            console.error("Gagal generate PDF: ", e);
           }
 
           const mailOptions = {
@@ -301,7 +280,8 @@ export async function POST(request) {
             mailOptions.attachments = [
               {
                 filename: filename,
-                content: docBuffer
+                content: docBuffer,
+                contentType: "application/pdf",
               }
             ];
           }

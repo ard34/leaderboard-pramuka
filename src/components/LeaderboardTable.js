@@ -37,23 +37,37 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
   // Fetch lomba and assessment details
   const fetchDetails = async () => {
     try {
-      // 1. Fetch info and check publication status
+      // 1. Fetch info and check publication status from server API + Supabase
+      let pubIds = [];
+      let isPubAll = true;
+      let isAnnounced = false;
+
+      try {
+        const pubRes = await fetch("/api/admin/publish-score");
+        if (pubRes.ok) {
+          const pubData = await pubRes.json();
+          if (pubData.publishAll !== undefined) isPubAll = pubData.publishAll;
+          if (pubData.publishedJuriIds) pubIds = pubData.publishedJuriIds;
+          if (pubData.showWinners !== undefined) isAnnounced = pubData.showWinners;
+        }
+      } catch (_) {}
+
       const { data: infoData } = await supabase
         .from("informasi")
         .select("id, text, created_at")
         .order("created_at", { ascending: false });
 
-      const pubIds = [];
-      let isPubAll = false;
-      let isAnnounced = false;
-      if (infoData) {
+      if (infoData && infoData.length > 0) {
         const cleanInfo = infoData.filter((i) => !i.text.startsWith("__CONFIG_") && !i.text.startsWith("__PUBLISH") && !i.text.startsWith("__PUBLISHED_JURI__"));
         setAnnouncements(cleanInfo);
-        isAnnounced = infoData.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
+        if (infoData.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__")) {
+          isAnnounced = true;
+        }
         infoData.forEach((item) => {
           if (item.text === "__PUBLISH_ALL_SCORES__:true" || item.text === "__PUBLISH_ALL_SCORES__") isPubAll = true;
           if (item.text && item.text.startsWith("__PUBLISHED_JURI__:")) {
-            pubIds.push(item.text.replace("__PUBLISHED_JURI__:", "").trim());
+            const jId = item.text.replace("__PUBLISHED_JURI__:", "").trim();
+            if (jId && !pubIds.includes(jId)) pubIds.push(jId);
           }
         });
       }
@@ -235,7 +249,12 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
       )
       .subscribe();
 
+    const pollInterval = setInterval(() => {
+      fetchDetails();
+    }, 5000);
+
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channelPeserta);
       supabase.removeChannel(channelNilai);
       supabase.removeChannel(channelInfo);

@@ -12,8 +12,6 @@ function ResetPasswordAdminContent() {
   const [tokenValid, setTokenValid] = useState(false);
   const [tokenError, setTokenError] = useState("");
 
-  const [email, setEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +35,7 @@ function ResetPasswordAdminContent() {
         try {
           data = await res.json();
         } catch (_) {
-          throw new Error("Server belum siap atau sedang memuat rute. Silakan refresh halaman.");
+          throw new Error("Server belum siap. Silakan refresh halaman.");
         }
         if (res.ok && data.valid) {
           setTokenValid(true);
@@ -59,23 +57,13 @@ function ResetPasswordAdminContent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email.trim()) {
-      setError("Email akun Admin wajib diisi.");
-      return;
-    }
-
-    if (!currentPassword) {
-      setError("Password saat ini wajib diisi untuk verifikasi identitas.");
-      return;
-    }
-
     if (!newPassword || newPassword.length < 6) {
       setError("Password baru minimal 6 karakter.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Konfirmasi password baru tidak cocok.");
+      setError("Konfirmasi password baru tidak cocok. Pastikan kedua kolom sama.");
       return;
     }
 
@@ -88,8 +76,6 @@ function ResetPasswordAdminContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token,
-          email: email.trim().toLowerCase(),
-          currentPassword,
           newPassword,
         }),
       });
@@ -98,11 +84,11 @@ function ResetPasswordAdminContent() {
       try {
         data = await res.json();
       } catch (_) {
-        throw new Error("Gagal membaca respons server. Pastikan server aktif.");
+        throw new Error("Gagal membaca respons server.");
       }
 
       if (!res.ok || !data.success) {
-        setError(data.error || "Gagal mengubah password.");
+        setError(data.error || "Gagal mengubah kata sandi.");
         setLoading(false);
         return;
       }
@@ -110,12 +96,12 @@ function ResetPasswordAdminContent() {
       setSuccess(true);
       setLoading(false);
 
-      // Auto redirect to login after 3 seconds
+      // Auto redirect to login after 3.5 seconds
       setTimeout(() => {
         router.replace("/login");
-      }, 3000);
+      }, 3500);
     } catch (err) {
-      setError("Terjadi kesalahan jaringan: " + err.message);
+      setError("Terjadi kesalahan: " + err.message);
       setLoading(false);
     }
   };
@@ -192,23 +178,39 @@ function ResetPasswordAdminContent() {
             </div>
           ) : success ? (
             <div className="space-y-4 text-center py-4">
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm space-y-2">
-                <div className="text-3xl">🎉</div>
-                <div className="font-black text-base">Kata Sandi Berhasil Diperbarui!</div>
-                <p className="text-xs text-emerald-300/90 leading-relaxed">
-                  Tautan 1-kali pakai ini sekarang telah <b>hangus secara permanen</b>. Anda dapat login dengan kata sandi baru Anda.
+              <div className="p-5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-sm space-y-3 shadow-xl">
+                <div className="text-4xl animate-bounce">🎉</div>
+                <div className="font-black text-lg text-white">Password Berhasil Diperbarui!</div>
+                <p className="text-xs text-emerald-200/90 leading-relaxed">
+                  Tautan 1-kali pakai ini sekarang telah <b>hangus secara permanen</b>.
                 </p>
+                <div className="p-3 bg-slate-950/80 rounded-xl border border-emerald-500/20 text-xs text-left space-y-1">
+                  <div className="text-slate-400">Akun Anda:</div>
+                  <div className="text-white font-bold">Username: <span className="text-amber-400">admin</span></div>
+                  <div className="text-slate-400 text-[0.7rem]">Gunakan password baru yang baru saja Anda buat untuk login.</div>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => router.replace("/login")}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg"
+                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-black py-3.5 px-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg hover:shadow-emerald-500/25"
               >
-                Masuk Sekarang
+                Masuk ke Halaman Login Sekarang →
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Account Identity Info */}
+              <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl text-xs flex items-center justify-between">
+                <div>
+                  <span className="text-slate-400 block text-[0.65rem] uppercase tracking-wider">Target Akun:</span>
+                  <span className="text-amber-300 font-black tracking-wide">Admin Utama (admin)</span>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[0.65rem] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  1-Kali Pakai
+                </span>
+              </div>
+
               {error && (
                 <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl text-center text-xs font-semibold flex items-center justify-center gap-2">
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,56 +226,27 @@ function ResetPasswordAdminContent() {
               )}
 
               <div className="space-y-1.5">
-                <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">
-                  Email Akun Admin
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="admin@email.com"
-                  autoComplete="email"
-                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">
-                  Password Saat Ini
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    required
-                    placeholder="Masukkan password saat ini"
-                    autoComplete="current-password"
-                    className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm"
-                  />
+                <div className="flex items-center justify-between">
+                  <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">
+                    Password Baru
+                  </label>
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-300"
+                    className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-semibold"
                   >
                     {showPassword ? "Sembunyikan" : "Lihat"}
                   </button>
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">
-                  Password Baru
-                </label>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  placeholder="Minimal 6 karakter"
+                  placeholder="Masukkan minimal 6 karakter"
                   autoComplete="new-password"
-                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm"
+                  autoFocus
+                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm font-mono tracking-wide"
                 />
               </div>
 
@@ -286,18 +259,18 @@ function ResetPasswordAdminContent() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  placeholder="Ketik ulang password baru"
+                  placeholder="Ketik ulang password baru Anda"
                   autoComplete="new-password"
-                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm"
+                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 text-sm font-mono tracking-wide"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3.5 px-4 rounded-xl mt-2 transition-all shadow-lg hover:shadow-amber-500/20 disabled:opacity-50 tracking-wider text-xs uppercase"
+                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3.5 px-4 rounded-xl mt-2 transition-all shadow-lg hover:shadow-amber-500/20 disabled:opacity-50 tracking-wider text-xs uppercase cursor-pointer"
               >
-                {loading ? "Memproses Verifikasi..." : "Simpan Password Baru"}
+                {loading ? "Menyimpan & Menghanguskan Token..." : "Simpan Password Baru"}
               </button>
             </form>
           )}

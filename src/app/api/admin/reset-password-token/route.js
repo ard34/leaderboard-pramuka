@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 
 const TOKEN_FILE_PATH = path.join(process.cwd(), "src", "lib", "adminResetToken.json");
+const AUTH_FILE_PATH = path.join(process.cwd(), "src", "lib", "adminAuth.json");
 
 // In-memory fallback in case filesystem is read-only (e.g. serverless)
 const memoryTokenState = new Map([
@@ -11,18 +12,27 @@ const memoryTokenState = new Map([
 ]);
 
 function getTokens() {
+  let fileTokens = [];
   try {
     if (fs.existsSync(TOKEN_FILE_PATH)) {
       const data = JSON.parse(fs.readFileSync(TOKEN_FILE_PATH, "utf8"));
-      return data.activeTokens || [];
+      fileTokens = data.activeTokens || [];
     }
   } catch (_) {}
-  // Fallback to in-memory
-  const tokens = [];
-  for (const [token, val] of memoryTokenState.entries()) {
-    tokens.push({ token, used: val.used });
+
+  if (fileTokens.length === 0) {
+    for (const [token, val] of memoryTokenState.entries()) {
+      fileTokens.push({ token, used: val.used });
+    }
   }
-  return tokens;
+
+  return fileTokens.map((item) => {
+    const mem = memoryTokenState.get(item.token);
+    return {
+      ...item,
+      used: mem ? mem.used : item.used,
+    };
+  });
 }
 
 function markTokenAsUsed(tokenStr) {
@@ -38,6 +48,23 @@ function markTokenAsUsed(tokenStr) {
       }
     }
   } catch (_) {}
+}
+
+function saveNewAdminPassword(newPassword) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(newPassword, salt, 1000, 64, "sha512").toString("hex");
+  const authData = {
+    username: "admin",
+    hash,
+    salt,
+    updatedAt: Date.now(),
+  };
+
+  try {
+    fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify(authData, null, 2), "utf8");
+  } catch (_) {}
+
+  return authData;
 }
 
 // GET: Cek validitas token saat halaman dimuat
@@ -60,7 +87,7 @@ export async function GET(request) {
     if (tokenItem.used) {
       return NextResponse.json({
         valid: false,
-        reason: "Tautan token ini sudah pernah digunakan (bersifat 1-kali pakai) dan tidak berlaku lagi.",
+        reason: "Tautan token ini sudah pernah digunakan (bersifat 1-kali pakai) dan telah hangus.",
       }, { status: 410 });
     }
 
@@ -70,11 +97,11 @@ export async function GET(request) {
   }
 }
 
-// POST: Eksekusi reset password dengan validasi password saat ini
+// POST: Atur password baru admin dengan token 1-kali pakai
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { token, email, currentPassword, newPassword } = body;
+    const { token, newPassword } = body;
 
     if (!token) {
       return NextResponse.json({ error: "Token tidak disertakan." }, { status: 400 });
@@ -93,72 +120,19 @@ export async function POST(request) {
       }, { status: 410 });
     }
 
-    if (!email || !email.trim()) {
-      return NextResponse.json({ error: "Email akun admin wajib diisi." }, { status: 400 });
-    }
-
-    if (!currentPassword) {
-      return NextResponse.json({ error: "Password saat ini wajib diisi untuk verifikasi keamanan." }, { status: 400 });
-    }
-
     if (!newPassword || newPassword.length < 6) {
       return NextResponse.json({ error: "Password baru minimal 6 karakter." }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    // 1. Simpan password baru terenkripsi
+    saveNewAdminPassword(newPassword);
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json({ error: "Konfigurasi Supabase belum lengkap." }, { status: 500 });
-    }
-
-    // 1. Buat instance client untuk memverifikasi password saat ini
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: false },
-    });
-
-    const cleanEmail = email.trim().toLowerCase();
-    const { data: signInData, error: signInError } = await authClient.auth.signInWithPassword({
-      email: cleanEmail,
-      password: currentPassword,
-    });
-
-    if (signInError || !signInData?.user) {
-      return NextResponse.json({
-        error: "Password saat ini salah atau akun admin dengan email tersebut tidak ditemukan.",
-      }, { status: 401 });
-    }
-
-    // 2. Verifikasi bahwa pengguna adalah Admin
-    const { data: profile, error: profileErr } = await authClient
-      .from("profiles")
-      .select("role")
-      .eq("id", signInData.user.id)
-      .maybeSingle();
-
-    if (profileErr || !profile || profile.role !== "admin") {
-      return NextResponse.json({
-        error: "Akses ditolak: Akun yang diverifikasi bukan akun Administrator.",
-      }, { status: 403 });
-    }
-
-    // 3. Perbarui password ke password baru
-    const { error: updateError } = await authClient.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (updateError) {
-      return NextResponse.json({
-        error: "Gagal memperbarui password di Supabase: " + updateError.message,
-      }, { status: 500 });
-    }
-
-    // 4. HANGUSKAN TOKEN (1-KALI PAKAI)
+    // 2. Hanguskan token secara permanen (1-KALI PAKAI)
     markTokenAsUsed(token);
 
     return NextResponse.json({
       success: true,
-      message: "Kata sandi Admin berhasil diubah! Token 1-kali pakai ini sekarang telah hangus secara permanen.",
+      message: "Password Admin berhasil diperbarui! Token 1-kali pakai ini sekarang telah hangus secara permanen.",
     });
   } catch (err) {
     return NextResponse.json({ error: "Kesalahan internal server: " + err.message }, { status: 500 });

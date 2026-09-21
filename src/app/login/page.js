@@ -90,15 +90,79 @@ export default function LoginPage() {
 
     const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail || !password) {
-      setError("Email dan kata sandi wajib diisi.");
+      setError("Username / Email dan kata sandi wajib diisi.");
       return;
     }
 
     setLoading(true);
     setError(null);
 
+    // 1. Cek apakah login sebagai akun Admin (Username 'admin' atau email admin)
+    const isAdminLogin =
+      trimmedEmail === "admin" ||
+      trimmedEmail === "admin utama" ||
+      trimmedEmail.startsWith("admin@") ||
+      trimmedEmail.endsWith("@admin") ||
+      trimmedEmail.includes("admin");
 
+    if (isAdminLogin) {
+      try {
+        const adminRes = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            usernameOrEmail: trimmedEmail,
+            password: password,
+          }),
+        });
 
+        const adminData = await adminRes.json();
+        if (adminRes.ok && adminData.success) {
+          loginAttemptsRef.current = 0;
+
+          try {
+            sessionStorage.setItem(
+              "_admin_session",
+              JSON.stringify({
+                token: adminData.token,
+                user: adminData.user,
+                ts: Date.now(),
+              })
+            );
+            sessionStorage.setItem(
+              "_profile_cache",
+              JSON.stringify({
+                id: adminData.user.id,
+                role: "admin",
+                nama_lengkap: adminData.user.nama_lengkap,
+                assigned_lomba_id: null,
+                assigned_kategori: null,
+                assigned_gender: "SEMUA",
+                ts: Date.now(),
+              })
+            );
+          } catch (_) {}
+
+          router.replace("/dashboard/admin");
+          return;
+        } else if (adminRes.status === 401) {
+          loginAttemptsRef.current += 1;
+          const remaining = MAX_LOGIN_ATTEMPTS - loginAttemptsRef.current;
+          if (loginAttemptsRef.current >= MAX_LOGIN_ATTEMPTS) {
+            setError("Terlalu banyak percobaan gagal. Akun dikunci sementara.");
+            startLockout();
+          } else {
+            setError(adminData.error || `Kata sandi Admin salah. Sisa percobaan: ${remaining}`);
+          }
+          setLoading(false);
+          return;
+        }
+      } catch (adminErr) {
+        console.warn("Local admin auth error, falling back to Supabase auth:", adminErr);
+      }
+    }
+
+    // 2. Fallback ke Supabase Auth untuk Dewan Juri & akun lain
     try {
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({
@@ -211,15 +275,15 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-[0.7rem] font-bold text-slate-500 uppercase tracking-[0.15em]">
-                Email Akun
+                Username / Email Akun
               </label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="nama@email.com"
-                autoComplete="email"
+                placeholder="admin atau email@terdaftar.com"
+                autoComplete="username"
                 className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm"
               />
             </div>

@@ -61,6 +61,21 @@ export default function CetakBuktiPendaftaran() {
     year: "numeric"
   });
 
+  // Pisahkan no. gudep sesuai gender jika format "A-B" atau "A – B"
+  const getNoGudepByGender = (noGudep, gender) => {
+    if (!noGudep) return "-";
+    const cleaned = noGudep.trim();
+    const parts = cleaned.split(/\s*[\u2013\-]\s*/);
+    if (parts.length >= 2) {
+      const isPutra =
+        gender?.toLowerCase().includes("laki") ||
+        gender?.toLowerCase().includes("putra");
+      return isPutra ? parts[0].trim() : parts[1].trim();
+    }
+    return cleaned;
+  };
+  const noGudepDisplay = getNoGudepByGender(peserta.no_gudep, peserta.gender);
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center py-6 print:py-0 print:bg-white text-black" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
       <style>{`
@@ -83,7 +98,7 @@ export default function CetakBuktiPendaftaran() {
             download
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg flex items-center gap-2 transition-all"
           >
-            📄 Unduh Bukti (Word/DOC)
+            📄 Unduh Bukti (PDF)
           </a>
         )}
       </div>
@@ -137,7 +152,7 @@ export default function CetakBuktiPendaftaran() {
               <tr><td className="py-1.5 w-48">Nama Regu</td><td className="py-1.5 w-4">:</td><td className="py-1.5">{peserta.nama_regu}</td></tr>
               <tr><td className="py-1.5">No. Kapling (Tenda)</td><td className="py-1.5">:</td><td className="py-1.5 font-mono">{peserta.nomor_dada ? `#${String(peserta.nomor_dada).padStart(3, "0")}` : "Menunggu Verifikasi"}</td></tr>
               <tr><td className="py-1.5">Pangkalan / Sekolah</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.pangkalan}</td></tr>
-              <tr><td className="py-1.5">No. Gugus Depan</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.no_gudep || "-"}</td></tr>
+              <tr><td className="py-1.5">No. Gugus Depan</td><td className="py-1.5">:</td><td className="py-1.5">{noGudepDisplay}</td></tr>
               <tr><td className="py-1.5">Kategori Peserta</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.kategori}</td></tr>
               <tr><td className="py-1.5">Jenis Kelamin</td><td className="py-1.5">:</td><td className="py-1.5">{peserta.gender}</td></tr>
               <tr><td className="py-1.5">Tanggal Daftar</td><td className="py-1.5">:</td><td className="py-1.5">{tglDaftar}</td></tr>

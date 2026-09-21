@@ -499,27 +499,42 @@ export default function Home() {
         setAvailableCounts((prev) => ({ ...prev, [`${kategori}_${gender}`]: pesertaData.length }));
       }
 
-      // 1. Fetch info and check publication status
+      // 1. Fetch info and check publication status from server API + Supabase
+      let pubIds = [];
+      let isPubAll = true;
+      let isAnnounced = false;
+
+      try {
+        const pubRes = await fetch("/api/admin/publish-score");
+        if (pubRes.ok) {
+          const pubData = await pubRes.json();
+          if (pubData.publishAll !== undefined) isPubAll = pubData.publishAll;
+          if (pubData.publishedJuriIds) pubIds = pubData.publishedJuriIds;
+          if (pubData.showWinners !== undefined) isAnnounced = pubData.showWinners;
+        }
+      } catch (_) {}
+
       const { data: infoData } = await supabase
         .from("informasi")
         .select("id, text, created_at")
         .order("created_at", { ascending: false })
         .limit(20);
 
-      const pubIds = [];
-      let isPubAll = false;
-      if (infoData) {
+      if (infoData && infoData.length > 0) {
         const cleanInfo = infoData.filter((i) => !i.text.startsWith("__CONFIG_") && !i.text.startsWith("__PUBLISH"));
         setAnnouncements(cleanInfo);
-        const isAnnounced = infoData.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__");
-        setShowWinners(isAnnounced);
+        if (infoData.some((i) => i.text === "__CONFIG_SHOW_WINNERS:true" || i.text === "__SHOW_WINNERS__")) {
+          isAnnounced = true;
+        }
         infoData.forEach((item) => {
           if (item.text === "__PUBLISH_ALL_SCORES__:true") isPubAll = true;
           if (item.text && item.text.startsWith("__PUBLISHED_JURI__:")) {
-            pubIds.push(item.text.replace("__PUBLISHED_JURI__:", "").trim());
+            const jId = item.text.replace("__PUBLISHED_JURI__:", "").trim();
+            if (jId && !pubIds.includes(jId)) pubIds.push(jId);
           }
         });
       }
+      setShowWinners(isAnnounced);
 
       // 2. Process nilai if there are participants
       if (pesertaData && pesertaData.length > 0) {
