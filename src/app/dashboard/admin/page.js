@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
+import { getNoGudepByGender } from "@/lib/generatePdfBukti";
 
 // Official 4 Groups of Competition Activities (13 Cabang Lomba Resmi LT-II 2026)
 const OFFICIAL_GROUP_ORDER = {
@@ -91,12 +92,31 @@ export default function DashboardAdmin() {
   const [seedingPeserta, setSeedingPeserta] = useState(false);
   const [clearingData, setClearingData] = useState(false);
 
-  // State Ganti Password Admin
+  // State Ganti Password & Reset Token Admin
   const [modalPasswordOpen, setModalPasswordOpen] = useState(false);
   const [newAdminPassword, setNewAdminPassword] = useState("");
   const [confirmAdminPassword, setConfirmAdminPassword] = useState("");
   const [adminPasswordSaving, setAdminPasswordSaving] = useState(false);
   const [adminPasswordMsg, setAdminPasswordMsg] = useState({ type: "", text: "" });
+  const [generatedResetUrl, setGeneratedResetUrl] = useState("");
+  const [generatedToken, setGeneratedToken] = useState("");
+  const [generatingToken, setGeneratingToken] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
+
+  const handleGenerateNewToken = async () => {
+    setGeneratingToken(true);
+    try {
+      const res = await fetch("/api/admin/reset-password-token?action=generate");
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setGeneratedResetUrl(data.resetUrl);
+        setGeneratedToken(data.token);
+      }
+    } catch (_) {}
+    finally {
+      setGeneratingToken(false);
+    }
+  };
 
   const handleChangeAdminPassword = async (e) => {
     e.preventDefault();
@@ -746,6 +766,10 @@ export default function DashboardAdmin() {
 
     const actualType = type === "auto" ? (peserta.is_verified || isComplete ? "selesai" : "belum") : type;
 
+    // Sinkronisasi No. Gudep sesuai jenis kelamin regu
+    const rawGudep = peserta.no_gudep || (pesertaList || []).find((p) => p.pangkalan === peserta.pangkalan && p.no_gudep)?.no_gudep;
+    const effectiveGudep = getNoGudepByGender(rawGudep, peserta.gender) || "-";
+
     let message = "";
     if (actualType === "selesai") {
       message = 
@@ -757,7 +781,7 @@ Panitia Lomba Tingkat II (LT-II) Kwarran Mekar Baru menginformasikan bahwa berka
 📋 *Data Regu Terverifikasi:*
 • Regu: ${peserta.nama_regu} (${peserta.gender === 'Laki-laki' ? 'Putra' : 'Putri'})
 • Pangkalan: ${peserta.pangkalan}
-• Gudep: ${peserta.no_gudep || '-'}
+• Gudep: ${effectiveGudep}
 • No. Kapling: ${peserta.nomor_dada ? String(peserta.nomor_dada).padStart(3, '0') : '-'}
 • Status: *TERVERIFIKASI RESMI*
 
@@ -784,7 +808,7 @@ Terima kasih atas partisipasinya dan salam sukses! ⛺`;
       }
 
       message = 
-`Halo Kak Pembina Regu *${peserta.nama_regu}* (${peserta.pangkalan}),
+`Halo Kak Pembina Regu *${peserta.nama_regu}* (${peserta.pangkalan} - Gudep: ${effectiveGudep}),
 
 Salam Pramuka! ⚜️
 Panitia Lomba Tingkat II (LT-II) Kwarran Mekar Baru menginformasikan terkait status berkas persyaratan pendaftaran regu Kakak:
@@ -815,19 +839,44 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
   const handleSimpanBerkas = async (id) => {
     setSaving(true);
     try {
-      // Direct update using supabase admin since we're in client side and have RLS "Admin full access" 
-      // Wait, client side has session, so RLS applies. Let's use supabase client directly.
-      const { error } = await supabase
-        .from("peserta")
-        .update({
+      // 1. Simpan melalui Server API (terjamin berhasil tanpa terblokir RLS)
+      const apiRes = await fetch("/api/peserta/update-berkas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
           status_berkas: berkasStatus,
-          catatan_berkas: catatanBerkas
-        })
-        .eq("id", id);
-      
-      if (error) throw error;
-      
-      showPesan("success", "Status berkas berhasil disimpan.");
+          catatan_berkas: catatanBerkas,
+        }),
+      });
+
+      const apiData = await apiRes.json().catch(() => ({}));
+
+      if (!apiRes.ok || !apiData.success) {
+        throw new Error(apiData.error || "Gagal menyimpan ke server.");
+      }
+
+      // 2. Perbarui state lokal secara instan agar tidak pernah kembali tidak terceklist
+      setPesertaList((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? { ...p, status_berkas: { ...berkasStatus }, catatan_berkas: catatanBerkas }
+            : p
+        )
+      );
+
+      // 3. Cadangan: simpan langsung via client jika sesi Supabase aktif
+      try {
+        await supabase
+          .from("peserta")
+          .update({
+            status_berkas: berkasStatus,
+            catatan_berkas: catatanBerkas,
+          })
+          .eq("id", id);
+      } catch (_) {}
+
+      showPesan("success", "✅ Status berkas berhasil disimpan permanen!");
       setCheckingBerkasId(null);
       await fetchAllData();
     } catch (err) {
@@ -1416,9 +1465,11 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 setNewAdminPassword("");
                 setConfirmAdminPassword("");
                 setAdminPasswordMsg({ type: "", text: "" });
+                setTokenCopied(false);
+                handleGenerateNewToken();
               }}
               className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 transition-all shadow-sm flex items-center gap-1.5"
-              title="Ganti kata sandi akun Admin"
+              title="Ganti kata sandi akun Admin & buat token baru"
             >
               <span>🔑 Ganti Password</span>
             </button>
@@ -2832,10 +2883,10 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
         )}
       </main>
 
-      {/* MODAL GANTI PASSWORD ADMIN */}
+      {/* MODAL GANTI PASSWORD & RESET TOKEN ADMIN */}
       {modalPasswordOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print">
-          <div className="glass-card max-w-md w-full p-6 md:p-8 border border-amber-500/30 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print overflow-y-auto">
+          <div className="glass-card max-w-lg w-full p-6 md:p-8 border border-amber-500/30 shadow-2xl relative my-8">
             <button
               type="button"
               onClick={() => setModalPasswordOpen(false)}
@@ -2851,11 +2902,83 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 </svg>
               </div>
               <h2 className="text-lg font-black tracking-wider text-white uppercase">
-                Ganti Kata Sandi Admin
+                Ganti Kata Sandi & Token Admin
               </h2>
               <p className="text-xs text-slate-400">
-                Perbarui kata sandi login Admin Utama untuk keamanan sistem
+                Setiap klik ganti password, token baru 1-kali pakai langsung dibuat otomatis
               </p>
+            </div>
+
+            {/* SEKSI 1: TOKEN RESET 1-KALI PAKAI */}
+            <div className="mb-6 p-4 rounded-xl bg-slate-900/90 border border-amber-500/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[0.7rem] font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  Token Baru Aktif (1-Kali Pakai)
+                </span>
+                <button
+                  type="button"
+                  onClick={handleGenerateNewToken}
+                  disabled={generatingToken}
+                  className="text-[0.65rem] font-bold text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1 disabled:opacity-50"
+                  title="Buat token reset acak baru lainnya"
+                >
+                  <span>{generatingToken ? "Membuat..." : "🔄 Buat Token Baru"}</span>
+                </button>
+              </div>
+
+              {generatedResetUrl ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={generatedResetUrl}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-300 select-all outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(generatedResetUrl);
+                        }
+                        setTokenCopied(true);
+                        setTimeout(() => setTokenCopied(false), 2500);
+                      }}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 flex-shrink-0 ${
+                        tokenCopied
+                          ? "bg-emerald-600 text-white shadow-emerald-500/30"
+                          : "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm"
+                      }`}
+                    >
+                      <span>{tokenCopied ? "✅ Tersalin!" : "📋 Salin Link"}</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between text-[0.65rem] text-slate-400">
+                    <span>Masa berlaku: 48 jam (Hangus setelah 1x reset)</span>
+                    <a
+                      href={generatedResetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-400 hover:underline font-bold"
+                    >
+                      Buka Halaman Reset ↗
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-2 text-xs text-slate-500 italic">
+                  {generatingToken ? "Membuat token keamanan baru..." : "Klik tombol 'Buat Token Baru' untuk membuat token."}
+                </div>
+              )}
+            </div>
+
+            <div className="relative flex py-2 items-center mb-4">
+              <div className="flex-grow border-t border-slate-800"></div>
+              <span className="flex-shrink mx-3 text-[0.65rem] font-bold uppercase tracking-wider text-slate-500">
+                Atau Ubah Langsung di Panel Ini
+              </span>
+              <div className="flex-grow border-t border-slate-800"></div>
             </div>
 
             {adminPasswordMsg.text && (
@@ -2907,7 +3030,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                   onClick={() => setModalPasswordOpen(false)}
                   className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold py-3 px-4 rounded-xl text-xs transition-colors"
                 >
-                  Batal
+                  Tutup
                 </button>
                 <button
                   type="submit"

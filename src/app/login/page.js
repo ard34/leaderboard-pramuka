@@ -143,6 +143,14 @@ export default function LoginPage() {
             );
           } catch (_) {}
 
+          // Autentikasi ke Supabase Auth agar auth.uid() aktif untuk izin RLS Admin
+          try {
+            await supabase.auth.signInWithPassword({
+              email: "admin@gmail.com",
+              password: password,
+            });
+          } catch (_) {}
+
           router.replace("/dashboard/admin");
           return;
         } else if (adminRes.status === 401) {

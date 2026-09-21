@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
-import { generatePdfBukti } from "@/lib/generatePdfBukti";
+import { generatePdfBukti, getNoGudepByGender } from "@/lib/generatePdfBukti";
+import { getSupabaseAdmin } from "@/lib/supabaseServerAdmin";
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -14,20 +15,14 @@ export async function POST(request) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseAdmin = await getSupabaseAdmin();
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseAdmin) {
       return NextResponse.json(
         { error: "Konfigurasi Supabase Server belum lengkap." },
         { status: 500 }
       );
     }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
 
     // 1. Fetch participant details
     const { data: peserta, error: fetchError } = await supabaseAdmin
@@ -101,9 +96,10 @@ export async function POST(request) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.siloti-kwaranmekarbaru.my.id";
     const cetakUrl = `${baseUrl}/peserta/cetak/${peserta.id}`;
     const groupWaUrl = "https://chat.whatsapp.com/G8fYg03xvHjL2lsVKCorPG?s=cl&p=a&mlu=4&ilr=4";
+    const noGudepDisplay = getNoGudepByGender(peserta.no_gudep, peserta.gender);
 
     const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} - NO. KAPLING: #${kaplingFormatted} | LT-II Kwarran Mekar Baru 2026`;
-    const plainTextBody = `Salam Pramuka!\n\nPemberitahuan Resmi Panitia LT-II Kwarran Mekar Baru 2026 kepada Pembina Pendamping Regu ${peserta.nama_regu} (${peserta.pangkalan}).\n\nPendaftaran regu Kakak telah DIVERIFIKASI RESMI & LENGKAP.\n\n📋 INFORMASI KAPLING & REGU:\n• Nomor Kapling Tenda: #${kaplingFormatted}\n• Nama Regu: ${peserta.nama_regu} (${peserta.gender === 'Laki-laki' ? 'Putra' : 'Putri'})\n• Asal Sekolah / Pangkalan: ${peserta.pangkalan}\n• No. Gugus Depan: ${peserta.no_gudep || "—"}\n• Tingkat: ${peserta.kategori}\n• Status: TERVERIFIKASI RESMI ✅\n\nBukti Pendaftaran Resmi telah kami lampirkan dalam email ini. Silakan unduh dan cetak Bukti Pendaftaran tersebut, lalu wajib dibawa saat PENDAFTARAN ULANG untuk mendapatkan surat izin mendirikan tenda.\n\n(Tunjukkan bukti cetak tersebut kepada Panitia saat tiba di Bumi Perkemahan untuk konfirmasi lokasi penempatan kapling tenda #${kaplingFormatted})\n\n👥 GABUNG GRUP WHATSAPP RESMI PEMBINA PENDAMPING:\nUntuk koordinasi teknis, informasi kapling, jadwal kegiatan, dan pengumuman panitia, Pembina Pendamping diwajibkan segera bergabung ke grup WhatsApp berikut:\n${groupWaUrl}\n\nTerima kasih atas partisipasinya dan salam Pramuka!\nPanitia Pelaksana LT-II Kwarran Mekar Baru 2026`;
+    const plainTextBody = `Salam Pramuka!\n\nPemberitahuan Resmi Panitia LT-II Kwarran Mekar Baru 2026 kepada Pembina Pendamping Regu ${peserta.nama_regu} (${peserta.pangkalan}).\n\nPendaftaran regu Kakak telah DIVERIFIKASI RESMI & LENGKAP.\n\n📋 INFORMASI KAPLING & REGU:\n• Nomor Kapling Tenda: #${kaplingFormatted}\n• Nama Regu: ${peserta.nama_regu} (${peserta.gender === 'Laki-laki' ? 'Putra' : 'Putri'})\n• Asal Sekolah / Pangkalan: ${peserta.pangkalan}\n• No. Gugus Depan: ${noGudepDisplay}\n• Tingkat: ${peserta.kategori}\n• Status: TERVERIFIKASI RESMI ✅\n\nBukti Pendaftaran Resmi telah kami lampirkan dalam email ini. Silakan unduh dan cetak Bukti Pendaftaran tersebut, lalu wajib dibawa saat PENDAFTARAN ULANG untuk mendapatkan surat izin mendirikan tenda.\n\n(Tunjukkan bukti cetak tersebut kepada Panitia saat tiba di Bumi Perkemahan untuk konfirmasi lokasi penempatan kapling tenda #${kaplingFormatted})\n\n👥 GABUNG GRUP WHATSAPP RESMI PEMBINA PENDAMPING:\nUntuk koordinasi teknis, informasi kapling, jadwal kegiatan, dan pengumuman panitia, Pembina Pendamping diwajibkan segera bergabung ke grup WhatsApp berikut:\n${groupWaUrl}\n\nTerima kasih atas partisipasinya dan salam Pramuka!\nPanitia Pelaksana LT-II Kwarran Mekar Baru 2026`;
     const mailtoUrl = targetEmail ? `mailto:${targetEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(plainTextBody)}` : null;
 
     if (targetEmail) {
@@ -189,7 +185,7 @@ export async function POST(request) {
                 </tr>
                 <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
                   <td style="padding: 8px; color: #94a3b8;">No. Gugus Depan</td>
-                  <td style="padding: 8px; color: #ffffff; font-weight: bold; font-family: monospace; text-align: right;">${peserta.no_gudep || "—"}</td>
+                  <td style="padding: 8px; color: #ffffff; font-weight: bold; font-family: monospace; text-align: right;">${noGudepDisplay}</td>
                 </tr>
                 <tr style="border-bottom: 1px dashed rgba(255,255,255,0.1);">
                   <td style="padding: 8px; color: #94a3b8;">Tingkat & Gender</td>

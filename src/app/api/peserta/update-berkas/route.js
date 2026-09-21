@@ -1,0 +1,51 @@
+import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseServerAdmin";
+
+export async function POST(request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const { id, status_berkas, catatan_berkas } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "ID peserta wajib diisi." },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await getSupabaseAdmin();
+    if (!supabase) {
+      return NextResponse.json(
+        { success: false, error: "Koneksi database tidak tersedia." },
+        { status: 500 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("peserta")
+      .update({
+        status_berkas: status_berkas || {},
+        catatan_berkas: catatanBerkas !== undefined ? catatan_berkas : "",
+      })
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: "Gagal menyimpan berkas: " + error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Status berkas berhasil disimpan permanen!",
+      data: data?.[0] || null,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { success: false, error: "Kesalahan server: " + err.message },
+      { status: 500 }
+    );
+  }
+}
