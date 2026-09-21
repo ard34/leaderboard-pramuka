@@ -33,7 +33,12 @@ function ResetPasswordAdminContent() {
     const verifyToken = async () => {
       try {
         const res = await fetch(`/api/admin/reset-password-token?token=${encodeURIComponent(token)}`);
-        const data = await res.json();
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_) {
+          throw new Error("Server belum siap atau sedang memuat rute. Silakan refresh halaman.");
+        }
         if (res.ok && data.valid) {
           setTokenValid(true);
         } else {
@@ -42,7 +47,7 @@ function ResetPasswordAdminContent() {
         }
       } catch (err) {
         setTokenValid(false);
-        setTokenError("Gagal memverifikasi token: " + err.message);
+        setTokenError(err.message || "Gagal memverifikasi token.");
       } finally {
         setCheckingToken(false);
       }
@@ -89,7 +94,12 @@ function ResetPasswordAdminContent() {
         }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (_) {
+        throw new Error("Gagal membaca respons server. Pastikan server aktif.");
+      }
 
       if (!res.ok || !data.success) {
         setError(data.error || "Gagal mengubah password.");
