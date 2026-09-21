@@ -2665,24 +2665,24 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 </div>
 
                 <div className="grid grid-cols-2 text-center text-xs font-semibold gap-12 mb-4">
-                  {/* Kiri: Ketua Pelaksana */}
-                  <div className="space-y-20">
-                    <div>
-                      <p className="text-slate-700">Panitia Pelaksana,</p>
-                      <p className="font-bold text-black uppercase mt-0.5">Ketua Pelaksana LT-II 2026</p>
-                    </div>
-                    <div>
-                      <p className="font-black text-black underline uppercase text-sm tracking-wider">( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
-                    </div>
-                  </div>
-
-                  {/* Kanan: Ketua Kwarran */}
+                  {/* Kiri: Ketua Kwarran (Mengetahui & Mengesahkan) */}
                   <div className="space-y-20">
                     <div>
                       <p className="text-slate-700">Mengetahui &amp; Mengesahkan,</p>
                       <p className="font-black text-black uppercase mt-0.5">
                         Ketua Kwartir Ranting Gerakan Pramuka Mekar Baru
                       </p>
+                    </div>
+                    <div>
+                      <p className="font-black text-black underline uppercase text-sm tracking-wider">( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
+                    </div>
+                  </div>
+
+                  {/* Kanan: Ketua Pelaksana (Panitia Pelaksana) */}
+                  <div className="space-y-20">
+                    <div>
+                      <p className="text-slate-700">Panitia Pelaksana,</p>
+                      <p className="font-bold text-black uppercase mt-0.5">Ketua Pelaksana LT-II 2026</p>
                     </div>
                     <div>
                       <p className="font-black text-black underline uppercase text-sm tracking-wider">( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
