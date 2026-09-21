@@ -25,7 +25,7 @@ export async function POST(request) {
       .from("peserta")
       .update({
         status_berkas: status_berkas || {},
-        catatan_berkas: catatanBerkas !== undefined ? catatan_berkas : "",
+        catatan_berkas: catatan_berkas !== undefined ? catatan_berkas : "",
       })
       .eq("id", id)
       .select();
