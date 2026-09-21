@@ -9,7 +9,7 @@ import crypto from "crypto";
 // =====================================================
 
 // Token tetap (hardcoded 1-kali pakai, bisa di-reset oleh developer)
-const HARDCODED_TOKEN = "token-admin-cb5c3e114062d5f19c45bd634f8e5fbe";
+const HARDCODED_TOKEN = "token-admin-ac8f5980a2ee4509c86e7562cbf43803";
 
 function getSupabaseAdmin() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
