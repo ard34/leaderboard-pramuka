@@ -1,16 +1,45 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
-const AUTH_FILE_PATH = path.join(process.cwd(), "src", "lib", "adminAuth.json");
+// =====================================================
+// ADMIN LOGIN — Persistent via Supabase (key-value)
+// Vercel filesystem is read-only; credentials stored
+// in Supabase table `informasi` with key=admin_auth
+// =====================================================
 
-function getStoredAdminAuth() {
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseServiceKey) return null;
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { persistSession: false },
+  });
+}
+
+// Baca hash admin dari Supabase (tabel informasi, key=admin_auth)
+async function getAdminAuthFromSupabase() {
   try {
-    if (fs.existsSync(AUTH_FILE_PATH)) {
-      return JSON.parse(fs.readFileSync(AUTH_FILE_PATH, "utf8"));
-    }
-  } catch (_) {}
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return null;
+    const { data, error } = await supabase
+      .from("informasi")
+      .select("text")
+      .eq("title", "admin_auth")
+      .maybeSingle();
+    if (error || !data) return null;
+    return JSON.parse(data.text);
+  } catch (_) {
+    return null;
+  }
+}
+
+// Fallback: baca dari env var jika tersedia
+function getAdminAuthFromEnv() {
+  const hash = process.env.ADMIN_HASH;
+  const salt = process.env.ADMIN_SALT;
+  if (hash && salt) return { hash, salt };
   return null;
 }
 
@@ -41,15 +70,17 @@ export async function POST(request) {
       );
     }
 
-    const stored = getStoredAdminAuth();
+    // 1. Coba dari Supabase dulu (persistent)
+    let stored = await getAdminAuthFromSupabase();
+    // 2. Fallback ke env var
+    if (!stored) stored = getAdminAuthFromEnv();
+
     let isValid = false;
 
     if (stored && stored.hash && stored.salt) {
       const calculatedHash = crypto
         .pbkdf2Sync(password, stored.salt, 1000, 64, "sha512")
         .toString("hex");
-      
-      // Timing safe comparison to prevent timing attacks
       if (
         calculatedHash.length === stored.hash.length &&
         crypto.timingSafeEqual(Buffer.from(calculatedHash), Buffer.from(stored.hash))
@@ -58,8 +89,8 @@ export async function POST(request) {
       }
     }
 
-    // Fallback if password matches initial defaults
-    if (!isValid && (password === "admin" || password === "Pramuka2026!")) {
+    // Fallback default passwords (hanya jika belum pernah diset)
+    if (!isValid && !stored && (password === "admin123" || password === "Pramuka2026!")) {
       isValid = true;
     }
 
@@ -80,7 +111,7 @@ export async function POST(request) {
     const sessionPayload = {
       user: adminUser,
       loggedAt: Date.now(),
-      exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+      exp: Date.now() + 24 * 60 * 60 * 1000,
     };
 
     const sessionToken = Buffer.from(JSON.stringify(sessionPayload)).toString("base64");
