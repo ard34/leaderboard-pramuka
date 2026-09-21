@@ -18,6 +18,14 @@ export const metadata = {
     "Sistem Penilaian & Live Leaderboard Lomba Tingkat II (LT II) dengan papan klasemen real-time.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html
