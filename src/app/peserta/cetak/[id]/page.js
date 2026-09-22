@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useParams } from "next/navigation";
+import { getNoGudepByGender } from "@/lib/gudepUtils";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -61,19 +62,6 @@ export default function CetakBuktiPendaftaran() {
     year: "numeric"
   });
 
-  // Pisahkan no. gudep sesuai gender jika format "A-B" atau "A – B"
-  const getNoGudepByGender = (noGudep, gender) => {
-    if (!noGudep) return "-";
-    const cleaned = noGudep.trim();
-    const parts = cleaned.split(/\s*[\u2013\-]\s*/);
-    if (parts.length >= 2) {
-      const isPutra =
-        gender?.toLowerCase().includes("laki") ||
-        gender?.toLowerCase().includes("putra");
-      return isPutra ? parts[0].trim() : parts[1].trim();
-    }
-    return cleaned;
-  };
   const noGudepDisplay = getNoGudepByGender(peserta.no_gudep, peserta.gender);
 
   return (

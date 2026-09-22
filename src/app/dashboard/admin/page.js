@@ -1761,7 +1761,13 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                           <td className="p-3 text-sm font-bold text-white">{p.nama_regu}</td>
                           <td className="p-3 text-sm text-slate-400">
                             <div className="font-semibold text-slate-300">{p.pangkalan}</div>
-                            {p.no_gudep && <div className="text-[0.65rem] text-slate-500 font-mono">Gudep: {p.no_gudep}</div>}
+                            {(() => {
+                              const rawG = p.no_gudep || (pesertaList || []).find((other) => other.pangkalan === p.pangkalan && other.no_gudep)?.no_gudep;
+                              const gVal = getNoGudepByGender(rawG, p.gender);
+                              return gVal && gVal !== "—" ? (
+                                <div className="text-[0.65rem] text-amber-400/90 font-mono font-bold">Gudep: {gVal}</div>
+                              ) : null;
+                            })()}
                           </td>
                           <td className="p-3 text-xs font-black">
                             <div>{p.kategori}</div>

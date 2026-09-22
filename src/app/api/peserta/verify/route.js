@@ -96,7 +96,22 @@ export async function POST(request) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.siloti-kwaranmekarbaru.my.id";
     const cetakUrl = `${baseUrl}/peserta/cetak/${peserta.id}`;
     const groupWaUrl = "https://chat.whatsapp.com/G8fYg03xvHjL2lsVKCorPG?s=cl&p=a&mlu=4&ilr=4";
-    const noGudepDisplay = getNoGudepByGender(peserta.no_gudep, peserta.gender);
+    
+    // Fallback nomor gudep dari pangkalan yang sama jika kosong
+    let rawGudep = peserta.no_gudep;
+    if (!rawGudep && peserta.pangkalan) {
+      const { data: sibling } = await supabaseAdmin
+        .from("peserta")
+        .select("no_gudep")
+        .eq("pangkalan", peserta.pangkalan)
+        .not("no_gudep", "is", null)
+        .limit(1);
+      if (sibling && sibling.length > 0 && sibling[0]?.no_gudep) {
+        rawGudep = sibling[0].no_gudep;
+        peserta.no_gudep = rawGudep;
+      }
+    }
+    const noGudepDisplay = getNoGudepByGender(rawGudep, peserta.gender);
 
     const mailSubject = `[VERIFIKASI RESMI] Regu ${peserta.nama_regu} - NO. KAPLING: #${kaplingFormatted} | LT-II Kwarran Mekar Baru 2026`;
     const plainTextBody = `Salam Pramuka!\n\nPemberitahuan Resmi Panitia LT-II Kwarran Mekar Baru 2026 kepada Pembina Pendamping Regu ${peserta.nama_regu} (${peserta.pangkalan}).\n\nPendaftaran regu Kakak telah DIVERIFIKASI RESMI & LENGKAP.\n\n📋 INFORMASI KAPLING & REGU:\n• Nomor Kapling Tenda: #${kaplingFormatted}\n• Nama Regu: ${peserta.nama_regu} (${peserta.gender === 'Laki-laki' ? 'Putra' : 'Putri'})\n• Asal Sekolah / Pangkalan: ${peserta.pangkalan}\n• No. Gugus Depan: ${noGudepDisplay}\n• Tingkat: ${peserta.kategori}\n• Status: TERVERIFIKASI RESMI ✅\n\nBukti Pendaftaran Resmi telah kami lampirkan dalam email ini. Silakan unduh dan cetak Bukti Pendaftaran tersebut, lalu wajib dibawa saat PENDAFTARAN ULANG untuk mendapatkan surat izin mendirikan tenda.\n\n(Tunjukkan bukti cetak tersebut kepada Panitia saat tiba di Bumi Perkemahan untuk konfirmasi lokasi penempatan kapling tenda #${kaplingFormatted})\n\n👥 GABUNG GRUP WHATSAPP RESMI PEMBINA PENDAMPING:\nUntuk koordinasi teknis, informasi kapling, jadwal kegiatan, dan pengumuman panitia, Pembina Pendamping diwajibkan segera bergabung ke grup WhatsApp berikut:\n${groupWaUrl}\n\nTerima kasih atas partisipasinya dan salam Pramuka!\nPanitia Pelaksana LT-II Kwarran Mekar Baru 2026`;
