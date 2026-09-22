@@ -1218,7 +1218,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
           pangkalanMap[pName].reguPaList.push(p.nama_regu);
         }
         if (p.no_gudep && p.no_gudep !== "—") {
-          pangkalanMap[pName].no_gudep_pa = p.no_gudep;
+          pangkalanMap[pName].no_gudep_pa = getNoGudepByGender(p.no_gudep, "Laki-laki");
         }
       } else {
         pangkalanMap[pName].scorePutri += score;
@@ -1226,7 +1226,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
           pangkalanMap[pName].reguPiList.push(p.nama_regu);
         }
         if (p.no_gudep && p.no_gudep !== "—") {
-          pangkalanMap[pName].no_gudep_pi = p.no_gudep;
+          pangkalanMap[pName].no_gudep_pi = getNoGudepByGender(p.no_gudep, "Perempuan");
         }
       }
       pangkalanMap[pName].totalScore += score;
@@ -1291,7 +1291,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
     return rankedReguList.map((regu) => ({
       id: regu.id,
       pangkalan: regu.pangkalan,
-      no_gudep: regu.no_gudep || "—",
+      no_gudep: getNoGudepByGender(regu.no_gudep, regu.gender) || "—",
       subText: `Regu: ${regu.nama_regu} (${regu.gender === "Laki-laki" ? "Putra" : "Putri"})`,
       calculatedScore: regu.calculatedScore,
       getLombaScore: (lombaId) => getScoreForReguLomba(regu.id, lombaId),

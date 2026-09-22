@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getNoGudepByGender } from "@/lib/gudepUtils";
 
 export default function LeaderboardTable({ data, accentColor = "emerald", tingkat, gender, onGenderChange }) {
   const [lombaList, setLombaList] = useState([]);
@@ -448,8 +449,8 @@ export default function LeaderboardTable({ data, accentColor = "emerald", tingka
                             </span>
                           </td>
                           <td className="sticky-col-name col-name">
-                            <div className="school-name text-xs md:text-sm font-mono font-bold text-white" title={`Regu: ${regu.nama_regu} | Sekolah: ${regu.pangkalan}`}>
-                              {regu.no_gudep || "—"}
+                            <div className="school-name text-xs md:text-sm font-mono font-bold text-white" title={`Gudep: ${getNoGudepByGender(regu.no_gudep, regu.gender) || "—"} | Regu: ${regu.nama_regu} | Sekolah: ${regu.pangkalan}`}>
+                              {getNoGudepByGender(regu.no_gudep, regu.gender) || "—"}
                             </div>
                           </td>
                           {lombaList.map((lomba) => {

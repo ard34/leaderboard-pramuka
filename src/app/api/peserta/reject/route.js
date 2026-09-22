@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
+import { getNoGudepByGender } from "@/lib/gudepUtils";
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -187,7 +188,7 @@ export async function POST(request) {
             
             const namaRegu = peserta.nama_regu || "—";
             const pangkalan = peserta.pangkalan || "—";
-            const noGudep = peserta.no_gudep || "—";
+            const noGudep = getNoGudepByGender(peserta.no_gudep, peserta.gender) || "—";
             const kategoriPeserta = peserta.kategori || "—";
             const jenisKelamin = peserta.gender || "—";
             const tglDaftar = new Date(peserta.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
