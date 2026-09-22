@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
-import { getNoGudepByGender } from "@/lib/generatePdfBukti";
+import { getNoGudepByGender } from "@/lib/gudepUtils";
 
 // Official 4 Groups of Competition Activities (13 Cabang Lomba Resmi LT-II 2026)
 const OFFICIAL_GROUP_ORDER = {

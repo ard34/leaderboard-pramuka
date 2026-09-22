@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getNoGudepByGender } from "@/lib/gudepUtils";
 
 const TABS = [
   { key: "SD", label: "SD / MI", color: "emerald" },
@@ -752,7 +753,7 @@ export default function Home() {
                       <th className="sc-th-rank sticky-col-rank col-rank">
                         {showWinners ? "PERINGKAT" : "NO"}
                       </th>
-                      <th className="sc-th-name sticky-col-name col-name">NO. KAPLING</th>
+                      <th className="sc-th-name sticky-col-name col-name">NO. GUDEP</th>
                       {currentLombaCols.map((lomba) => (
                         <th key={lomba.id} title={lomba.nama_lomba} className="col-lomba">
                           <div className="sc-th-lomba">{lomba.kode_lomba || lomba.nama_lomba.substring(0, 4)}</div>
@@ -784,8 +785,8 @@ export default function Home() {
                               </span>
                             </td>
                             <td className="sticky-col-name col-name">
-                              <div className="school-name text-xs md:text-sm font-mono font-bold text-amber-300" title={`Kapling: ${regu.nomor_dada ? String(regu.nomor_dada).padStart(3, "0") : "—"} | Regu: ${regu.nama_regu} | Gudep: ${regu.no_gudep || "—"}`}>
-                                {regu.nomor_dada ? String(regu.nomor_dada).padStart(3, "0") : (regu.no_gudep || "—")}
+                              <div className="school-name text-xs md:text-sm font-mono font-bold text-amber-300" title={`Gudep: ${regu.no_gudep || "—"} | Regu: ${regu.nama_regu} | Kapling: ${regu.nomor_dada ? String(regu.nomor_dada).padStart(3, "0") : "—"}`}>
+                                {getNoGudepByGender(regu.no_gudep, regu.gender) || "—"}
                               </div>
                             </td>
 
