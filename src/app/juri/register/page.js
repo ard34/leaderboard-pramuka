@@ -108,8 +108,18 @@ export default function JuriRegisterPage() {
     fetchLomba();
   }, []);
 
-  // Filtered lomba options based on selected kategori (with fallback to all if no exact match)
+  // Filtered lomba options based on selected kategori
   const filteredLomba = useMemo(() => {
+    if (kategori === "SEMUA") {
+      // Tampilkan seluruh daftar lomba unik
+      const uniqueMap = new Map();
+      lombaList.forEach((l) => {
+        if (!uniqueMap.has(l.nama_lomba)) {
+          uniqueMap.set(l.nama_lomba, l);
+        }
+      });
+      return Array.from(uniqueMap.values());
+    }
     const matched = lombaList.filter((l) => !l.kategori || l.kategori === kategori);
     if (matched.length > 0) return matched;
     // Fallback: return official 15 list for the selected category
@@ -121,16 +131,16 @@ export default function JuriRegisterPage() {
     }));
   }, [lombaList, kategori]);
 
-
   // Set default selected lomba when kategori changes
   useEffect(() => {
+    if (lombaId === "SEMUA") return;
     if (filteredLomba.length > 0) {
       const exists = filteredLomba.some((l) => l.id === lombaId);
       if (!exists) {
         setLombaId(filteredLomba[0].id);
       }
     } else {
-      setLombaId("");
+      setLombaId("SEMUA");
     }
   }, [kategori, lombaList]);
 
@@ -292,8 +302,9 @@ export default function JuriRegisterPage() {
                       onChange={(e) => setKategori(e.target.value)}
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
                     >
-                      <option value="SD">SD / MI</option>
-                      <option value="SMP">SMP / MTs</option>
+                      <option value="SEMUA">Bebas Akses (Semua Tingkat)</option>
+                      <option value="SD">Khusus SD / MI</option>
+                      <option value="SMP">Khusus SMP / MTs</option>
                     </select>
                   </div>
 
@@ -306,8 +317,9 @@ export default function JuriRegisterPage() {
                       onChange={(e) => setGender(e.target.value)}
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
                     >
-                      <option value="Laki-laki">Putra (Laki-laki)</option>
-                      <option value="Perempuan">Putri (Perempuan)</option>
+                      <option value="SEMUA">Bebas Akses (Semua Gender)</option>
+                      <option value="Laki-laki">Khusus Putra (Laki-laki)</option>
+                      <option value="Perempuan">Khusus Putri (Perempuan)</option>
                     </select>
                   </div>
                 </div>
@@ -323,15 +335,12 @@ export default function JuriRegisterPage() {
                     required
                     className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all text-sm"
                   >
-                    {filteredLomba.length === 0 ? (
-                      <option value="">Belum ada cabang lomba di tingkat {kategori}</option>
-                    ) : (
-                      filteredLomba.map((l) => (
-                        <option key={l.id} value={l.id}>
-                          {l.nama_lomba}
-                        </option>
-                      ))
-                    )}
+                    <option value="SEMUA">Bebas Akses (Semua Pos / Juri Pengawas)</option>
+                    {filteredLomba.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.kategori ? `[${l.kategori}] ` : ""}{l.nama_lomba}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

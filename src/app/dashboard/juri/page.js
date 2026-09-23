@@ -505,8 +505,20 @@ export default function DashboardJuri() {
       }
 
       setLombaList(loadedLomba);
-      if (loadedLomba.length > 0) {
-        const matching = loadedLomba.find((l) => l.kategori === selectedKategori);
+      const defaultKategori = (profile.assigned_kategori && profile.assigned_kategori !== "SEMUA") 
+        ? profile.assigned_kategori 
+        : selectedKategori;
+      if (profile.assigned_kategori && profile.assigned_kategori !== "SEMUA") {
+        setSelectedKategori(profile.assigned_kategori);
+      }
+      if (profile.assigned_gender && profile.assigned_gender !== "SEMUA") {
+        setSelectedGender(profile.assigned_gender);
+      }
+
+      if (profile.assigned_lomba_id && profile.assigned_lomba_id !== "SEMUA" && loadedLomba.some((l) => l.id === profile.assigned_lomba_id)) {
+        setSelectedLombaId(profile.assigned_lomba_id);
+      } else if (loadedLomba.length > 0) {
+        const matching = loadedLomba.find((l) => l.kategori === defaultKategori);
         setSelectedLombaId(matching ? matching.id : loadedLomba[0].id);
       }
 

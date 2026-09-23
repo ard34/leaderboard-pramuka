@@ -39,30 +39,38 @@ export async function POST(request) {
     // Ensure valid UUID for assigned_lomba_id
     let validLombaId = null;
     let lombaNama = null;
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lombaId);
 
-    if (isUuid) {
-      validLombaId = lombaId;
-      const { data: lData } = await supabaseAdmin
-        .from("lomba")
-        .select("nama_lomba")
-        .eq("id", validLombaId)
-        .maybeSingle();
-      if (lData) lombaNama = lData.nama_lomba;
+    if (lombaId === "SEMUA" || !lombaId) {
+      validLombaId = null;
+      lombaNama = "Bebas Akses (Semua Pos Lomba)";
     } else {
-      // Find matching lomba row in public.lomba
-      const { data: matched } = await supabaseAdmin
-        .from("lomba")
-        .select("id, nama_lomba")
-        .eq("kategori", kategori)
-        .ilike("nama_lomba", `%${lombaId.replace(/fallback-.*-/g, '')}%`)
-        .maybeSingle();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lombaId);
+      if (isUuid) {
+        validLombaId = lombaId;
+        const { data: lData } = await supabaseAdmin
+          .from("lomba")
+          .select("nama_lomba")
+          .eq("id", validLombaId)
+          .maybeSingle();
+        if (lData) lombaNama = lData.nama_lomba;
+      } else {
+        // Find matching lomba row in public.lomba
+        const { data: matched } = await supabaseAdmin
+          .from("lomba")
+          .select("id, nama_lomba")
+          .eq("kategori", kategori === "SEMUA" ? "SD" : kategori)
+          .ilike("nama_lomba", `%${lombaId.replace(/fallback-.*-/g, '')}%`)
+          .maybeSingle();
 
-      if (matched) {
-        validLombaId = matched.id;
-        lombaNama = matched.nama_lomba;
+        if (matched) {
+          validLombaId = matched.id;
+          lombaNama = matched.nama_lomba;
+        }
       }
     }
+
+    const assignedKategoriVal = kategori !== "SEMUA" ? kategori : null;
+    const assignedLombaVal = lombaId !== "SEMUA" ? validLombaId : null;
 
     // Generate a temporary random password for the user
     const tempPassword = Math.random().toString(36).slice(-10) + "A1!";
@@ -74,9 +82,9 @@ export async function POST(request) {
       email_confirm: true,
       user_metadata: {
         nama_lengkap: cleanNama,
-        assigned_kategori: kategori,
+        assigned_kategori: assignedKategoriVal,
         assigned_gender: gender,
-        assigned_lomba_id: validLombaId,
+        assigned_lomba_id: assignedLombaVal,
         role: "juri",
         no_wa: noWa,
       },
@@ -104,8 +112,8 @@ export async function POST(request) {
       id: userId,
       nama_lengkap: cleanNama,
       role: "juri",
-      assigned_lomba_id: validLombaId,
-      assigned_kategori: kategori,
+      assigned_lomba_id: assignedLombaVal,
+      assigned_kategori: assignedKategoriVal,
       assigned_gender: gender,
       no_wa: noWa,
       is_verified: false,

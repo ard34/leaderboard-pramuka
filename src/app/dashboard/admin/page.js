@@ -1067,14 +1067,30 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
   const handleHapusJuri = async (id, nama) => {
     setSaving(true);
-    const { error } = await supabase.from("profiles").delete().eq("id", id);
-    if (error) showPesan("error", "Gagal menghapus dewan juri: " + error.message);
-    else {
-      showPesan("success", `Dewan Juri ${nama} berhasil dihapus.`);
-      setConfirmDeleteId(null);
-      await fetchAllData();
+    try {
+      const res = await fetch("/api/juri/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        showPesan("success", `✅ Akun Dewan Juri ${nama} dan akses autentikasinya berhasil dihapus permanen.`);
+        setConfirmDeleteId(null);
+        await fetchAllData();
+      } else {
+        // Fallback delete direct
+        const { error } = await supabase.from("profiles").delete().eq("id", id);
+        if (error) throw error;
+        showPesan("success", `Dewan Juri ${nama} berhasil dihapus.`);
+        setConfirmDeleteId(null);
+        await fetchAllData();
+      }
+    } catch (err) {
+      showPesan("error", "Gagal menghapus dewan juri: " + err.message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   // --- HANDLERS: LOMBA (DINAMIS) ---
@@ -2069,74 +2085,90 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
         {/* TAB 3: JURI */}
         {activeTab === "juri" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 glass-card p-6 h-fit">
-              <h2 className="text-lg font-black text-white mb-4">Buat Akun Juri</h2>
-              <form onSubmit={handleTambahJuri} className="space-y-4">
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nama Lengkap</label>
-                  <input type="text" required value={formJuri.nama_lengkap} onChange={(e) => setFormJuri({...formJuri, nama_lengkap: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="Kak Budi" />
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <div className="xl:col-span-1 glass-card p-5 md:p-6 h-fit shadow-lg border border-slate-800/80">
+              <div className="flex items-center gap-2 mb-4 border-b border-slate-800/80 pb-3">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Email (Untuk Login)</label>
-                  <input type="email" required value={formJuri.email} onChange={(e) => setFormJuri({...formJuri, email: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="juri@pramuka.com" />
+                <div>
+                  <h2 className="text-sm md:text-base font-black text-white uppercase tracking-wider">Buat Akun Juri</h2>
+                  <p className="text-[0.65rem] text-slate-400">Daftarkan akun dewan juri baru</p>
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kata Sandi</label>
-                  <input type="password" required value={formJuri.password} onChange={(e) => setFormJuri({...formJuri, password: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="minimal 6 karakter" />
+              </div>
+
+              <form onSubmit={handleTambahJuri} className="space-y-3.5">
+                <div>
+                  <label className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider">Nama Lengkap & Gelar</label>
+                  <input type="text" required value={formJuri.nama_lengkap} onChange={(e) => setFormJuri({...formJuri, nama_lengkap: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-cyan-500/50" placeholder="Kak Budi Santoso, S.Pd." />
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Tugas Tingkatan</label>
-                  <select value={formJuri.kategori} onChange={(e) => setFormJuri({...formJuri, kategori: e.target.value, lomba_id: "SEMUA"})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
+                <div>
+                  <label className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider">Email (Untuk Akses Login)</label>
+                  <input type="email" required value={formJuri.email} onChange={(e) => setFormJuri({...formJuri, email: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-cyan-500/50" placeholder="juri@pramuka.com" />
+                </div>
+                <div>
+                  <label className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider">Kata Sandi Awal</label>
+                  <input type="password" required value={formJuri.password} onChange={(e) => setFormJuri({...formJuri, password: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-cyan-500/50" placeholder="minimal 6 karakter" />
+                </div>
+                <div>
+                  <label className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider">Tugas Tingkatan</label>
+                  <select value={formJuri.kategori} onChange={(e) => setFormJuri({...formJuri, kategori: e.target.value, lomba_id: "SEMUA"})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-cyan-500/50">
                     <option value="SEMUA">Bebas Akses (Semua Tingkat)</option>
-                    <option value="SD">Khusus SD / MI</option><option value="SMP">Khusus SMP / MTs</option>
+                    <option value="SD">Khusus SD / MI</option>
+                    <option value="SMP">Khusus SMP / MTs</option>
                   </select>
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Tugas Cabang Lomba</label>
-                  <select value={formJuri.lomba_id} onChange={(e) => setFormJuri({...formJuri, lomba_id: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
-                    <option value="SEMUA">Bebas Akses (Semua Pos)</option>
+                <div>
+                  <label className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider">Tugas Cabang Lomba</label>
+                  <select value={formJuri.lomba_id} onChange={(e) => setFormJuri({...formJuri, lomba_id: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-cyan-500/50">
+                    <option value="SEMUA">Bebas Akses (Semua Pos / Pengawas)</option>
                     {dynamicJuriLombaOptions.map((l) => (
                       <option key={l.id} value={l.id}>[{l.kategori}] {l.nama_lomba}</option>
                     ))}
                   </select>
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Tugas Gender Kategori</label>
-                  <select value={formJuri.gender} onChange={(e) => setFormJuri({...formJuri, gender: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
-                    <option value="SEMUA">Bebas Akses (Semua Gender)</option>
+                <div>
+                  <label className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider">Tugas Gender Kategori</label>
+                  <select value={formJuri.gender} onChange={(e) => setFormJuri({...formJuri, gender: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-cyan-500/50">
+                    <option value="SEMUA">Bebas Akses (Semua Gender: Pa & Pi)</option>
                     <option value="Laki-laki">Khusus Laki-laki (Putra)</option>
                     <option value="Perempuan">Khusus Perempuan (Putri)</option>
                   </select>
                 </div>
-                <button type="submit" disabled={saving} className="w-full bg-cyan-500 text-white font-bold py-3 rounded-lg mt-2 disabled:opacity-50">
-                  {saving ? "Membuat Akun..." : "+ Buat Akun Juri"}
+                <button type="submit" disabled={saving} className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white font-bold py-3 rounded-xl mt-2 disabled:opacity-50 transition-all shadow-md text-xs tracking-wider uppercase">
+                  {saving ? "Memproses..." : "+ Buat & Kirim Akses Akun Juri"}
                 </button>
               </form>
             </div>
             
-            <div className="lg:col-span-2 glass-card overflow-hidden flex flex-col">
+            <div className="xl:col-span-3 glass-card overflow-hidden flex flex-col shadow-lg border border-slate-800/80">
               {/* Toolbar Moderasi Nilai Juri */}
-              <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 flex flex-wrap gap-3 items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-300">STATUS TAMPILKAN NILAI:</span>
+              <div className="p-4 border-b border-slate-800/80 bg-slate-900/70 flex flex-wrap gap-3 items-center justify-between">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">STATUS PUBLIKASI:</span>
                   {publishAll ? (
-                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
+                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm whitespace-nowrap">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                      🟢 Semua Nilai Ditampilkan di Leaderboard
+                      🟢 Semua Nilai Tampil di Leaderboard
                     </span>
                   ) : publishedJuriIds.length > 0 ? (
-                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1.5 shadow-sm">
+                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1.5 shadow-sm whitespace-nowrap">
                       <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                      🟡 {publishedJuriIds.length} Juri Ditampilkan (Parsial)
+                      🟡 {publishedJuriIds.length} Juri Tampil (Parsial)
                     </span>
                   ) : (
-                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+                    <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 shadow-sm whitespace-nowrap">
                       <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                      ⏸️ Semua Nilai Ditahan (Belum Tampil di Leaderboard)
+                      ⏸️ Semua Nilai Ditahan
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   {publishAll ? (
                     <button
                       onClick={handleUnpublishAll}
                       disabled={globalPublishing || clearingData}
-                      className="px-3 py-1.5 text-xs font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+                      className="px-3 py-1.5 text-xs font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                       title="Sembunyikan / tahan seluruh nilai juri dari papan klasemen leaderboard"
                     >
                       {globalPublishing ? "Memproses..." : "⏸️ Sembunyikan Semua Nilai"}
@@ -2145,7 +2177,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                     <button
                       onClick={handlePublishAll}
                       disabled={globalPublishing || clearingData}
-                      className="px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg shadow-md hover:shadow-emerald-500/25 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg shadow-md hover:shadow-emerald-500/25 transition-all disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap"
                       title="Tampilkan seluruh nilai juri ke papan klasemen utama / leaderboard"
                     >
                       {globalPublishing ? "Memproses..." : "👁️ Tampilkan Semua Nilai"}
@@ -2155,7 +2187,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                     type="button"
                     onClick={handleBersihkanJuriTest}
                     disabled={clearingData}
-                    className="px-3 py-1.5 text-xs font-bold bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+                    className="px-3 py-1.5 text-xs font-bold bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm whitespace-nowrap"
                     title="Hapus seluruh profil dewan juri uji coba"
                   >
                     {clearingData ? "Membersihkan..." : "🗑️ Bersihkan Juri Test"}
@@ -2163,68 +2195,86 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 </div>
               </div>
 
-              <div className="overflow-x-auto max-h-[600px] mobile-table-scroll flex-1">
-                <table className="w-full text-left border-collapse min-w-[850px]">
-                  <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
+              <div className="overflow-x-auto max-h-[650px] mobile-table-scroll flex-1">
+                <table className="w-full text-left border-collapse min-w-[1100px]">
+                  <thead className="sticky top-0 bg-slate-900/95 backdrop-blur z-10 shadow-md border-b border-slate-800">
                     <tr>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Nama Juri</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">No. WA</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Email</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Tingkat Ditugaskan</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Pos Lomba Ditugaskan</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Gender Ditugaskan</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Status Akun</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase">Cetak Hasil</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-emerald-400 uppercase">Tampilkan Nilai</th>
-                      <th className="p-4 text-[0.65rem] font-bold text-slate-500 uppercase text-right">Aksi</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[170px]">Nama Juri</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[130px]">No. WhatsApp</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[170px]">Email Login</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[110px]">Tingkat</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[170px]">Pos Lomba</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[120px]">Gender</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[100px]">Status</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[90px]">Cetak</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-emerald-400 uppercase tracking-wider whitespace-nowrap min-w-[160px]">Tampilkan Nilai</th>
+                      <th className="px-4 py-3 text-[0.68rem] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap min-w-[160px] text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
                     {juriList.map((j) => (
-                      <tr key={j.id} className="border-t border-slate-800/30 hover:bg-slate-800/20">
-                        <td className="p-4">
-                          <div className="text-sm font-bold text-white flex items-center gap-2">
-                            <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                      <tr key={j.id} className="border-t border-slate-800/40 hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div className="text-xs md:text-sm font-bold text-white flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-[10px] text-cyan-300 font-black">
+                              {j.nama_lengkap ? j.nama_lengkap.charAt(0).toUpperCase() : "J"}
+                            </span>
                             {j.nama_lengkap}
                           </div>
                         </td>
-                        <td className="p-4">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           {j.no_wa ? (
-                            <a href={`https://wa.me/${j.no_wa.replace(/^0/, '62')}?text=${encodeURIComponent('Halo Kak ' + j.nama_lengkap + ', akun juri Anda sudah diverifikasi. Silakan cek email di inbox atau spam.')}`} target="_blank" rel="noopener noreferrer" className="text-[0.65rem] text-amber-400 flex items-center gap-1 font-mono hover:text-amber-300 hover:underline transition-colors w-fit">
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                            <a href={`https://wa.me/${j.no_wa.replace(/^0/, '62')}?text=${encodeURIComponent('Halo Kak ' + j.nama_lengkap + ', akun juri Anda sudah aktif diverifikasi. Silakan cek email untuk petunjuk akses login.')}`} target="_blank" rel="noopener noreferrer" className="text-xs text-amber-400 flex items-center gap-1.5 font-mono hover:text-amber-300 hover:underline transition-colors w-fit">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                               {j.no_wa}
                             </a>
                           ) : (
                             <span className="text-xs text-slate-600 italic">—</span>
                           )}
                         </td>
-                        <td className="p-4">
-                          {j.email ? (
-                            <div className="text-[0.65rem] text-slate-300 flex items-center gap-1 font-mono">
-                              <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          {j.email && j.email !== "No Email" ? (
+                            <div className="text-xs text-slate-300 flex items-center gap-1.5 font-mono">
+                              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                               {j.email}
                             </div>
                           ) : (
                             <span className="text-xs text-slate-600 italic">—</span>
                           )}
                         </td>
-                        <td className="p-4 text-xs font-black">{j.assigned_kategori || "SEMUA"}</td>
-                        <td className="p-4 text-xs font-black">{j.lomba?.nama_lomba || "SEMUA"}</td>
-                        <td className="p-4 text-xs font-black">
-                          {j.assigned_gender === "SEMUA" ? "SEMUA" : j.assigned_gender === "Laki-laki" ? "👦 Laki-laki" : "👧 Perempuan"}
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className={`text-[0.65rem] font-bold px-2 py-0.5 rounded-full border ${
+                            j.assigned_kategori === "SD" ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" :
+                            j.assigned_kategori === "SMP" ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/30" :
+                            "bg-purple-500/10 text-purple-300 border-purple-500/30"
+                          }`}>
+                            {j.assigned_kategori || "SEMUA"}
+                          </span>
                         </td>
-                        <td className="p-4 text-xs">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs font-semibold text-slate-200">
+                            {j.lomba?.nama_lomba || "SEMUA POS LOMBA"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="text-xs font-semibold text-slate-300">
+                            {j.assigned_gender === "SEMUA" || !j.assigned_gender ? "Bebas (Pa & Pi)" : j.assigned_gender === "Laki-laki" ? "👦 Putra" : "👧 Putri"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           {j.is_verified ? (
-                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
-                              ✅ Aktif
+                            <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full font-bold text-[0.65rem] uppercase flex items-center gap-1 w-fit">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                              Aktif
                             </span>
                           ) : (
-                            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-full font-bold text-[0.6rem] uppercase">
-                              ⏳ Menunggu
+                            <span className="bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full font-bold text-[0.65rem] uppercase flex items-center gap-1 w-fit">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                              Menunggu
                             </span>
                           )}
                         </td>
-                        <td className="p-4 text-xs">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           {j.is_verified ? (
                             <button
                               onClick={() => {
@@ -2240,25 +2290,22 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                                 } catch (_) {}
                                 window.open(`/dashboard/admin/cetak-rekap?juriName=${encodeURIComponent(j.nama_lengkap)}&juriId=${j.id}`, '_blank');
                               }}
-                              className="text-xs font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md transition-all whitespace-nowrap"
+                              className="text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-sm"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                              </svg>
-                              Cetak
+                              <span>🖨️ Cetak</span>
                             </button>
                           ) : (
-                            <span className="text-[0.6rem] text-slate-500 italic">Belum Verif</span>
+                            <span className="text-[0.65rem] text-slate-500 italic">—</span>
                           )}
                         </td>
                         {/* Kolom Tampilkan Nilai */}
-                        <td className="p-4 text-xs">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           {j.is_verified ? (
                             (() => {
                               const isPublished = publishAll || publishedJuriIds.includes(j.id);
                               const scoreCount = penilaianList.filter(p => p.juri_id === j.id).length;
                               return (
-                                <div className="flex flex-col gap-1.5 min-w-[145px]">
+                                <div className="flex flex-col gap-1.5 min-w-[150px]">
                                   <div className="flex items-center gap-1.5 text-[0.65rem]">
                                     {isPublished ? (
                                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
@@ -2280,7 +2327,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                                       className="px-2.5 py-1 text-[0.65rem] font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-50 shadow-sm"
                                       title="Tahan / sembunyikan nilai juri ini dari leaderboard"
                                     >
-                                      {publishingJuriId === j.id ? "Memproses..." : "⏸️ Sembunyikan Nilai"}
+                                      {publishingJuriId === j.id ? "Memproses..." : "⏸️ Sembunyikan"}
                                     </button>
                                   ) : (
                                     <button
@@ -2290,19 +2337,19 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                                       className="px-2.5 py-1 text-[0.65rem] font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg shadow-md hover:shadow-emerald-500/25 transition-all flex items-center justify-center gap-1 whitespace-nowrap disabled:opacity-50"
                                       title="Tampilkan nilai juri ini ke papan klasemen leaderboard publik"
                                     >
-                                      {publishingJuriId === j.id ? "Memproses..." : "👁️ Tampilkan Nilai"}
+                                      {publishingJuriId === j.id ? "Memproses..." : "👁️ Tampilkan"}
                                     </button>
                                   )}
                                 </div>
                               );
                             })()
                           ) : (
-                            <span className="text-[0.6rem] text-slate-600 italic">—</span>
+                            <span className="text-[0.65rem] text-slate-500 italic">Belum Verif</span>
                           )}
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
                           {verifyingJuriId === j.id ? (
-                            <div className="flex justify-end gap-1 items-center">
+                            <div className="flex justify-end gap-1.5 items-center">
                               <input 
                                 type="text" 
                                 placeholder="Set Password" 
@@ -2310,7 +2357,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                                 onChange={(e) => setJuriPasswordInput(e.target.value)} 
                                 className="w-28 bg-slate-950 border border-amber-500 rounded px-2 py-1.5 text-amber-300 text-xs font-bold outline-none"
                               />
-                              <button onClick={() => handleVerifikasiJuri(j.id)} className="text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-1.5 rounded text-xs font-bold transition-all">
+                              <button onClick={() => handleVerifikasiJuri(j.id)} className="text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded text-xs font-bold transition-all shadow-sm">
                                 Simpan
                               </button>
                               <button onClick={() => { setVerifyingJuriId(null); setJuriPasswordInput(""); }} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded text-xs font-bold transition-all">
@@ -2318,23 +2365,23 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                               </button>
                             </div>
                           ) : confirmDeleteId === j.id ? (
-                            <div className="flex justify-end gap-1.5">
-                              <button onClick={() => handleHapusJuri(j.id, j.nama_lengkap)} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                            <div className="flex justify-end gap-1.5 items-center">
+                              <button onClick={() => handleHapusJuri(j.id, j.nama_lengkap)} className="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md">
                                 Ya, Hapus
                               </button>
-                              <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                              <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all">
                                 Batal
                               </button>
                             </div>
                           ) : (
                             <div className="flex justify-end gap-1.5 items-center">
                               {!j.is_verified && (
-                                <button onClick={() => setVerifyingJuriId(j.id)} className="text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black px-2.5 py-1.5 rounded text-xs font-bold transition-colors">
+                                <button onClick={() => setVerifyingJuriId(j.id)} className="text-amber-300 bg-amber-500/15 hover:bg-amber-500 hover:text-black border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm">
                                   ⚡ Verifikasi
                                 </button>
                               )}
-                              <button onClick={() => setConfirmDeleteId(j.id)} className="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
-                                Hapus Profil
+                              <button onClick={() => setConfirmDeleteId(j.id)} className="text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/30 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm">
+                                🗑️ Hapus
                               </button>
                             </div>
                           )}
@@ -2342,7 +2389,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                       </tr>
                     ))}
                     {juriList.length === 0 && (
-                      <tr><td colSpan="8" className="p-8 text-center text-slate-500 italic">Belum ada akun Juri terdaftar.</td></tr>
+                      <tr><td colSpan="10" className="p-8 text-center text-slate-500 italic">Belum ada akun Juri terdaftar.</td></tr>
                     )}
                   </tbody>
                 </table>
