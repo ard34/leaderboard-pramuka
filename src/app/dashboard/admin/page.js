@@ -1449,23 +1449,45 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
       {/* Navbar */}
       <nav className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-emerald-500/20 shadow-2xl no-print">
-        <div className="max-w-[1600px] mx-auto flex justify-between items-center px-4 md:px-8 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <img src="/logo_wosm.png" alt="WOSM" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-              <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-              <img src="/logo_lt2.png" alt="LT-II 2026" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
-              <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+        <div className="max-w-[1600px] mx-auto px-3 md:px-8 py-2.5 md:py-3">
+          {/* Top row: brand + logout */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+              {/* Logos - hidden on very small mobile, show from sm+ */}
+              <div className="hidden sm:flex items-center gap-1.5 md:gap-2 shrink-0">
+                <img src="/logo_wosm.png" alt="WOSM" className="h-7 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+                <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-7 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+                <img src="/logo_lt2.png" alt="LT-II 2026" className="h-7 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+                <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-7 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+              </div>
+              {/* Single logo on very small mobile */}
+              <img src="/logo_lt2.png" alt="LT-II 2026" className="sm:hidden h-8 w-auto object-contain shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-xs sm:text-sm md:text-base font-black tracking-wider text-white truncate">
+                  PANEL <span className="text-emerald-400">ADMINISTRATOR</span>
+                </h1>
+                <p className="text-[0.6rem] md:text-[0.65rem] text-slate-400 tracking-wider truncate">LT-II Kwartir Ranting Mekar Baru 2026</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-sm md:text-base font-black tracking-wider text-white">
-                PANEL <span className="text-emerald-400">ADMINISTRATOR</span>
-              </h1>
-              <p className="text-[0.65rem] text-slate-400 tracking-wider">LT-II Kwartir Ranting Mekar Baru 2026</p>
-            </div>
+
+            {/* Logout always visible */}
+            <button
+              onClick={async () => {
+                try {
+                  sessionStorage.removeItem("_profile_cache");
+                  sessionStorage.removeItem("_admin_session");
+                } catch (_) {}
+                await supabase.auth.signOut().catch(() => {});
+                router.push("/login");
+              }}
+              className="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all shrink-0"
+            >
+              LOGOUT
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+          {/* Bottom row: action buttons - scrollable on mobile */}
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto no-scrollbar pb-0.5">
 
             <button
               onClick={() => {
@@ -1480,7 +1502,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 } catch (_) {}
                 router.push("/dashboard/admin/cetak-rekap");
               }}
-              className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 transition-all shadow-sm flex items-center gap-1.5"
+              className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 transition-all shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               title="Buka halaman cetak laporan hasil rekap nilai resmi per mata lomba"
             >
               <span>🖨️ Cetak Rekap</span>
@@ -1488,7 +1510,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
             <button
               onClick={handleToggleShowWinners}
-              className={`text-[0.68rem] md:text-xs font-black tracking-wider px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-2 ${
+              className={`text-[0.68rem] md:text-xs font-black tracking-wider px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-2 shrink-0 whitespace-nowrap ${
                 showWinners
                   ? "bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-amber-500/30 animate-pulse"
                   : "bg-slate-800/90 text-slate-300 border border-slate-700 hover:bg-slate-700"

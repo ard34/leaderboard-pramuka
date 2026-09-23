@@ -948,42 +948,62 @@ export default function DashboardJuri() {
 
       {/* Modern Glassmorphism Navbar */}
       <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-amber-500/20 shadow-2xl transition-all">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
-          
-          {/* Brand & Logos */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <img src="/logo_wosm.png" alt="WOSM" className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-              <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-              <img src="/logo_lt2.png" alt="LT-II 2026" className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
-              <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
-            </div>
-            
-            <div className="border-l border-slate-800 pl-3">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[0.6rem] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
-                  LT-II MEKAR BARU 2026
-                </span>
-                <span className="text-[0.6rem] text-slate-400 font-medium hidden sm:inline">25-27 SEP 2026</span>
+        <div className="max-w-7xl mx-auto px-3 md:px-6 py-2 md:py-2.5">
+          {/* Top row: brand + logout */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Brand & Logos */}
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+              {/* Logos - hidden on very small mobile */}
+              <div className="hidden sm:flex items-center gap-1.5 md:gap-2 shrink-0">
+                <img src="/logo_wosm.png" alt="WOSM" className="h-7 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+                <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-7 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+                <img src="/logo_lt2.png" alt="LT-II 2026" className="h-7 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+                <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-7 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
               </div>
-              <h1 className="text-xs md:text-sm font-black tracking-wide text-white uppercase mt-0.5">
-                PANEL PENILAIAN <span className="text-amber-400">DEWAN JURI</span>
-              </h1>
+              {/* Single logo on very small mobile */}
+              <img src="/logo_lt2.png" alt="LT-II 2026" className="sm:hidden h-7 w-auto object-contain shrink-0" />
+              
+              <div className="min-w-0 border-l border-slate-800 pl-2 md:pl-3">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[0.55rem] sm:text-[0.6rem] font-black px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                    LT-II MEKAR BARU 2026
+                  </span>
+                  <span className="text-[0.55rem] sm:text-[0.6rem] text-slate-400 font-medium hidden sm:inline">25-27 SEP 2026</span>
+                </div>
+                <h1 className="text-[0.65rem] sm:text-xs md:text-sm font-black tracking-wide text-white uppercase mt-0.5 truncate">
+                  PANEL PENILAIAN <span className="text-amber-400">DEWAN JURI</span>
+                </h1>
+              </div>
             </div>
-          </div>
 
           {/* Juri Profile Pill & Actions */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs">
-              <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-[0.65rem] border border-amber-500/30">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="bg-slate-900/90 border border-slate-800 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl flex items-center gap-1.5 sm:gap-2 text-xs max-w-[120px] sm:max-w-none">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-[0.55rem] sm:text-[0.65rem] border border-amber-500/30 shrink-0">
                 ⚖️
               </div>
-              <div>
-                <div className="text-[0.65rem] text-slate-400 uppercase leading-none">Dewan Juri</div>
-                <div className="font-bold text-white text-xs leading-tight">{juri?.nama_lengkap || "Dewan Juri"}</div>
+              <div className="min-w-0">
+                <div className="text-[0.55rem] sm:text-[0.65rem] text-slate-400 uppercase leading-none hidden sm:block">Dewan Juri</div>
+                <div className="font-bold text-white text-[0.6rem] sm:text-xs leading-tight truncate">{juri?.nama_lengkap || "Dewan Juri"}</div>
               </div>
             </div>
 
+            <button
+              onClick={async () => {
+                try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
+                await supabase.auth.signOut();
+                router.replace("/login");
+              }}
+              className="text-[0.6rem] sm:text-xs font-bold bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 text-red-400 hover:text-white px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-xl transition-all duration-200 shrink-0"
+              title="Keluar dari panel juri"
+            >
+              LOGOUT
+            </button>
+          </div>
+          </div>
+
+          {/* Bottom row: action buttons - scrollable on mobile */}
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto no-scrollbar pb-0.5">
             <button
               onClick={() => {
                 const jName = juri?.nama_lengkap || "";
@@ -993,25 +1013,10 @@ export default function DashboardJuri() {
                 if (jId) query.set("juriId", jId);
                 window.open(`/dashboard/admin/cetak-rekap?${query.toString()}`, "_blank");
               }}
-              className="text-xs font-bold bg-amber-500/15 hover:bg-amber-500 border border-amber-500/30 hover:border-amber-500 text-amber-400 hover:text-slate-950 px-3.5 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-sm"
+              className="text-[0.65rem] sm:text-xs font-bold bg-amber-500/15 hover:bg-amber-500 border border-amber-500/30 hover:border-amber-500 text-amber-400 hover:text-slate-950 px-3 sm:px-3.5 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap"
               title="Buka & Cetak Lembar Rekap Penilaian Resmi"
             >
               <span>📋 CETAK REKAP NILAI</span>
-            </button>
-
-            <button
-              onClick={async () => {
-                try { sessionStorage.removeItem("_profile_cache"); } catch (_) {}
-                await supabase.auth.signOut();
-                router.replace("/login");
-              }}
-              className="text-xs font-bold bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 text-red-400 hover:text-white px-3.5 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-sm"
-              title="Keluar dari panel juri"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span>LOGOUT</span>
             </button>
           </div>
 
