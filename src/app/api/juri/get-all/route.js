@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseServerAdmin";
 
 export async function GET() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: "Supabase config missing" }, { status: 500 });
+    let supabaseAdmin = await getSupabaseAdmin();
+    if (!supabaseAdmin && supabaseUrl && supabaseServiceKey) {
+      supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { persistSession: false },
+      });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: "Supabase config missing" }, { status: 500 });
+    }
 
     // 1. Fetch profiles for juri
     const { data: profiles, error: profileError } = await supabaseAdmin
@@ -23,7 +27,7 @@ export async function GET() {
 
     if (profileError) throw profileError;
 
-    // 2. Fetch auth users to get emails (safely, fallback if anon key used)
+    // 2. Fetch auth users to get emails (safely)
     const usersMap = {};
     try {
       const { data: authData } = await supabaseAdmin.auth.admin.listUsers();

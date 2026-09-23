@@ -966,16 +966,22 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
       showPesan("error", "Password minimal 6 karakter.");
       return;
     }
+    const targetJuri = juriList.find((j) => j.id === id);
     setSaving(true);
     try {
       const res = await fetch("/api/juri/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: id, password: juriPasswordInput }),
+        body: JSON.stringify({
+          userId: id,
+          password: juriPasswordInput,
+          email: targetJuri?.email && targetJuri.email !== "No Email" ? targetJuri.email : undefined,
+          nama_lengkap: targetJuri?.nama_lengkap,
+        }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showPesan("success", `Juri berhasil diverifikasi dan password diupdate. ${data.emailMessage || ""}`);
+        showPesan("success", `🎉 Juri berhasil diverifikasi! ${data.emailMessage || ""}`);
         if (data.mailtoUrl && !data.emailSent) {
           window.open(data.mailtoUrl, "_blank");
         }
@@ -1021,7 +1027,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
     }
 
     if (authData.user) {
-      // Add to profiles
+      // Add to profiles with is_verified = true
       const { error: profileError } = await supabase.from("profiles").upsert({
         id: authData.user.id,
         nama_lengkap: formJuri.nama_lengkap,
@@ -1029,12 +1035,29 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
         assigned_kategori: formJuri.kategori !== "SEMUA" ? formJuri.kategori : null,
         assigned_lomba_id: formJuri.lomba_id !== "SEMUA" ? formJuri.lomba_id : null,
         assigned_gender: formJuri.gender,
+        is_verified: true,
       });
 
       if (profileError) {
         showPesan("error", "Akun Auth dibuat, tapi gagal menyimpan Profil: " + profileError.message);
       } else {
-        showPesan("success", `Akun Juri ${formJuri.nama_lengkap} berhasil dibuat!`);
+        // Kirim email notifikasi akses login ke dewan juri yang baru didaftarkan
+        try {
+          const verifyRes = await fetch("/api/juri/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: authData.user.id,
+              password: formJuri.password,
+              email: formJuri.email,
+              nama_lengkap: formJuri.nama_lengkap,
+            }),
+          });
+          const verifyData = await verifyRes.json().catch(() => ({}));
+          showPesan("success", `Akun Juri ${formJuri.nama_lengkap} berhasil dibuat! ${verifyData.emailMessage || ""}`);
+        } catch (_) {
+          showPesan("success", `Akun Juri ${formJuri.nama_lengkap} berhasil dibuat!`);
+        }
         setFormJuri({ nama_lengkap: "", email: "", password: "", kategori: "SEMUA", lomba_id: "SEMUA", gender: "SEMUA" });
         await fetchAllData();
       }
