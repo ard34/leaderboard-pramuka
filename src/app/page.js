@@ -80,20 +80,20 @@ export default function LandingPage() {
       <div className="relative z-10 w-full max-w-6xl mx-auto space-y-8 sm:space-y-12 py-4 sm:py-10">
         
         {/* Header Section */}
-        <div className="text-center space-y-6">
-          <div className="inline-block p-4 bg-slate-900/50 rounded-full border border-amber-500/30 shadow-[0_0_30px_rgba(245,166,35,0.2)] mb-2 transform transition-transform hover:scale-105 duration-500">
+        <div className="text-center space-y-4 sm:space-y-6">
+          <div className="inline-block p-3 sm:p-4 bg-slate-900/50 rounded-full border border-amber-500/30 shadow-[0_0_30px_rgba(245,166,35,0.2)] mb-2 transform transition-transform hover:scale-105 duration-500">
             <img 
               src="/logo_lt2.png" 
               alt="Logo LT-II" 
-              className="h-20 sm:h-28 md:h-36 w-auto object-contain drop-shadow-[0_0_15px_rgba(245,166,35,0.5)]" 
+              className="h-14 sm:h-24 md:h-36 w-auto object-contain drop-shadow-[0_0_15px_rgba(245,166,35,0.5)]" 
               onError={(e) => e.target.style.display = 'none'} 
             />
           </div>
           <div>
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 drop-shadow-lg tracking-tight mb-2 sm:mb-3">
+            <h1 className="text-2xl sm:text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 drop-shadow-lg tracking-tight mb-1 sm:mb-3">
               PORTAL LOMBA TINGKAT II
             </h1>
-            <p className="text-sm sm:text-lg md:text-2xl text-amber-100/90 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase">
+            <p className="text-xs sm:text-lg md:text-2xl text-amber-100/90 font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase">
               Kwartir Ranting Mekar Baru 2026
             </p>
           </div>

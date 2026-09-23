@@ -952,16 +952,14 @@ export default function DashboardJuri() {
           {/* Top row: brand + logout */}
           <div className="flex items-center justify-between gap-2">
             {/* Brand & Logos */}
-            <div className="flex items-center gap-2 md:gap-3 min-w-0">
-              {/* Logos - hidden on very small mobile */}
-              <div className="hidden sm:flex items-center gap-1.5 md:gap-2 shrink-0">
-                <img src="/logo_wosm.png" alt="WOSM" className="h-7 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-                <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-7 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-                <img src="/logo_lt2.png" alt="LT-II 2026" className="h-7 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
-                <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-7 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+              {/* Logos Cluster - Proporsional simetris di Android HP & Desktop */}
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                <img src="/logo_wosm.png" alt="WOSM" className="h-6 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
+                <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-6 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
+                <img src="/logo_lt2.png" alt="LT-II 2026" className="h-6 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]" />
+                <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-6 sm:h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]" />
               </div>
-              {/* Single logo on very small mobile */}
-              <img src="/logo_lt2.png" alt="LT-II 2026" className="sm:hidden h-7 w-auto object-contain shrink-0" />
               
               <div className="min-w-0 border-l border-slate-800 pl-2 md:pl-3">
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -970,7 +968,7 @@ export default function DashboardJuri() {
                   </span>
                   <span className="text-[0.55rem] sm:text-[0.6rem] text-slate-400 font-medium hidden sm:inline">25-27 SEP 2026</span>
                 </div>
-                <h1 className="text-[0.65rem] sm:text-xs md:text-sm font-black tracking-wide text-white uppercase mt-0.5 truncate">
+                <h1 className="text-[0.68rem] sm:text-xs md:text-sm font-black tracking-wide text-white uppercase mt-0.5 truncate">
                   PANEL PENILAIAN <span className="text-amber-400">DEWAN JURI</span>
                 </h1>
               </div>
@@ -1160,8 +1158,8 @@ export default function DashboardJuri() {
         {/* Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           
-          {/* Kolom Kiri: Pengaturan & JUKLAK (Col 4) */}
-          <div className="lg:col-span-4 space-y-4">
+          {/* Kolom Kiri: Pengaturan & JUKLAK (Col 4, muncul di bawah form nilai di HP) */}
+          <div className="lg:col-span-4 space-y-4 order-2 lg:order-1">
             
             {/* Card Aturan JUKLAK */}
             {currentLombaDef && (
@@ -1279,9 +1277,9 @@ export default function DashboardJuri() {
 
           </div>
 
-          {/* Kolom Kanan: Lembar Penilaian Real-Time (Col 8) */}
-          <div className="lg:col-span-8">
-            <div className="bg-slate-900/85 border border-amber-500/25 rounded-3xl p-5 md:p-7 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+          {/* Kolom Kanan: Lembar Penilaian Real-Time (Col 8, prioritas utama di atas pada HP) */}
+          <div className="lg:col-span-8 order-1 lg:order-2">
+            <div className="bg-slate-900/85 border border-amber-500/25 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-7 shadow-2xl backdrop-blur-xl relative overflow-hidden">
               
               {/* Notifikasi Pesan */}
               {pesan.text && (
@@ -1582,7 +1580,7 @@ export default function DashboardJuri() {
                                     max={r.max}
                                     value={val}
                                     onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
-                                    className="w-full accent-amber-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+                                    className="w-full accent-amber-500 h-3 sm:h-2 bg-slate-800 rounded-lg cursor-pointer touch-none"
                                   />
                                   <input
                                     type="number"
@@ -1590,7 +1588,7 @@ export default function DashboardJuri() {
                                     max={r.max}
                                     value={val}
                                     onChange={(e) => handleRubrikChange(r.id, e.target.value, r.max)}
-                                    className="w-14 bg-slate-900 border border-slate-700 rounded-xl py-1 text-center text-xs text-amber-300 font-black focus:border-amber-500 outline-none font-mono"
+                                    className="w-14 sm:w-16 bg-slate-900 border border-slate-700 rounded-xl py-1 sm:py-1.5 text-center text-xs sm:text-sm text-amber-300 font-black focus:border-amber-500 outline-none font-mono"
                                   />
                                 </div>
                               </div>

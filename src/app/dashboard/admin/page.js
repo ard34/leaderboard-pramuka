@@ -1449,24 +1449,22 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
       {/* Navbar */}
       <nav className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-emerald-500/20 shadow-2xl no-print">
-        <div className="max-w-[1600px] mx-auto px-3 md:px-8 py-2.5 md:py-3">
+        <div className="max-w-[1600px] mx-auto px-3 md:px-8 py-2 md:py-3">
           {/* Top row: brand + logout */}
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 md:gap-3 min-w-0">
-              {/* Logos - hidden on very small mobile, show from sm+ */}
-              <div className="hidden sm:flex items-center gap-1.5 md:gap-2 shrink-0">
-                <img src="/logo_wosm.png" alt="WOSM" className="h-7 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-                <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-7 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-                <img src="/logo_lt2.png" alt="LT-II 2026" className="h-7 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
-                <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-7 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]" />
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+              {/* Logos Cluster - Proporsional simetris di Android HP & Desktop */}
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                <img src="/logo_wosm.png" alt="WOSM" className="h-6 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
+                <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-6 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
+                <img src="/logo_lt2.png" alt="LT-II 2026" className="h-6 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]" />
+                <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-6 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]" />
               </div>
-              {/* Single logo on very small mobile */}
-              <img src="/logo_lt2.png" alt="LT-II 2026" className="sm:hidden h-8 w-auto object-contain shrink-0" />
-              <div className="min-w-0">
+              <div className="min-w-0 border-l border-slate-800 pl-2 md:pl-3">
                 <h1 className="text-xs sm:text-sm md:text-base font-black tracking-wider text-white truncate">
                   PANEL <span className="text-emerald-400">ADMINISTRATOR</span>
                 </h1>
-                <p className="text-[0.6rem] md:text-[0.65rem] text-slate-400 tracking-wider truncate">LT-II Kwartir Ranting Mekar Baru 2026</p>
+                <p className="text-[0.55rem] sm:text-[0.65rem] text-slate-400 tracking-wider truncate">LT-II Kwartir Ranting Mekar Baru 2026</p>
               </div>
             </div>
 
@@ -1480,7 +1478,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 await supabase.auth.signOut().catch(() => {});
                 router.push("/login");
               }}
-              className="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all shrink-0"
+              className="text-[0.6rem] sm:text-xs font-bold tracking-wider bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border border-red-500/20 hover:border-red-500 transition-all shrink-0 shadow-sm"
             >
               LOGOUT
             </button>
@@ -1502,7 +1500,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 } catch (_) {}
                 router.push("/dashboard/admin/cetak-rekap");
               }}
-              className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 transition-all shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+              className="text-[0.65rem] sm:text-xs font-bold tracking-wider px-3 py-1.5 sm:py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 transition-all shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               title="Buka halaman cetak laporan hasil rekap nilai resmi per mata lomba"
             >
               <span>🖨️ Cetak Rekap</span>
@@ -1510,14 +1508,14 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
             <button
               onClick={handleToggleShowWinners}
-              className={`text-[0.68rem] md:text-xs font-black tracking-wider px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-2 shrink-0 whitespace-nowrap ${
+              className={`text-[0.65rem] sm:text-xs font-black tracking-wider px-3 py-1.5 sm:py-2 rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 showWinners
                   ? "bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-amber-500/30 animate-pulse"
                   : "bg-slate-800/90 text-slate-300 border border-slate-700 hover:bg-slate-700"
               }`}
               title="Klik untuk mengaktifkan/menonaktifkan pengumuman juara & total akumulasi di layar utama broadcast"
             >
-              <span>{showWinners ? "🏆 MODE JUARA: AKTIF" : "🔒 MODE JUARA: NON-AKTIF"}</span>
+              <span>{showWinners ? "🏆 MODE JUARA: AKTIF" : "🔒 MODE JUARA: OFF"}</span>
             </button>
 
             <button
@@ -1529,24 +1527,10 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 setTokenCopied(false);
                 handleGenerateNewToken();
               }}
-              className="text-[0.68rem] md:text-xs font-bold tracking-wider px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 transition-all shadow-sm flex items-center gap-1.5"
+              className="text-[0.65rem] sm:text-xs font-bold tracking-wider px-3 py-1.5 sm:py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 transition-all shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               title="Ganti kata sandi akun Admin & buat token baru"
             >
               <span>🔑 Ganti Password</span>
-            </button>
-
-            <button
-              onClick={async () => {
-                try {
-                  sessionStorage.removeItem("_profile_cache");
-                  sessionStorage.removeItem("_admin_session");
-                } catch (_) {}
-                await supabase.auth.signOut().catch(() => {});
-                router.push("/login");
-              }}
-              className="text-[0.65rem] font-bold tracking-wider bg-red-500/10 text-red-400 px-3.5 py-2 rounded-lg hover:bg-red-500 hover:text-white transition-all"
-            >
-              LOGOUT
             </button>
           </div>
 
@@ -1554,20 +1538,32 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
       </nav>
 
       {/* TABS */}
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 pt-6 no-print">
-        <div className="flex gap-2 overflow-x-auto whitespace-nowrap no-scrollbar py-1.5 px-4 rounded-t-xl" style={{
+      <div className="max-w-[1600px] mx-auto px-2.5 sm:px-4 md:px-8 pt-3 sm:pt-6 no-print">
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto whitespace-nowrap no-scrollbar py-1 sm:py-1.5 px-2 sm:px-4 rounded-t-xl" style={{
           backgroundImage: "url('/table_header_banner.png')",
           backgroundSize: "100% 100%",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           borderBottom: "1.5px solid rgba(6, 182, 212, 0.45)"
         }}>
-          <button onClick={() => setActiveTab("penilaian")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "penilaian" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Matriks Penilaian</button>
-          <button onClick={() => setActiveTab("peserta")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "peserta" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Manajemen Peserta</button>
-          <button onClick={() => setActiveTab("juri")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "juri" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Manajemen Juri</button>
-          <button onClick={() => setActiveTab("lomba")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "lomba" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Cabang Lomba</button>
-          <button onClick={() => setActiveTab("laporan")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "laporan" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Laporan & Rekap</button>
-          <button onClick={() => setActiveTab("informasi")} className={`px-4 py-3 text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "informasi" ? "border-amber-400 text-amber-300" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0`}>Live Ticker Info</button>
+          <button onClick={() => setActiveTab("penilaian")} className={`px-2.5 sm:px-4 py-2 sm:py-3 text-[0.7rem] sm:text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "penilaian" ? "border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0 flex items-center gap-1.5`}>
+            <span>📊</span> Matriks Penilaian
+          </button>
+          <button onClick={() => setActiveTab("peserta")} className={`px-2.5 sm:px-4 py-2 sm:py-3 text-[0.7rem] sm:text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "peserta" ? "border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0 flex items-center gap-1.5`}>
+            <span>👥</span> Manajemen Peserta
+          </button>
+          <button onClick={() => setActiveTab("juri")} className={`px-2.5 sm:px-4 py-2 sm:py-3 text-[0.7rem] sm:text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "juri" ? "border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0 flex items-center gap-1.5`}>
+            <span>⚖️</span> Manajemen Juri
+          </button>
+          <button onClick={() => setActiveTab("lomba")} className={`px-2.5 sm:px-4 py-2 sm:py-3 text-[0.7rem] sm:text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "lomba" ? "border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0 flex items-center gap-1.5`}>
+            <span>🏆</span> Cabang Lomba
+          </button>
+          <button onClick={() => setActiveTab("laporan")} className={`px-2.5 sm:px-4 py-2 sm:py-3 text-[0.7rem] sm:text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "laporan" ? "border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0 flex items-center gap-1.5`}>
+            <span>📑</span> Laporan & Rekap
+          </button>
+          <button onClick={() => setActiveTab("informasi")} className={`px-2.5 sm:px-4 py-2 sm:py-3 text-[0.7rem] sm:text-xs md:text-sm font-black tracking-wider uppercase border-b-2 transition-colors ${activeTab === "informasi" ? "border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-200"} flex-shrink-0 flex items-center gap-1.5`}>
+            <span>📢</span> Live Ticker Info
+          </button>
         </div>
       </div>
 
@@ -1583,42 +1579,47 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
         {activeTab === "penilaian" && (
           <>
             {/* Stats Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
               {[
                 { label: "Total Peserta", value: pesertaList.length },
                 { label: "Total Cabang Lomba", value: lombaList.length },
                 { label: "Cabang Aktif", value: dynamicLombaCols.length },
                 { label: "Kategori Klasemen", value: filterTingkat },
               ].map((stat) => (
-                <div key={stat.label} className="glass-card p-4">
-                  <div className="text-[0.65rem] text-slate-500 font-bold tracking-wider uppercase">{stat.label}</div>
-                  <div className="text-2xl font-black text-white mt-1">{stat.value}</div>
+                <div key={stat.label} className="glass-card p-3 sm:p-4">
+                  <div className="text-[0.6rem] sm:text-[0.65rem] text-slate-500 font-bold tracking-wider uppercase">{stat.label}</div>
+                  <div className="text-xl sm:text-2xl font-black text-white mt-0.5 sm:mt-1">{stat.value}</div>
                 </div>
               ))}
             </div>
 
             {/* Search & Filters */}
-            <div className="glass-card p-4">
-              <div className="flex flex-col md:flex-row gap-3">
-                <input type="text" placeholder="Cari regu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
-                <select value={filterTingkat} onChange={(e) => { setFilterTingkat(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50">
-                  <option value="SD">SD / MI</option>
-                  <option value="SMP">SMP / MTs</option>
-                </select>
-                <select value={filterGender} onChange={(e) => { setFilterGender(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50">
-                  <option value="Laki-laki">Laki-laki (Putra)</option>
-                  <option value="Perempuan">Perempuan (Putri)</option>
-                </select>
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50">
-                  <option value="SEMUA">Semua Status</option>
-                  <option value="SUDAH">Sudah Dinilai</option>
-                  <option value="BELUM">Belum Dinilai</option>
-                </select>
+            <div className="glass-card p-3 sm:p-4">
+              <div className="flex flex-col md:flex-row gap-2 sm:gap-3">
+                <input type="text" placeholder="🔍 Cari regu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                <div className="grid grid-cols-3 gap-1.5 sm:flex sm:gap-3">
+                  <select value={filterTingkat} onChange={(e) => { setFilterTingkat(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                    <option value="SD">SD / MI</option>
+                    <option value="SMP">SMP / MTs</option>
+                  </select>
+                  <select value={filterGender} onChange={(e) => { setFilterGender(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                    <option value="Laki-laki">Putra</option>
+                    <option value="Perempuan">Putri</option>
+                  </select>
+                  <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                    <option value="SEMUA">Semua</option>
+                    <option value="SUDAH">Dinilai</option>
+                    <option value="BELUM">Belum</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             {/* Score Matrix */}
             <div className="glass-card overflow-hidden">
+              <div className="md:hidden px-3 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-[0.65rem] font-bold text-amber-300 flex items-center gap-1.5">
+                <span>👉</span> Geser tabel ke kanan untuk melihat rincian nilai cabang lomba
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[1200px]">
                   <thead>
@@ -1702,33 +1703,35 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
 
         {/* TAB 2: PESERTA */}
         {activeTab === "peserta" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 glass-card p-6 h-fit">
-              <h2 className="text-lg font-black text-white mb-4">Daftar Regu Baru</h2>
-              <form onSubmit={handleTambahPeserta} className="space-y-4">
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Tingkat</label>
-                  <select value={formPeserta.kategori} onChange={(e) => setFormPeserta({...formPeserta, kategori: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="lg:col-span-1 glass-card p-4 sm:p-6 h-fit">
+              <h2 className="text-base sm:text-lg font-black text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <span>➕</span> Daftar Regu Baru
+              </h2>
+              <form onSubmit={handleTambahPeserta} className="space-y-3 sm:space-y-4">
+                <div><label className="text-[0.65rem] sm:text-xs text-slate-400 font-bold uppercase">Kategori Tingkat</label>
+                  <select value={formPeserta.kategori} onChange={(e) => setFormPeserta({...formPeserta, kategori: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm text-white outline-none focus:border-emerald-500/50">
                     <option value="SD">SD / MI</option><option value="SMP">SMP / MTs</option>
                   </select>
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Kategori Gender</label>
+                <div><label className="text-[0.65rem] sm:text-xs text-slate-400 font-bold uppercase">Kategori Gender</label>
                   <select value={formPeserta.gender} onChange={(e) => {
                       const newGender = e.target.value;
                       setFormPeserta({...formPeserta, gender: newGender, nomor_dada: getNextKaplingFormatted(newGender, pesertaList)});
-                  }} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none">
+                  }} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm text-white outline-none focus:border-emerald-500/50">
                     <option value="Laki-laki">Laki-laki (Putra - Kapling Ganjil)</option><option value="Perempuan">Perempuan (Putri - Kapling Genap)</option>
                   </select>
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nomor Kapling (Urut Tenda: 001, 002, dst.)</label>
-                  <input type="text" required value={formPeserta.nomor_dada} onChange={(e) => setFormPeserta({...formPeserta, nomor_dada: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-amber-400 font-mono font-bold outline-none" placeholder="001" />
+                <div><label className="text-[0.65rem] sm:text-xs text-slate-400 font-bold uppercase">Nomor Kapling (Urut Tenda: 001, 002, dst.)</label>
+                  <input type="text" required value={formPeserta.nomor_dada} onChange={(e) => setFormPeserta({...formPeserta, nomor_dada: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm text-amber-400 font-mono font-bold outline-none focus:border-amber-500" placeholder="001" />
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Nama Regu</label>
-                  <input type="text" required value={formPeserta.nama_regu} onChange={(e) => setFormPeserta({...formPeserta, nama_regu: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="Regu Rajawali" />
+                <div><label className="text-[0.65rem] sm:text-xs text-slate-400 font-bold uppercase">Nama Regu</label>
+                  <input type="text" required value={formPeserta.nama_regu} onChange={(e) => setFormPeserta({...formPeserta, nama_regu: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm text-white outline-none focus:border-emerald-500/50" placeholder="Regu Rajawali" />
                 </div>
-                <div><label className="text-[0.65rem] text-slate-500 font-bold uppercase">Asal Pangkalan / Sekolah</label>
-                  <input type="text" required value={formPeserta.pangkalan} onChange={(e) => setFormPeserta({...formPeserta, pangkalan: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-sm text-white outline-none" placeholder="SDN 1 Sukabumi" />
+                <div><label className="text-[0.65rem] sm:text-xs text-slate-400 font-bold uppercase">Asal Pangkalan / Sekolah</label>
+                  <input type="text" required value={formPeserta.pangkalan} onChange={(e) => setFormPeserta({...formPeserta, pangkalan: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm text-white outline-none focus:border-emerald-500/50" placeholder="SDN 1 Sukabumi" />
                 </div>
-                <button type="submit" disabled={saving} className="w-full bg-emerald-500 text-white font-bold py-3 rounded-lg mt-2 disabled:opacity-50">
+                <button type="submit" disabled={saving} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2.5 sm:py-3 rounded-xl mt-2 disabled:opacity-50 text-xs sm:text-sm uppercase tracking-wider transition-all shadow-md">
                   {saving ? "Menyimpan..." : "+ Tambahkan Regu"}
                 </button>
               </form>
@@ -1778,7 +1781,233 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 </div>
               </div>
 
-              <div className="overflow-x-auto max-h-[600px] mobile-table-scroll flex-1">
+              {/* Tampilan Khusus Mobile: Kartu Peserta Rapi & Simetris */}
+              <div className="md:hidden p-2.5 sm:p-3 space-y-2.5 max-h-[600px] overflow-y-auto">
+                {filteredPesertaList.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-500 italic bg-slate-950/40 rounded-xl border border-slate-800">
+                    Tidak ada data peserta yang cocok dengan kriteria pencarian/filter.
+                  </div>
+                ) : (
+                  filteredPesertaList.map((p) => {
+                    const isVerifying = verifyingId === p.id;
+                    const isRejecting = rejectingId === p.id;
+                    return (
+                      <div key={p.id} className={`p-3 rounded-xl border transition-all ${checkingBerkasId === p.id ? 'bg-slate-900/90 border-cyan-500/50' : 'bg-slate-950/70 border-slate-800'}`}>
+                        {/* Header Kartu: Kapling, Regu, Gender & Status */}
+                        <div className="flex items-start justify-between gap-2 pb-2 border-b border-slate-800/80">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono text-xs font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+                                #{p.nomor_dada ? String(p.nomor_dada).padStart(3, "0") : "—"}
+                              </span>
+                              <span className="text-xs font-bold text-white truncate">{p.nama_regu}</span>
+                            </div>
+                            <div className="text-[0.68rem] text-slate-400 mt-0.5 flex items-center gap-1 flex-wrap">
+                              <span>🏫 {p.pangkalan}</span>
+                              {(() => {
+                                const rawG = p.no_gudep || (pesertaList || []).find((other) => other.pangkalan === p.pangkalan && other.no_gudep)?.no_gudep;
+                                const gVal = getNoGudepByGender(rawG, p.gender);
+                                return gVal && gVal !== "—" ? (
+                                  <span className="text-amber-400/90 font-mono font-bold">• Gudep: {gVal}</span>
+                                ) : null;
+                              })()}
+                            </div>
+                          </div>
+                          <div className="shrink-0 flex flex-col items-end gap-1">
+                            {p.is_verified ? (
+                              <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold text-[0.6rem] uppercase">
+                                ✅ Aktif
+                              </span>
+                            ) : (
+                              <span className={`px-2 py-0.5 rounded-full font-bold text-[0.6rem] uppercase ${p.catatan_berkas?.startsWith('DITOLAK') ? 'bg-red-500/15 text-red-400 border border-red-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'}`}>
+                                {p.catatan_berkas?.startsWith('DITOLAK') ? '❌ Ditolak' : '⏳ Menunggu'}
+                              </span>
+                            )}
+                            <span className="text-[0.6rem] font-bold text-slate-400">
+                              {p.kategori} • {p.gender === 'Laki-laki' ? '👦 PA' : '👧 PI'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Kontak & WhatsApp */}
+                        <div className="py-2 flex items-center justify-between gap-2 text-xs">
+                          <div className="min-w-0">
+                            <span className="text-[0.65rem] text-slate-400 block truncate">
+                              👤 {p.kontak_person || "—"} {p.email ? `• ${p.email}` : ""}
+                            </span>
+                          </div>
+                          {getWaPesertaUrl(p, "auto") && (
+                            <a
+                              href={getWaPesertaUrl(p, "auto")}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[0.65rem] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                            >
+                              <span>💬 WA</span>
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Aksi Mobile */}
+                        <div className="pt-2 border-t border-slate-800/80">
+                          {isVerifying ? (
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <label className="text-[0.65rem] text-slate-400">No. Kapling:</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="001" 
+                                  value={noDadaInput} 
+                                  onChange={(e) => setNoDadaInput(e.target.value)} 
+                                  className="w-20 bg-slate-950 border border-amber-500 rounded-lg px-2 py-1 text-amber-300 text-xs font-mono font-bold outline-none text-center"
+                                />
+                              </div>
+                              <div className="flex gap-1.5">
+                                <button 
+                                  onClick={() => handleVerifikasiPeserta(p.id)} 
+                                  className="flex-1 text-white bg-emerald-600 hover:bg-emerald-700 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm"
+                                >
+                                  Simpan & Verifikasi
+                                </button>
+                                <button 
+                                  onClick={() => { setVerifyingId(null); setNoDadaInput(""); }} 
+                                  className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                >
+                                  Batal
+                                </button>
+                              </div>
+                            </div>
+                          ) : isRejecting ? (
+                            <div className="flex flex-col gap-2">
+                              <input 
+                                type="text" 
+                                value={rejectReason} 
+                                onChange={(e) => setRejectReason(e.target.value)} 
+                                placeholder="Alasan penolakan..." 
+                                className="text-xs px-2.5 py-1.5 bg-slate-900 border border-red-500/40 text-white rounded-lg w-full outline-none"
+                              />
+                              <div className="flex gap-1.5">
+                                <button 
+                                  onClick={() => handleRejectPeserta(p.id)} 
+                                  className="flex-1 text-white bg-red-600 hover:bg-red-700 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                >
+                                  Tolak & Kirim Email
+                                </button>
+                                <button 
+                                  onClick={() => { setRejectingId(null); setRejectReason(""); }} 
+                                  className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                >
+                                  Batal
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <button 
+                                onClick={() => handleStartCekBerkas(p)} 
+                                className="flex-1 text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400 hover:text-black py-1.5 px-2 rounded-lg text-[0.7rem] font-bold transition-colors border border-cyan-500/30 text-center"
+                              >
+                                📄 Cek Berkas
+                              </button>
+
+                              {!p.is_verified && (
+                                <>
+                                  <button 
+                                    onClick={() => handleStartVerifikasi(p)} 
+                                    disabled={!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina || !p.status_berkas?.bukti_pembayaran}
+                                    className="flex-1 text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black py-1.5 px-2 rounded-lg text-[0.7rem] font-bold transition-colors border border-amber-500/30 disabled:opacity-30 disabled:cursor-not-allowed text-center"
+                                  >
+                                    ⚡ Verifikasi
+                                  </button>
+                                  <button 
+                                    onClick={() => handleStartReject(p)} 
+                                    className="text-red-400 bg-red-400/10 hover:bg-red-500 hover:text-white py-1.5 px-2.5 rounded-lg text-[0.7rem] font-bold transition-colors border border-red-500/30 text-center"
+                                  >
+                                    ❌ Tolak
+                                  </button>
+                                </>
+                              )}
+
+                              {confirmDeleteId === p.id ? (
+                                <div className="flex gap-1">
+                                  <button onClick={() => handleHapusPeserta(p.id, p.nama_regu)} className="text-white bg-red-600 hover:bg-red-700 px-2 py-1.5 rounded-lg text-[0.7rem] font-bold">
+                                    Ya
+                                  </button>
+                                  <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded-lg text-[0.7rem] font-bold">
+                                    Batal
+                                  </button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setConfirmDeleteId(p.id)} className="text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white py-1.5 px-2.5 rounded-lg text-[0.7rem] font-bold border border-red-500/30 text-center">
+                                  🗑️ Hapus
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Inline Pengecekan Berkas untuk Mobile */}
+                        {checkingBerkasId === p.id && (
+                          <div className="mt-2.5 pt-2.5 border-t border-cyan-500/30 bg-slate-950/90 p-2.5 rounded-xl">
+                            <h4 className="text-cyan-400 font-bold text-xs mb-2.5 flex items-center gap-1.5">
+                              <span>📋</span> Berkas Persyaratan: {p.nama_regu}
+                            </h4>
+                            <div className="space-y-1.5 mb-2.5">
+                              {[
+                                { key: "ketersediaan", label: "Form Ketersediaan", url: p.berkas_ketersediaan },
+                                { key: "pendaftaran", label: "Form Pendaftaran", url: p.berkas_pendaftaran },
+                                { key: "biodata_peserta", label: "Biodata Peserta", url: p.berkas_biodata_peserta },
+                                { key: "biodata_pembina", label: "Biodata Pembina", url: p.berkas_biodata_pembina },
+                                { key: "bukti_pembayaran", label: "Bukti Pembayaran", url: p.berkas_bukti_pembayaran },
+                              ].map((b) => {
+                                const isValid = p.status_berkas?.[b.key] || false;
+                                return (
+                                  <div key={b.key} className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+                                    <div className="flex items-center gap-1.5 truncate mr-2">
+                                      <span className={isValid ? "text-emerald-400" : "text-slate-500"}>
+                                        {isValid ? "✅" : "⏳"}
+                                      </span>
+                                      <span className="text-white text-[0.7rem] truncate">{b.label}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {b.url ? (
+                                        <a href={b.url} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded text-[0.65rem] bg-cyan-500/20 text-cyan-300 font-bold">
+                                          Buka
+                                        </a>
+                                      ) : (
+                                        <span className="text-[0.6rem] text-slate-500 italic">Kosong</span>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleStatusBerkas(p.id, b.key, !isValid)}
+                                        className={`px-2 py-0.5 rounded text-[0.65rem] font-bold ${
+                                          isValid ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-400"
+                                        }`}
+                                      >
+                                        {isValid ? "Sah ✓" : "Validasi"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setCheckingBerkasId(null)}
+                              className="w-full text-center py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg font-bold"
+                            >
+                              Tutup Berkas
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Tampilan Desktop: Tabel Lengkap */}
+              <div className="hidden md:block overflow-x-auto max-h-[600px] mobile-table-scroll flex-1">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
                     <tr>
@@ -2217,7 +2446,180 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 </div>
               </div>
 
-              <div className="overflow-x-auto max-h-[650px] mobile-table-scroll flex-1">
+              {/* Tampilan Khusus Mobile: Kartu Dewan Juri Rapi & Simetris */}
+              <div className="md:hidden p-2.5 sm:p-3 space-y-2.5 max-h-[650px] overflow-y-auto">
+                {juriList.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-500 italic bg-slate-950/40 rounded-xl border border-slate-800">
+                    Belum ada akun Juri terdaftar.
+                  </div>
+                ) : (
+                  juriList.map((j) => {
+                    const isPublished = publishAll || publishedJuriIds.includes(j.id);
+                    const scoreCount = penilaianList.filter(p => p.juri_id === j.id).length;
+                    return (
+                      <div key={j.id} className="p-3 rounded-xl border border-slate-800 bg-slate-950/70 space-y-2.5 shadow-sm">
+                        {/* Header: Nama Juri & Status */}
+                        <div className="flex items-start justify-between gap-2 pb-2 border-b border-slate-800/80">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-7 h-7 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-xs text-cyan-300 font-black shrink-0">
+                              {j.nama_lengkap ? j.nama_lengkap.charAt(0).toUpperCase() : "J"}
+                            </span>
+                            <div className="min-w-0">
+                              <h3 className="text-xs font-bold text-white truncate">{j.nama_lengkap}</h3>
+                              <p className="text-[0.62rem] text-slate-400 font-mono truncate">{j.email || "No Email"}</p>
+                            </div>
+                          </div>
+                          <div className="shrink-0">
+                            {j.is_verified ? (
+                              <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold text-[0.6rem] uppercase flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                Aktif
+                              </span>
+                            ) : (
+                              <span className="bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold text-[0.6rem] uppercase flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                Menunggu
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Penugasan Lomba, Tingkat & Gender */}
+                        <div className="grid grid-cols-2 gap-1.5 text-[0.65rem] bg-slate-900/60 p-2 rounded-lg border border-slate-800/60">
+                          <div>
+                            <span className="text-slate-500 block uppercase">Pos Lomba:</span>
+                            <span className="text-slate-200 font-bold truncate block">{j.lomba?.nama_lomba || "Semua Pos"}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block uppercase">Tingkat:</span>
+                            <span className="text-cyan-300 font-bold">{j.assigned_kategori || "SEMUA"}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block uppercase">Gender:</span>
+                            <span className="text-slate-300 font-medium">
+                              {j.assigned_gender === "SEMUA" || !j.assigned_gender ? "Bebas (Pa & Pi)" : j.assigned_gender === "Laki-laki" ? "👦 Putra" : "👧 Putri"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block uppercase">WhatsApp:</span>
+                            {j.no_wa ? (
+                              <a href={`https://wa.me/${String(j.no_wa).replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-emerald-400 font-mono font-bold hover:underline">
+                                {j.no_wa}
+                              </a>
+                            ) : (
+                              <span className="text-slate-600 italic">—</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Status Publikasi Nilai */}
+                        <div className="flex items-center justify-between text-xs py-1 px-1.5 bg-slate-900/40 rounded-lg">
+                          <span className="text-[0.65rem] text-slate-400 font-medium">
+                            Progres: <strong className="text-white">{scoreCount} Nilai</strong>
+                          </span>
+                          {j.is_verified && (
+                            <span className={`text-[0.6rem] font-bold px-2 py-0.5 rounded-full border ${isPublished ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border-amber-500/30"}`}>
+                              {isPublished ? "🟢 Tampil di Live" : "⏸️ Ditahan"}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Action Buttons Mobile */}
+                        <div className="pt-2 border-t border-slate-800/80">
+                          {verifyingJuriId === j.id ? (
+                            <div className="flex flex-col gap-2">
+                              <input 
+                                type="text" 
+                                placeholder="Set Password Juri" 
+                                value={juriPasswordInput} 
+                                onChange={(e) => setJuriPasswordInput(e.target.value)} 
+                                className="w-full bg-slate-950 border border-amber-500 rounded-lg px-2.5 py-1.5 text-amber-300 text-xs font-bold outline-none"
+                              />
+                              <div className="flex gap-1.5">
+                                <button onClick={() => handleVerifikasiJuri(j.id)} className="flex-1 text-white bg-emerald-600 hover:bg-emerald-700 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm">
+                                  Simpan
+                                </button>
+                                <button onClick={() => { setVerifyingJuriId(null); setJuriPasswordInput(""); }} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                                  Batal
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {j.is_verified && (
+                                <button
+                                  onClick={() => {
+                                    try {
+                                      const juriScores = penilaianList.filter((p) => p.juri_id === j.id);
+                                      localStorage.setItem("_cetak_cache", JSON.stringify({
+                                        lombaList,
+                                        pesertaList,
+                                        juriList: [j],
+                                        penilaianList: juriScores,
+                                        ts: Date.now(),
+                                      }));
+                                    } catch (_) {}
+                                    window.open(`/dashboard/admin/cetak-rekap?juriName=${encodeURIComponent(j.nama_lengkap)}&juriId=${j.id}`, '_blank');
+                                  }}
+                                  className="text-[0.65rem] font-bold bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all"
+                                >
+                                  <span>🖨️ Cetak</span>
+                                </button>
+                              )}
+
+                              {j.is_verified && (
+                                isPublished ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUnpublishJuri(j.id, j.nama_lengkap)}
+                                    disabled={publishingJuriId === j.id}
+                                    className="flex-1 px-2.5 py-1.5 text-[0.65rem] font-bold bg-amber-500/10 hover:bg-amber-500 hover:text-black text-amber-400 border border-amber-500/30 rounded-lg transition-all text-center"
+                                  >
+                                    {publishingJuriId === j.id ? "..." : "⏸️ Tahan Nilai"}
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePublishJuri(j.id, j.nama_lengkap)}
+                                    disabled={publishingJuriId === j.id}
+                                    className="flex-1 px-2.5 py-1.5 text-[0.65rem] font-bold bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/30 rounded-lg transition-all text-center"
+                                  >
+                                    {publishingJuriId === j.id ? "..." : "👁️ Tampilkan Nilai"}
+                                  </button>
+                                )
+                              )}
+
+                              {!j.is_verified && (
+                                <button onClick={() => setVerifyingJuriId(j.id)} className="flex-1 text-amber-300 bg-amber-500/15 hover:bg-amber-500 hover:text-black border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-[0.65rem] font-bold transition-all text-center">
+                                  ⚡ Verifikasi
+                                </button>
+                              )}
+
+                              {confirmDeleteId === j.id ? (
+                                <div className="flex gap-1">
+                                  <button onClick={() => handleHapusJuri(j.id, j.nama_lengkap)} className="text-white bg-red-600 hover:bg-red-700 px-2 py-1.5 rounded-lg text-[0.65rem] font-bold">
+                                    Ya
+                                  </button>
+                                  <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded-lg text-[0.65rem] font-bold">
+                                    Batal
+                                  </button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setConfirmDeleteId(j.id)} className="text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/30 px-2.5 py-1.5 rounded-lg text-[0.65rem] font-bold transition-all">
+                                  🗑️ Hapus
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Tampilan Desktop: Tabel Lengkap */}
+              <div className="hidden md:block overflow-x-auto max-h-[650px] mobile-table-scroll flex-1">
                 <table className="w-full text-left border-collapse min-w-[1100px]">
                   <thead className="sticky top-0 bg-slate-900/95 backdrop-blur z-10 shadow-md border-b border-slate-800">
                     <tr>
