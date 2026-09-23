@@ -43,9 +43,9 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans, 'Outfit', 'Inter', system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /* Prevent horizontal scroll on mobile */
-  overflow-x: hidden;
+  /* Enable desktop mode scrolling */
+  overflow-x: auto;
+  min-width: 1280px;
   /* Fix iOS momentum scroll */
   -webkit-overflow-scrolling: touch;
 }

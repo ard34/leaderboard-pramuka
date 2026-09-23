@@ -44,6 +44,27 @@ export default function JuriRegisterPage() {
     { nama_lomba: "Administrasi Regu", kode_lomba: "ADM" },
   ];
 
+  const getKodeSingkatan = (l) => {
+    if (l.kode_lomba && l.kode_lomba !== "SD" && l.kode_lomba !== "SMP") {
+      return l.kode_lomba.toUpperCase();
+    }
+    const name = (l.nama_lomba || "").toLowerCase();
+    if (name.includes("administrasi")) return "ADM";
+    if (name.includes("karnaval")) return "KRN";
+    if (name.includes("masak")) return "MSK";
+    if (name.includes("taksir")) return "TKS";
+    if (name.includes("hymne") || name.includes("mars") || name.includes("paduan") || name.includes("menyanyi")) return "HMN";
+    if (name.includes("morse")) return "MRS";
+    if (name.includes("kim") || name.includes("obat")) return "KIM";
+    if (name.includes("orienteering") || name.includes("navigasi")) return "NAV";
+    if (name.includes("tari") || name.includes("pentas") || name.includes("seni") || name.includes("budaya")) return "TSB";
+    if (name.includes("pionering")) return "PNR";
+    if (name.includes("ppgd") || name.includes("pppk")) return "PGD";
+    if (name.includes("sandi")) return "SND";
+    if (name.includes("semaphore")) return "SMP";
+    return l.kode_lomba || "LMB";
+  };
+
   // Fetch and auto-sync all 13 official JUKLAK competitions
   useEffect(() => {
     const fetchLomba = async () => {
@@ -367,7 +388,7 @@ export default function JuriRegisterPage() {
                     <option value="SEMUA">Bebas Akses (Semua Pos / Juri Pengawas)</option>
                     {filteredLomba.map((l) => (
                       <option key={l.id} value={l.id}>
-                        {l.kategori ? `[${l.kategori}] ` : ""}{l.nama_lomba}
+                        [{getKodeSingkatan(l)}] {l.nama_lomba}
                       </option>
                     ))}
                   </select>

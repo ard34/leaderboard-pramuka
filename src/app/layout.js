@@ -19,11 +19,10 @@ export const metadata = {
 };
 
 export const viewport = {
-  width: "device-width",
+  width: 1280,
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }) {
@@ -32,7 +31,36 @@ export default function RootLayout({ children }) {
       lang="id"
       className={`${outfit.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-background text-foreground">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function applyDesktopMode() {
+                  var targetWidth = 1280;
+                  var screenW = window.screen.width || targetWidth;
+                  if (screenW < targetWidth) {
+                    var scale = screenW / targetWidth;
+                    var meta = document.querySelector('meta[name="viewport"]');
+                    if (!meta) {
+                      meta = document.createElement('meta');
+                      meta.name = 'viewport';
+                      document.head.appendChild(meta);
+                    }
+                    meta.setAttribute('content', 'width=' + targetWidth + ', initial-scale=' + scale + ', minimum-scale=' + (scale * 0.5) + ', maximum-scale=5.0, user-scalable=yes');
+                  }
+                }
+                applyDesktopMode();
+                window.addEventListener('resize', applyDesktopMode);
+                window.addEventListener('orientationchange', function() {
+                  setTimeout(applyDesktopMode, 150);
+                });
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen flex flex-col bg-background text-foreground" style={{ minWidth: "1280px" }}>
         {children}
       </body>
     </html>

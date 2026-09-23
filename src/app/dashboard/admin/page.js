@@ -2374,7 +2374,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                   <select value={formJuri.lomba_id} onChange={(e) => setFormJuri({...formJuri, lomba_id: e.target.value})} className="w-full mt-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-cyan-500/50">
                     <option value="SEMUA">Bebas Akses (Semua Pos / Pengawas)</option>
                     {dynamicJuriLombaOptions.map((l) => (
-                      <option key={l.id} value={l.id}>[{l.kategori}] {l.nama_lomba}</option>
+                      <option key={l.id} value={l.id}>[{l.kode_lomba || "LMB"}] {l.nama_lomba}</option>
                     ))}
                   </select>
                 </div>
