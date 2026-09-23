@@ -27,26 +27,24 @@ export default function JuriRegisterPage() {
 
 
 
-  // Official JUKLAK LT-II Mekar Baru 2026 List
+  // Official 13 Cabang Lomba Aktif LT-II Mekar Baru 2026 (sesuai Rubrik Juri)
   const OFFICIAL_JUKLAK_LOMBA = [
-    { nama_lomba: "Menyanyi Hymne & Mars Tangerang", kode_lomba: "HMN" },
-    { nama_lomba: "Pentas Seni Budaya (Tari Kreasi)", kode_lomba: "TSB" },
-    { nama_lomba: "Pionering & Tali-Temali", kode_lomba: "PNR" },
-    { nama_lomba: "PPPK / PPGD", kode_lomba: "PGD" },
+    { nama_lomba: "Lomba Paduan Suara (Hymne & Mars)", kode_lomba: "HMN" },
+    { nama_lomba: "Lomba Tari Nusantara", kode_lomba: "TSB" },
+    { nama_lomba: "Lomba Pionering", kode_lomba: "PNR" },
+    { nama_lomba: "PPGD", kode_lomba: "PGD" },
     { nama_lomba: "Sandi-Sandi", kode_lomba: "SND" },
     { nama_lomba: "Orienteering Navigasi", kode_lomba: "NAV" },
     { nama_lomba: "Menaksir", kode_lomba: "TKS" },
-    { nama_lomba: "Packing Perlengkapan", kode_lomba: "PCK" },
     { nama_lomba: "Semaphore", kode_lomba: "SMP" },
-    { nama_lomba: "Morse Pluit", kode_lomba: "MRS" },
-    { nama_lomba: "Obat Tradisional & KIM", kode_lomba: "KIM" },
-    { nama_lomba: "Karnaval", kode_lomba: "KRN" },
-    { nama_lomba: "Administrasi Regu", kode_lomba: "ADM" },
-    { nama_lomba: "Forum Penggalang", kode_lomba: "FRP" },
+    { nama_lomba: "Morse", kode_lomba: "MRS" },
+    { nama_lomba: "Lomba KIM", kode_lomba: "KIM" },
+    { nama_lomba: "Lomba Karnaval", kode_lomba: "KRN" },
     { nama_lomba: "Masak Nusantara", kode_lomba: "MSK" },
+    { nama_lomba: "Administrasi Regu", kode_lomba: "ADM" },
   ];
 
-  // Fetch and auto-sync all 15 official JUKLAK competitions
+  // Fetch and auto-sync all 13 official JUKLAK competitions
   useEffect(() => {
     const fetchLomba = async () => {
       let currentData = [];
@@ -108,21 +106,52 @@ export default function JuriRegisterPage() {
     fetchLomba();
   }, []);
 
-  // Filtered lomba options based on selected kategori
+  // Filtered lomba options based on selected kategori - strictly 13 official active cabang lomba
   const filteredLomba = useMemo(() => {
+    const active13Only = lombaList.filter((l) => {
+      const code = (l.kode_lomba || "").trim().toUpperCase();
+      const name = (l.nama_lomba || "").toLowerCase();
+      if (code === "PCK" || code === "FRP" || name.includes("packing") || name.includes("forum")) return false;
+      return OFFICIAL_JUKLAK_LOMBA.some(
+        (off) =>
+          (code && off.kode_lomba === code) ||
+          name.includes(off.kode_lomba.toLowerCase()) ||
+          name.includes(off.nama_lomba.toLowerCase())
+      );
+    });
+
     if (kategori === "SEMUA") {
-      // Tampilkan seluruh daftar lomba unik
+      // Tampilkan seluruh daftar lomba unik (13 cabang lomba)
       const uniqueMap = new Map();
-      lombaList.forEach((l) => {
-        if (!uniqueMap.has(l.nama_lomba)) {
-          uniqueMap.set(l.nama_lomba, l);
+      active13Only.forEach((l) => {
+        const key = l.kode_lomba || l.nama_lomba;
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, l);
+        }
+      });
+      const result = Array.from(uniqueMap.values());
+      if (result.length > 0) return result;
+      return OFFICIAL_JUKLAK_LOMBA.map((off, idx) => ({
+        id: `fallback-SEMUA-${idx}`,
+        nama_lomba: off.nama_lomba,
+        kode_lomba: off.kode_lomba,
+        kategori: "SEMUA",
+      }));
+    }
+
+    const matched = active13Only.filter((l) => !l.kategori || l.kategori === kategori);
+    if (matched.length > 0) {
+      const uniqueMap = new Map();
+      matched.forEach((l) => {
+        const key = l.kode_lomba || l.nama_lomba;
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, l);
         }
       });
       return Array.from(uniqueMap.values());
     }
-    const matched = lombaList.filter((l) => !l.kategori || l.kategori === kategori);
-    if (matched.length > 0) return matched;
-    // Fallback: return official 15 list for the selected category
+
+    // Fallback: return official 13 list for the selected category
     return OFFICIAL_JUKLAK_LOMBA.map((off, idx) => ({
       id: `fallback-${kategori}-${idx}`,
       nama_lomba: off.nama_lomba,
@@ -214,12 +243,12 @@ export default function JuriRegisterPage() {
       <div className="bg-grid absolute inset-0 pointer-events-none" />
 
       <div className="relative z-10 max-w-md w-full">
-        {/* Logos Header Cluster */}
-        <div className="text-center mb-6 flex justify-center items-center gap-3 md:gap-4 flex-wrap">
-          <img src="/logo_wosm.png" alt="WOSM" className="h-14 md:h-18 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
-          <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-14 md:h-18 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
-          <img src="/logo_lt2.png" alt="LT-II 2026" className="h-14 md:h-18 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]" />
-          <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-14 md:h-18 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]" />
+        {/* Logos Header Cluster - Auto-scaling responsive for mobile Android / iOS & desktop */}
+        <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 w-full max-w-sm sm:max-w-md mx-auto mb-6 px-2">
+          <img src="/logo_wosm.png" alt="WOSM" className="h-10 sm:h-14 md:h-[4.5rem] max-w-[21vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+          <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-10 sm:h-14 md:h-[4.5rem] max-w-[21vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+          <img src="/logo_lt2.png" alt="LT-II 2026" className="h-10 sm:h-14 md:h-[4.5rem] max-w-[21vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]" />
+          <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-10 sm:h-14 md:h-[4.5rem] max-w-[21vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]" />
         </div>
 
 

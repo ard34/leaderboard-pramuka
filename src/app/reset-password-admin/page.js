@@ -123,16 +123,16 @@ function ResetPasswordAdminContent() {
 
       <div className="relative z-10 max-w-md w-full">
         {/* Header Branding */}
-        <div className="text-center mb-6 flex justify-center items-center gap-3 flex-wrap">
+        <div className="text-center mb-6 flex justify-center items-center gap-3 px-2">
           <img
             src="/logo_kwarran_mekarbaru.png"
             alt="Kwarran Mekar Baru"
-            className="h-16 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+            className="h-12 sm:h-16 max-w-[35vw] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] shrink-0"
           />
           <img
             src="/logo_lt2.png"
             alt="LT-II 2026"
-            className="h-16 w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.5)]"
+            className="h-12 sm:h-16 max-w-[35vw] w-auto object-contain drop-shadow-[0_0_20px_rgba(245,166,35,0.5)] shrink-0"
           />
         </div>
 
