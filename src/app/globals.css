@@ -43,9 +43,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans, 'Outfit', 'Inter', system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
-  /* Enable desktop mode scrolling */
-  overflow-x: auto;
-  min-width: 1280px;
+  /* Prevent accidental horizontal overflow on mobile */
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
   /* Fix iOS momentum scroll */
   -webkit-overflow-scrolling: touch;
 }
@@ -1592,49 +1593,204 @@ input[type="number"] {
   transform: translateY(-1px);
 }
 
-/* ---- SCOREBOARD MOBILE RESPONSIVE ---- */
-@media (max-width: 768px) {
-  .scoreboard-title {
-    font-size: 1rem;
-    letter-spacing: 0.1em;
+/* ---- SCOREBOARD MOBILE & ANDROID RESPONSIVE (Complete Redesign for Smartphone) ---- */
+@media (max-width: 900px) {
+  .scoreboard-layout {
+    min-height: 100dvh;
+    height: auto;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
   }
 
+  .scoreboard-container {
+    position: relative !important;
+    width: 100% !important;
+    min-height: 100dvh !important;
+    height: auto !important;
+    background-size: cover !important;
+    background-position: center top !important;
+    background-repeat: repeat-y !important;
+    background-attachment: scroll !important;
+    overflow: visible !important;
+    padding-bottom: 52px !important; /* ruang agar tabel tidak terhalang ticker */
+  }
+
+  /* Sembunyikan gambar sidebar desktop agar layar HP bersih */
+  .scoreboard-sidebar-img {
+    display: none !important;
+  }
+
+  /* Banner Header diubah jadi static/relative di atas layar HP */
+  .scoreboard-banner-header {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 52px !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    background-size: cover !important;
+    z-index: 10 !important;
+  }
+
+  .banner-title {
+    font-size: clamp(0.82rem, 3.8vw, 1.15rem) !important;
+    letter-spacing: 0.02em !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  /* Top Header Meta Info (Jam, LIVE, Tanggal) menjadi strip info mobile */
   .scoreboard-header {
-    padding: 14px 16px;
+    position: relative !important;
+    top: 0 !important;
+    right: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    padding: 8px 12px !important;
+    background: rgba(11, 19, 41, 0.85) !important;
+    border-bottom: 1px solid rgba(6, 182, 212, 0.3) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 10 !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
+  .header-right-meta {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .live-indicator {
+    font-size: 0.65rem !important;
+    padding: 2px 8px !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .live-dot {
+    width: 6px !important;
+    height: 6px !important;
+  }
+
+  .header-clock {
+    font-size: 0.95rem !important;
+    margin-right: 0 !important;
+  }
+
+  .header-date {
+    font-size: 0.72rem !important;
+  }
+
+  /* Glass Box Table Container mengisi lebar layar HP dengan margin simetris */
+  .glass-table-container {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: calc(100% - 16px) !important;
+    margin: 8px auto !important;
+    height: auto !important;
+    min-height: 55vh !important;
+    max-height: calc(100dvh - 160px) !important;
+    border-radius: 12px !important;
+    background: rgba(11, 19, 41, 0.4) !important;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  /* Info Bar inside glass box */
   .scoreboard-info-bar {
-    padding: 8px 12px;
+    height: auto !important;
+    min-height: 42px !important;
+    padding: 6px 10px !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .info-bar-left {
+    margin-right: 4px !important;
   }
 
   .info-bar-title {
-    font-size: 0.75rem;
-  }
-
-  .info-bar-clock {
-    font-size: 0.7rem;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.04em !important;
+    white-space: normal !important;
+    line-height: 1.2 !important;
   }
 
   .scoreboard-table-wrap {
-    padding: 6px 8px 4px 8px;
+    padding: 4px 6px !important;
+    max-height: calc(100dvh - 210px) !important;
   }
 
-  .scoreboard-footer {
-    padding: 10px 12px;
-    gap: 10px;
+  /* Sticky columns for wide tables on mobile */
+  .scoreboard-table th.sticky-col-rank,
+  .scoreboard-table td.sticky-col-rank {
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    font-size: 0.65rem !important;
   }
 
-  .scoreboard-btn-save,
-  .scoreboard-btn-reset {
-    padding: 8px 20px;
-    font-size: 0.65rem;
+  .scoreboard-table th.sticky-col-name,
+  .scoreboard-table td.sticky-col-name {
+    left: 36px !important;
+    width: 88px !important;
+    min-width: 88px !important;
+    max-width: 88px !important;
+    padding-left: 4px !important;
+    font-size: 0.64rem !important;
+  }
+
+  .scoreboard-table th.sticky-col-total,
+  .scoreboard-table td.sticky-col-total {
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .col-lomba {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    padding: 2px 1px !important;
+  }
+
+  .sc-th-lomba {
+    font-size: 0.44rem !important;
+    max-width: 34px !important;
+  }
+
+  .score-chip {
+    min-width: 22px !important;
+    height: 16px !important;
+    font-size: 0.55rem !important;
+    padding: 0 1px !important;
   }
 
   .school-name {
-    font-size: 0.68rem;
-    max-width: 100px;
+    font-size: 0.62rem !important;
+    max-width: 82px !important;
+  }
+
+  /* Bottom Ticker placement on mobile */
+  .bottom-ticker-wrap {
+    left: 0 !important;
+    width: 100% !important;
+    height: 36px !important;
+    background: rgba(11, 19, 41, 0.95) !important;
+    border-top: 1px solid rgba(6, 182, 212, 0.3) !important;
   }
 }
+
 
 /* Original Live Ticker Animation Styles */
 .ticker-wrap {
@@ -2059,10 +2215,12 @@ input[type="number"] {
   .glass-panel-right {
     display: none !important;
   }
-  .glass-table-container {
-    width: 88.5% !important; /* Expand table frame to occupy right side */
+  /* On tablet: table occupies full area beside sidebar */
+  .scoreboard-container:not(.mobile-mode) .glass-table-container {
+    width: 88.5% !important;
   }
 }
+
 
 /* ========================================
    MOBILE & CROSS-BROWSER COMPATIBILITY

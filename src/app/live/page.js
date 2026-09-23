@@ -92,7 +92,7 @@ const TransitionOverlay = ({ isActive, nextItem }) => {
             <img 
               src="/logo_lt2.png" 
               alt="Logo LT-II Kwartir Ranting Mekar Baru 2026" 
-              className="h-64 md:h-80 w-auto object-contain drop-shadow-[0_0_35px_rgba(245,166,35,0.6)]" 
+              className="h-40 sm:h-64 md:h-80 w-auto object-contain drop-shadow-[0_0_35px_rgba(245,166,35,0.6)]" 
             />
         </div>
 
