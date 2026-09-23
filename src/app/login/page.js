@@ -252,11 +252,11 @@ export default function LoginPage() {
 
       <div className="relative z-10 max-w-md w-full">
         {/* Logos Header Cluster - Auto-scaling responsive for mobile Android / iOS & desktop */}
-        <div className="flex items-center justify-center gap-1.5 sm:gap-3 md:gap-4 w-full max-w-[280px] sm:max-w-md mx-auto mb-4 sm:mb-6 px-1">
-          <img src="/logo_wosm.png" alt="WOSM" className="h-7 sm:h-12 md:h-16 max-w-[18vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
-          <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-7 sm:h-12 md:h-16 max-w-[18vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
-          <img src="/logo_lt2.png" alt="LT-II 2026" className="h-7 sm:h-12 md:h-16 max-w-[18vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_15px_rgba(245,166,35,0.4)]" />
-          <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-7 sm:h-12 md:h-16 max-w-[18vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_15px_rgba(245,166,35,0.4)]" />
+        <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 w-full max-w-[280px] sm:max-w-md mx-auto mb-4 sm:mb-6 px-1">
+          <img src="/logo_wosm.png" alt="WOSM" className="h-8 sm:h-11 md:h-14 max-h-8 sm:max-h-11 md:max-h-14 max-w-[20vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
+          <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-8 sm:h-11 md:h-14 max-h-8 sm:max-h-11 md:max-h-14 max-w-[20vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
+          <img src="/logo_lt2.png" alt="LT-II 2026" className="h-8 sm:h-11 md:h-14 max-h-8 sm:max-h-11 md:max-h-14 max-w-[20vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_12px_rgba(245,166,35,0.4)]" />
+          <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-8 sm:h-11 md:h-14 max-h-8 sm:max-h-11 md:max-h-14 max-w-[20vw] sm:max-w-none w-auto object-contain shrink-0 drop-shadow-[0_0_12px_rgba(245,166,35,0.4)]" />
         </div>
 
 

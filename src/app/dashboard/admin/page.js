@@ -712,19 +712,33 @@ export default function DashboardAdmin() {
     setSaving(false);
   };
 
-  // --- KAPLING AUTO-ASSIGNMENT (Putra = Ganjil / 001, Putri = Genap / 002) ---
+  // --- KAPLING AUTO-ASSIGNMENT (Maksimal 53: Putra = Ganjil 1..53, Putri = Genap 2..52, mengisi nomor terkecil yang belum terisi/kosong) ---
   const getNextKapling = (gender, list = pesertaList) => {
     const isPutra = gender?.toLowerCase().includes("laki") || gender?.toLowerCase().includes("putra");
-    const validKaplings = (list || [])
-      .map((p) => Number(p.nomor_dada))
-      .filter((n) => !isNaN(n) && n > 0);
+    const validKaplings = new Set(
+      (list || [])
+        .map((p) => Number(p.nomor_dada))
+        .filter((n) => !isNaN(n) && n > 0)
+    );
 
     if (isPutra) {
-      const oddNumbers = validKaplings.filter((n) => n % 2 !== 0);
-      return oddNumbers.length > 0 ? Math.max(...oddNumbers) + 2 : 1;
+      // Cari nomor kapling ganjil terkecil yang belum terisi (1 s.d. 53)
+      for (let n = 1; n <= 53; n += 2) {
+        if (!validKaplings.has(n)) return n;
+      }
+      // Jika 1..53 sudah penuh, cari slot ganjil berikutnya
+      let n = 55;
+      while (validKaplings.has(n)) n += 2;
+      return n;
     } else {
-      const evenNumbers = validKaplings.filter((n) => n % 2 === 0);
-      return evenNumbers.length > 0 ? Math.max(...evenNumbers) + 2 : 2;
+      // Cari nomor kapling genap terkecil yang belum terisi (2 s.d. 52)
+      for (let n = 2; n <= 52; n += 2) {
+        if (!validKaplings.has(n)) return n;
+      }
+      // Jika 2..52 sudah penuh, cari slot genap berikutnya
+      let n = 54;
+      while (validKaplings.has(n)) n += 2;
+      return n;
     }
   };
 
@@ -1455,10 +1469,10 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
             <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
               {/* Logos Cluster - Proporsional simetris di Android HP & Desktop */}
               <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                <img src="/logo_wosm.png" alt="WOSM" className="h-6 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
-                <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-6 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
-                <img src="/logo_lt2.png" alt="LT-II 2026" className="h-6 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]" />
-                <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-6 sm:h-8 md:h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]" />
+                <img src="/logo_wosm.png" alt="WOSM" className="h-7 sm:h-9 md:h-12 max-h-7 sm:max-h-9 md:max-h-12 w-auto object-contain drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
+                <img src="/logo_kwarran_mekarbaru.png" alt="Kwarran Mekar Baru" className="h-7 sm:h-9 md:h-12 max-h-7 sm:max-h-9 md:max-h-12 w-auto object-contain drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
+                <img src="/logo_lt2.png" alt="LT-II 2026" className="h-7 sm:h-9 md:h-12 max-h-7 sm:max-h-9 md:max-h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]" />
+                <img src="/logo_65.png" alt="HUT 65 Pramuka" className="h-7 sm:h-9 md:h-12 max-h-7 sm:max-h-9 md:max-h-12 w-auto object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]" />
               </div>
               <div className="min-w-0 border-l border-slate-800 pl-2 md:pl-3">
                 <h1 className="text-xs sm:text-sm md:text-base font-black tracking-wider text-white truncate">
@@ -1902,10 +1916,10 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                               </div>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5">
                               <button 
                                 onClick={() => handleStartCekBerkas(p)} 
-                                className="flex-1 text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400 hover:text-black py-1.5 px-2 rounded-lg text-[0.7rem] font-bold transition-colors border border-cyan-500/30 text-center"
+                                className="w-full sm:flex-1 text-cyan-400 bg-cyan-400/10 hover:bg-cyan-400 hover:text-black py-2 px-2 rounded-lg text-xs font-bold transition-colors border border-cyan-500/30 text-center whitespace-nowrap flex items-center justify-center gap-1 shadow-sm"
                               >
                                 📄 Cek Berkas
                               </button>
@@ -1915,13 +1929,13 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                                   <button 
                                     onClick={() => handleStartVerifikasi(p)} 
                                     disabled={!p.status_berkas?.ketersediaan || !p.status_berkas?.pendaftaran || !p.status_berkas?.biodata_peserta || !p.status_berkas?.biodata_pembina || !p.status_berkas?.bukti_pembayaran}
-                                    className="flex-1 text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black py-1.5 px-2 rounded-lg text-[0.7rem] font-bold transition-colors border border-amber-500/30 disabled:opacity-30 disabled:cursor-not-allowed text-center"
+                                    className="w-full sm:flex-1 text-amber-400 bg-amber-400/10 hover:bg-amber-400 hover:text-black py-2 px-2 rounded-lg text-xs font-bold transition-colors border border-amber-500/30 disabled:opacity-30 disabled:cursor-not-allowed text-center whitespace-nowrap flex items-center justify-center gap-1 shadow-sm"
                                   >
                                     ⚡ Verifikasi
                                   </button>
                                   <button 
                                     onClick={() => handleStartReject(p)} 
-                                    className="text-red-400 bg-red-400/10 hover:bg-red-500 hover:text-white py-1.5 px-2.5 rounded-lg text-[0.7rem] font-bold transition-colors border border-red-500/30 text-center"
+                                    className="w-full sm:w-auto text-red-400 bg-red-400/10 hover:bg-red-500 hover:text-white py-2 px-3 rounded-lg text-xs font-bold transition-colors border border-red-500/30 text-center whitespace-nowrap flex items-center justify-center gap-1 shadow-sm"
                                   >
                                     ❌ Tolak
                                   </button>
@@ -1929,16 +1943,16 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                               )}
 
                               {confirmDeleteId === p.id ? (
-                                <div className="flex gap-1">
-                                  <button onClick={() => handleHapusPeserta(p.id, p.nama_regu)} className="text-white bg-red-600 hover:bg-red-700 px-2 py-1.5 rounded-lg text-[0.7rem] font-bold">
-                                    Ya
+                                <div className="col-span-2 sm:col-span-1 flex gap-1.5">
+                                  <button onClick={() => handleHapusPeserta(p.id, p.nama_regu)} className="flex-1 text-white bg-red-600 hover:bg-red-700 py-2 px-2 rounded-lg text-xs font-bold shadow-sm">
+                                    Ya, Hapus
                                   </button>
-                                  <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded-lg text-[0.7rem] font-bold">
+                                  <button onClick={() => setConfirmDeleteId(null)} className="flex-1 text-slate-400 bg-slate-800 hover:bg-slate-700 py-2 px-2 rounded-lg text-xs font-bold">
                                     Batal
                                   </button>
                                 </div>
                               ) : (
-                                <button onClick={() => setConfirmDeleteId(p.id)} className="text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white py-1.5 px-2.5 rounded-lg text-[0.7rem] font-bold border border-red-500/30 text-center">
+                                <button onClick={() => setConfirmDeleteId(p.id)} className="w-full sm:w-auto text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white py-2 px-3 rounded-lg text-xs font-bold border border-red-500/30 text-center whitespace-nowrap flex items-center justify-center gap-1 shadow-sm">
                                   🗑️ Hapus
                                 </button>
                               )}

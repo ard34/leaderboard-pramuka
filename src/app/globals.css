@@ -2295,16 +2295,27 @@ input[type="number"] {
     border-radius: 0.75rem;
   }
 
-  /* Input fields — large enough to tap */
-  input, select, textarea, button {
-    font-size: 16px !important; /* Prevent iOS auto-zoom on input focus */
-    min-height: 44px;
+  /* Input fields — avoid iOS zoom without breaking button layouts */
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"], select, textarea {
+    font-size: 16px;
+    min-height: 42px;
   }
 
-  /* Prevent overflow from fixed-width elements */
-  img, video, iframe {
+  /* Prevent overflow from large video/iframe, protect fixed height images */
+  video, iframe {
     max-width: 100%;
     height: auto;
+  }
+
+  /* Ensure logos stay neatly proportioned on mobile screen */
+  img[src*="logo_"],
+  .logo-header img,
+  nav img,
+  header img {
+    max-height: 38px !important;
+    height: 32px !important;
+    width: auto !important;
+    object-fit: contain !important;
   }
 
   /* Table wrapper always gets horizontal scroll on mobile */

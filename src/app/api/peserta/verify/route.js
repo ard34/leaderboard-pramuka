@@ -51,16 +51,24 @@ export async function POST(request) {
           .not("nomor_dada", "is", null);
 
         const isPutra = peserta.gender?.toLowerCase().includes("laki") || peserta.gender?.toLowerCase().includes("putra");
-        const validKaplings = (allPeserta || [])
-          .map((p) => Number(p.nomor_dada))
-          .filter((n) => !isNaN(n) && n > 0);
+        const validKaplings = new Set(
+          (allPeserta || [])
+            .map((p) => Number(p.nomor_dada))
+            .filter((n) => !isNaN(n) && n > 0)
+        );
 
         if (isPutra) {
-          const oddNumbers = validKaplings.filter((n) => n % 2 !== 0);
-          finalKapling = oddNumbers.length > 0 ? Math.max(...oddNumbers) + 2 : 1;
+          // Cari nomor kapling ganjil terkecil yang belum terisi (1 s.d. 53)
+          finalKapling = 55;
+          for (let n = 1; n <= 53; n += 2) {
+            if (!validKaplings.has(n)) { finalKapling = n; break; }
+          }
         } else {
-          const evenNumbers = validKaplings.filter((n) => n % 2 === 0);
-          finalKapling = evenNumbers.length > 0 ? Math.max(...evenNumbers) + 2 : 2;
+          // Cari nomor kapling genap terkecil yang belum terisi (2 s.d. 52)
+          finalKapling = 54;
+          for (let n = 2; n <= 52; n += 2) {
+            if (!validKaplings.has(n)) { finalKapling = n; break; }
+          }
         }
       }
     }

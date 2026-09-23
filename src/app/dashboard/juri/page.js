@@ -515,8 +515,17 @@ export default function DashboardJuri() {
         setSelectedGender(profile.assigned_gender);
       }
 
-      if (profile.assigned_lomba_id && profile.assigned_lomba_id !== "SEMUA" && loadedLomba.some((l) => l.id === profile.assigned_lomba_id)) {
-        setSelectedLombaId(profile.assigned_lomba_id);
+      if (profile.assigned_lomba_id && profile.assigned_lomba_id !== "SEMUA") {
+        let matched = loadedLomba.find((l) => l.id === profile.assigned_lomba_id);
+        if (!matched && profile.lomba?.kode_lomba) {
+          matched = loadedLomba.find((l) => l.kode_lomba === profile.lomba.kode_lomba && (!profile.assigned_kategori || l.kategori === profile.assigned_kategori));
+        }
+        if (matched) {
+          setSelectedLombaId(matched.id);
+          if (matched.kategori) setSelectedKategori(matched.kategori);
+        } else {
+          setSelectedLombaId(profile.assigned_lomba_id);
+        }
       } else if (loadedLomba.length > 0) {
         const matching = loadedLomba.find((l) => l.kategori === defaultKategori);
         setSelectedLombaId(matching ? matching.id : loadedLomba[0].id);
@@ -845,16 +854,21 @@ export default function DashboardJuri() {
   const stepDown = (amount) => setManualOverrideTotal((prev) => Math.max(0, (prev ?? totalScoreCalculated) - amount));
   const stepUp = (amount) => setManualOverrideTotal((prev) => Math.min(100, (prev ?? totalScoreCalculated) + amount));
 
-  // Locking checks: Seluruh juri dan admin memiliki akses penuh ke semua cabang, tingkat, & gender
-  const isLockedPos = false;
-  const isLockedGender = false;
+  // Locking checks: Kunci hanya ke cabang lomba yang dipilih saat daftar jika bukan akses "SEMUA"
+  const isLockedPos = Boolean(juri && juri.role === "juri" && juri.assigned_lomba_id && juri.assigned_lomba_id !== "SEMUA");
+  const isLockedGender = Boolean(juri && juri.role === "juri" && juri.assigned_gender && juri.assigned_gender !== "SEMUA");
+  const isLockedKategori = Boolean(juri && juri.role === "juri" && juri.assigned_kategori && juri.assigned_kategori !== "SEMUA");
+
   const OFFICIAL_ACTIVE_KODES = [
     "HMN", "TSB", "PNR", "PGD", "SND", "NAV", "TKS", 
     "SMP", "MRS", "KIM", "KRN", "PCK", "ADM", "FRP", "MSK"
   ];
-  const filteredLomba = lombaList
-    .filter((l) => l.kategori === selectedKategori)
-    .sort((a, b) => {
+  const filteredLomba = useMemo(() => {
+    let list = lombaList.filter((l) => l.kategori === selectedKategori);
+    if (isLockedPos && juri?.assigned_lomba_id) {
+      list = list.filter((l) => l.id === juri.assigned_lomba_id || (currentLombaObj && l.id === currentLombaObj.id));
+    }
+    return list.sort((a, b) => {
       const idxA = OFFICIAL_ACTIVE_KODES.indexOf(a.kode_lomba);
       const idxB = OFFICIAL_ACTIVE_KODES.indexOf(b.kode_lomba);
       if (idxA !== -1 && idxB !== -1) return idxA - idxB;
@@ -862,6 +876,7 @@ export default function DashboardJuri() {
       if (idxB !== -1) return 1;
       return (a.nama_lomba || "").localeCompare(b.nama_lomba || "");
     });
+  }, [lombaList, selectedKategori, isLockedPos, juri, currentLombaObj]);
 
   // Filtered Peserta Calculations
   const availableInCategory = useMemo(() => {
@@ -1146,7 +1161,7 @@ export default function DashboardJuri() {
                 🏫 {selectedKategori === "SD" ? "SD / MI" : "SMP / MTs"}
               </span>
               <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold px-2.5 py-1 rounded-lg">
-                {selectedGender === "Laki-laki" ? "👦 Putra (Laki-laki)" : "👧 Putri (Perempuan)"}
+                {isLockedGender ? (selectedGender === "Laki-laki" ? "👦 Putra (Laki-laki)" : "👧 Putri (Perempuan)") : "👦👧 Putra & Putri"}
               </span>
             </div>
             <div className="text-[0.68rem] text-slate-400 italic hidden md:block">
