@@ -332,6 +332,24 @@ export default function DashboardAdmin() {
   };
 
 
+  // Set viewport to desktop scale (1280px) on mobile so admin dashboard appears like desktop mode
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'viewport';
+      document.head.appendChild(meta);
+    }
+    const prevContent = meta.content;
+    meta.content = 'width=1280, initial-scale=0.35, maximum-scale=3, user-scalable=yes';
+
+    return () => {
+      if (meta) {
+        meta.content = prevContent || 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes';
+      }
+    };
+  }, []);
+
   // Auth check
   useEffect(() => {
     cekAuth();
@@ -837,6 +855,47 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
   };
 
+  // --- HELPER: WHATSAPP NOTIFIKASI VERIFIKASI DEWAN JURI ---
+  const getWaJuriUrl = (j, customPassword = "") => {
+    if (!j || !j.no_wa) return null;
+    let cleanPhone = String(j.no_wa).replace(/\D/g, "");
+    if (cleanPhone.startsWith("0")) {
+      cleanPhone = "62" + cleanPhone.slice(1);
+    } else if (!cleanPhone.startsWith("62")) {
+      cleanPhone = "62" + cleanPhone;
+    }
+    if (cleanPhone.length < 9) return null;
+
+    const emailLogin = j.email && j.email !== "No Email" ? j.email : "-";
+    const passText = customPassword ? customPassword : "(Gunakan kata sandi yang telah didaftarkan oleh Admin)";
+
+    const message = 
+`Salam Pramuka, Kak ${j.nama_lengkap || "Dewan Juri"}! 🙏
+
+Pemberitahuan Resmi Panitia Pelaksana Lomba Tingkat II (LT-II) Kwartir Ranting Mekar Baru Tahun 2026.
+
+Akun Dewan Juri Kakak telah berhasil diverifikasi dan saat ini sudah aktif dalam Sistem Penilaian Real-Time.
+
+Berikut rincian data akses login Kakak:
+━━━━━━━━━━━━━━━━━━━━━━
+👤 *Username / Email* : ${emailLogin}
+🔑 *Kata Sandi*       : ${passText}
+🔗 *Link Login Panel* : https://kwaranmekarbaru.my.id/login
+━━━━━━━━━━━━━━━━━━━━━━
+
+*Petunjuk Akses Penilaian:*
+1. Buka tautan login di atas menggunakan browser di perangkat HP atau Laptop Kakak.
+2. Masukkan Email dan Kata Sandi sesuai rincian di atas.
+3. Silakan memulai penilaian peserta sesuai dengan cabang lomba dan petunjuk teknis yang ditugaskan.
+
+Apabila Kakak memerlukan bantuan teknis saat login maupun pengisian nilai, silakan langsung menghubungi Panitia / Administrator.
+
+Terima kasih banyak atas partisipasi, integritas, dan dedikasi Kakak dalam menyukseskan LT-II Kwarran Mekar Baru 2026.
+_Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
+
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  };
+
   // --- HANDLERS: CEK BERKAS PESERTA ---
   const handleStartCekBerkas = (p) => {
     setCheckingBerkasId(p.id);
@@ -981,6 +1040,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
       return;
     }
     const targetJuri = juriList.find((j) => j.id === id);
+    const pwdToSave = juriPasswordInput;
     setSaving(true);
     try {
       const res = await fetch("/api/juri/verify", {
@@ -988,7 +1048,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: id,
-          password: juriPasswordInput,
+          password: pwdToSave,
           email: targetJuri?.email && targetJuri.email !== "No Email" ? targetJuri.email : undefined,
           nama_lengkap: targetJuri?.nama_lengkap,
         }),
@@ -996,9 +1056,17 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
       const data = await res.json();
       if (res.ok && data.success) {
         showPesan("success", `🎉 Juri berhasil diverifikasi! ${data.emailMessage || ""}`);
-        if (data.mailtoUrl && !data.emailSent) {
+        
+        // Buka WhatsApp konfirmasi langsung ke dewan juri dengan pesan lengkap & sopan
+        if (targetJuri?.no_wa) {
+          const waUrl = getWaJuriUrl(targetJuri, pwdToSave);
+          if (waUrl) {
+            window.open(waUrl, "_blank");
+          }
+        } else if (data.mailtoUrl && !data.emailSent) {
           window.open(data.mailtoUrl, "_blank");
         }
+
         setVerifyingJuriId(null);
         setJuriPasswordInput("");
         await fetchAllData();
@@ -1453,7 +1521,7 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
   }
 
   return (
-    <div className="min-h-screen text-slate-200 font-sans relative overflow-x-hidden" style={{
+    <div className="min-h-screen min-w-[1240px] text-slate-200 font-sans relative overflow-x-auto" style={{
       backgroundImage: "linear-gradient(135deg, rgba(3, 7, 18, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%), url('/scout_event_live.png')",
       backgroundSize: "cover",
       backgroundPosition: "center",
@@ -1592,8 +1660,8 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
         {/* TAB 1: PENILAIAN */}
         {activeTab === "penilaian" && (
           <>
-            {/* Stats Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            {/* Stats Summary - Desktop 4 Columns */}
+            <div className="grid grid-cols-4 gap-3">
               {[
                 { label: "Total Peserta", value: pesertaList.length },
                 { label: "Total Cabang Lomba", value: lombaList.length },
@@ -1601,26 +1669,26 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 { label: "Kategori Klasemen", value: filterTingkat },
               ].map((stat) => (
                 <div key={stat.label} className="glass-card p-3 sm:p-4">
-                  <div className="text-[0.6rem] sm:text-[0.65rem] text-slate-500 font-bold tracking-wider uppercase">{stat.label}</div>
-                  <div className="text-xl sm:text-2xl font-black text-white mt-0.5 sm:mt-1">{stat.value}</div>
+                  <div className="text-[0.65rem] text-slate-500 font-bold tracking-wider uppercase">{stat.label}</div>
+                  <div className="text-xl sm:text-2xl font-black text-white mt-1">{stat.value}</div>
                 </div>
               ))}
             </div>
 
-            {/* Search & Filters */}
+            {/* Search & Filters - Desktop Row */}
             <div className="glass-card p-3 sm:p-4">
-              <div className="flex flex-col md:flex-row gap-2 sm:gap-3">
-                <input type="text" placeholder="🔍 Cari regu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50" />
-                <div className="grid grid-cols-3 gap-1.5 sm:flex sm:gap-3">
-                  <select value={filterTingkat} onChange={(e) => { setFilterTingkat(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50">
+              <div className="flex flex-row items-center gap-3">
+                <input type="text" placeholder="🔍 Cari regu..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                <div className="flex items-center gap-3">
+                  <select value={filterTingkat} onChange={(e) => { setFilterTingkat(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
                     <option value="SD">SD / MI</option>
                     <option value="SMP">SMP / MTs</option>
                   </select>
-                  <select value={filterGender} onChange={(e) => { setFilterGender(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                  <select value={filterGender} onChange={(e) => { setFilterGender(e.target.value); setEditedNilai({}); }} className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
                     <option value="Laki-laki">Putra</option>
                     <option value="Perempuan">Putri</option>
                   </select>
-                  <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                  <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
                     <option value="SEMUA">Semua</option>
                     <option value="SUDAH">Dinilai</option>
                     <option value="BELUM">Belum</option>
@@ -1629,11 +1697,8 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
               </div>
             </div>
 
-            {/* Score Matrix */}
+            {/* Score Matrix Table */}
             <div className="glass-card overflow-hidden">
-              <div className="md:hidden px-3 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-[0.65rem] font-bold text-amber-300 flex items-center gap-1.5">
-                <span>👉</span> Geser tabel ke kanan untuk melihat rincian nilai cabang lomba
-              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[1200px]">
                   <thead>
@@ -2020,8 +2085,8 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                 )}
               </div>
 
-              {/* Tampilan Desktop: Tabel Lengkap */}
-              <div className="hidden md:block overflow-x-auto max-h-[600px] mobile-table-scroll flex-1">
+              {/* Tampilan Desktop: Tabel Lengkap Peserta (Tampil di Semua Perangkat) */}
+              <div className="block overflow-x-auto max-h-[650px] mobile-table-scroll flex-1">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead className="sticky top-0 bg-slate-900 z-10 shadow-md">
                     <tr>
@@ -2662,9 +2727,15 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           {j.no_wa ? (
-                            <a href={`https://wa.me/${j.no_wa.replace(/^0/, '62')}?text=${encodeURIComponent('Halo Kak ' + j.nama_lengkap + ', akun juri Anda sudah aktif diverifikasi. Silakan cek email untuk petunjuk akses login.')}`} target="_blank" rel="noopener noreferrer" className="text-xs text-amber-400 flex items-center gap-1.5 font-mono hover:text-amber-300 hover:underline transition-colors w-fit">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                              {j.no_wa}
+                            <a 
+                              href={getWaJuriUrl(j)} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-xs text-amber-400 flex items-center gap-1.5 font-mono hover:text-amber-300 hover:underline transition-colors w-fit"
+                              title="Kirim Rincian Akun & Link Login via WhatsApp Resmi"
+                            >
+                              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                              <span>{j.no_wa} (💬 Kirim Akses WA)</span>
                             </a>
                           ) : (
                             <span className="text-xs text-slate-600 italic">—</span>
