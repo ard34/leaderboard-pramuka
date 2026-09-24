@@ -424,9 +424,35 @@ export default function DashboardJuri() {
     return Math.min(maxScore, Math.max(0, sum));
   }, [rubrikScores, manualOverrideTotal, currentLombaDef, selectedKategori]);
 
+  // Locking checks: Kunci hanya ke cabang lomba yang dipilih saat daftar jika bukan akses "SEMUA"
+  const isLockedPos = Boolean(juri && juri.role === "juri" && juri.assigned_lomba_id && juri.assigned_lomba_id !== "SEMUA");
+  const isLockedGender = Boolean(juri && juri.role === "juri" && juri.assigned_gender && juri.assigned_gender !== "SEMUA");
+  const isLockedKategori = Boolean(juri && juri.role === "juri" && juri.assigned_kategori && juri.assigned_kategori !== "SEMUA");
+
+  // Dapatkan kode lomba yang ditugaskan ke juri (misal "PNR" untuk Pionering)
+  const assignedLombaKode = useMemo(() => {
+    if (!juri?.assigned_lomba_id || juri.assigned_lomba_id === "SEMUA") return null;
+    const found = lombaList.find((l) => l.id === juri.assigned_lomba_id);
+    return found?.kode_lomba || juri?.lomba?.kode_lomba || null;
+  }, [juri, lombaList]);
+
   // Update selected lomba intelligently when kategori changes
   useEffect(() => {
-    if (juri && !juri.assigned_lomba_id && lombaList.length > 0) {
+    if (!juri || lombaList.length === 0) return;
+
+    // Jika juri dikunci ke cabang lomba tertentu (misal Pionering) tapi bisa akses SD & SMP
+    if (isLockedPos && assignedLombaKode) {
+      const matchingSameCode = lombaList.find(
+        (l) => l.kategori === selectedKategori && l.kode_lomba === assignedLombaKode
+      );
+      if (matchingSameCode) {
+        setSelectedLombaId(matchingSameCode.id);
+        return;
+      }
+    }
+
+    // Jika juri bebas akses semua lomba
+    if (!isLockedPos) {
       const currentKode = currentLombaDef?.kode;
       const matchingSameCode = lombaList.find(
         (l) => l.kategori === selectedKategori && l.kode_lomba === currentKode
@@ -439,7 +465,7 @@ export default function DashboardJuri() {
         else setSelectedLombaId(lombaList[0]?.id || "");
       }
     }
-  }, [selectedKategori, lombaList, juri]);
+  }, [selectedKategori, lombaList, juri, isLockedPos, assignedLombaKode, currentLombaDef?.kode]);
 
   const cekAuthDanAmbilData = async () => {
     try {
@@ -854,19 +880,18 @@ export default function DashboardJuri() {
   const stepDown = (amount) => setManualOverrideTotal((prev) => Math.max(0, (prev ?? totalScoreCalculated) - amount));
   const stepUp = (amount) => setManualOverrideTotal((prev) => Math.min(100, (prev ?? totalScoreCalculated) + amount));
 
-  // Locking checks: Kunci hanya ke cabang lomba yang dipilih saat daftar jika bukan akses "SEMUA"
-  const isLockedPos = Boolean(juri && juri.role === "juri" && juri.assigned_lomba_id && juri.assigned_lomba_id !== "SEMUA");
-  const isLockedGender = Boolean(juri && juri.role === "juri" && juri.assigned_gender && juri.assigned_gender !== "SEMUA");
-  const isLockedKategori = Boolean(juri && juri.role === "juri" && juri.assigned_kategori && juri.assigned_kategori !== "SEMUA");
-
   const OFFICIAL_ACTIVE_KODES = [
     "HMN", "TSB", "PNR", "PGD", "SND", "NAV", "TKS", 
     "SMP", "MRS", "KIM", "KRN", "PCK", "ADM", "FRP", "MSK"
   ];
   const filteredLomba = useMemo(() => {
     let list = lombaList.filter((l) => l.kategori === selectedKategori);
-    if (isLockedPos && juri?.assigned_lomba_id) {
-      list = list.filter((l) => l.id === juri.assigned_lomba_id || (currentLombaObj && l.id === currentLombaObj.id));
+    if (isLockedPos) {
+      if (assignedLombaKode) {
+        list = list.filter((l) => l.kode_lomba === assignedLombaKode);
+      } else if (juri?.assigned_lomba_id) {
+        list = list.filter((l) => l.id === juri.assigned_lomba_id || (currentLombaObj && l.id === currentLombaObj.id));
+      }
     }
     return list.sort((a, b) => {
       const idxA = OFFICIAL_ACTIVE_KODES.indexOf(a.kode_lomba);
@@ -876,7 +901,7 @@ export default function DashboardJuri() {
       if (idxB !== -1) return 1;
       return (a.nama_lomba || "").localeCompare(b.nama_lomba || "");
     });
-  }, [lombaList, selectedKategori, isLockedPos, juri, currentLombaObj]);
+  }, [lombaList, selectedKategori, isLockedPos, assignedLombaKode, juri, currentLombaObj]);
 
   // Filtered Peserta Calculations
   const availableInCategory = useMemo(() => {
