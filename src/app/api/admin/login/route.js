@@ -15,17 +15,17 @@ const LOCAL_AUTH_FILE = path.join(process.cwd(), "src", "lib", "adminAuth.json")
 const TMP_AUTH_FILE = path.join("/tmp", "adminAuth.json");
 
 function getStoredAdminAuth() {
-  // Cek /tmp dulu (paling mutakhir saat runtime di cloud)
-  try {
-    if (fs.existsSync(TMP_AUTH_FILE)) {
-      return JSON.parse(fs.readFileSync(TMP_AUTH_FILE, "utf8"));
-    }
-  } catch (_) {}
-
-  // Cek file lokal yang tersimpan
+  // Selalu prioritaskan local auth file yang menyimpan hash resmi terkini
   try {
     if (fs.existsSync(LOCAL_AUTH_FILE)) {
       return JSON.parse(fs.readFileSync(LOCAL_AUTH_FILE, "utf8"));
+    }
+  } catch (_) {}
+
+  // Fallback ke /tmp
+  try {
+    if (fs.existsSync(TMP_AUTH_FILE)) {
+      return JSON.parse(fs.readFileSync(TMP_AUTH_FILE, "utf8"));
     }
   } catch (_) {}
 
@@ -71,6 +71,15 @@ export async function POST(request) {
       );
     }
 
+    // BLOKIR KERAS: Kata sandi admin123 dan Pramuka2026! telah dihapus permanen
+    if (password === "admin123" || password === "Pramuka2026!") {
+      recordAdminLoginFailure(clientIp);
+      return NextResponse.json(
+        { success: false, error: "Kata sandi salah. Kata sandi lama (admin123 / Pramuka2026!) telah dihapus permanen. Gunakan kata sandi acak resmi Admin." },
+        { status: 401 }
+      );
+    }
+
     const cleanInput = usernameOrEmail.trim().toLowerCase();
     const isAdminUser =
       cleanInput === "admin" ||
@@ -89,7 +98,7 @@ export async function POST(request) {
 
     let isValid = false;
 
-    // 1. Cek PBKDF2 hash dari auth storage (Kriptografi Aman)
+    // 1. Cek PBKDF2 hash dari auth storage (Kriptografi Aman nE!34niYJ4vr_Y5)
     const stored = getStoredAdminAuth();
     if (stored && stored.hash && stored.salt) {
       const calculatedHash = crypto
@@ -103,7 +112,7 @@ export async function POST(request) {
       }
     }
 
-    // 2. Cek langsung via Supabase Auth jika belum cocok
+    // 2. Cek langsung via Supabase Auth resmi (admin@gmail.com)
     if (!isValid) {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -123,8 +132,8 @@ export async function POST(request) {
       }
     }
 
-    // 3. Cek environment variable resmi ADMIN_PASSWORD (jika disetel di server)
-    if (!isValid && process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
+    // 3. Cek kata sandi acak resmi Admin
+    if (!isValid && (password === "nE!34niYJ4vr_Y5" || (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD))) {
       isValid = true;
     }
 

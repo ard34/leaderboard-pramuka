@@ -11,14 +11,14 @@ const TMP_AUTH_FILE = path.join("/tmp", "adminAuth.json");
 
 function getStoredAdminAuth() {
   try {
-    if (fs.existsSync(TMP_AUTH_FILE)) {
-      return JSON.parse(fs.readFileSync(TMP_AUTH_FILE, "utf8"));
+    if (fs.existsSync(LOCAL_AUTH_FILE)) {
+      return JSON.parse(fs.readFileSync(LOCAL_AUTH_FILE, "utf8"));
     }
   } catch (_) {}
 
   try {
-    if (fs.existsSync(LOCAL_AUTH_FILE)) {
-      return JSON.parse(fs.readFileSync(LOCAL_AUTH_FILE, "utf8"));
+    if (fs.existsSync(TMP_AUTH_FILE)) {
+      return JSON.parse(fs.readFileSync(TMP_AUTH_FILE, "utf8"));
     }
   } catch (_) {}
 
@@ -33,6 +33,13 @@ export async function POST(request) {
     if (!newPassword || typeof newPassword !== "string" || newPassword.length < 6) {
       return NextResponse.json(
         { error: "Kata sandi baru wajib diisi minimal 6 karakter." },
+        { status: 400 }
+      );
+    }
+
+    if (newPassword === "admin123" || newPassword === "Pramuka2026!") {
+      return NextResponse.json(
+        { error: "Kata sandi tersebut dilarang karena tidak aman." },
         { status: 400 }
       );
     }
