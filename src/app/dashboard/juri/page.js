@@ -544,11 +544,26 @@ export default function DashboardJuri() {
       if (profile.assigned_lomba_id && profile.assigned_lomba_id !== "SEMUA") {
         let matched = loadedLomba.find((l) => l.id === profile.assigned_lomba_id);
         if (!matched && profile.lomba?.kode_lomba) {
-          matched = loadedLomba.find((l) => l.kode_lomba === profile.lomba.kode_lomba && (!profile.assigned_kategori || l.kategori === profile.assigned_kategori));
+          matched = loadedLomba.find((l) => l.kode_lomba === profile.lomba.kode_lomba && (!profile.assigned_kategori || profile.assigned_kategori === "SEMUA" || l.kategori === profile.assigned_kategori));
         }
         if (matched) {
-          setSelectedLombaId(matched.id);
-          if (matched.kategori) setSelectedKategori(matched.kategori);
+          if (profile.assigned_kategori && profile.assigned_kategori !== "SEMUA") {
+            setSelectedLombaId(matched.id);
+            if (matched.kategori) setSelectedKategori(matched.kategori);
+          } else {
+            // Juri lintas kategori (SD & SMP)
+            const targetKat = defaultKategori || "SD";
+            const matchSameKat = loadedLomba.find(
+              (l) => l.kategori === targetKat && l.kode_lomba === (matched.kode_lomba || profile.lomba?.kode_lomba)
+            );
+            if (matchSameKat) {
+              setSelectedLombaId(matchSameKat.id);
+              setSelectedKategori(targetKat);
+            } else {
+              setSelectedLombaId(matched.id);
+              if (matched.kategori) setSelectedKategori(matched.kategori);
+            }
+          }
         } else {
           setSelectedLombaId(profile.assigned_lomba_id);
         }
@@ -1065,28 +1080,43 @@ export default function DashboardJuri() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-5">
         
         {/* Top Active Task Strip / Pengawas Quick Switcher */}
-        {!isLockedPos ? (
-          <div className="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 mb-5 backdrop-blur-md shadow-xl">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black px-2.5 py-1 rounded-lg text-[0.65rem] tracking-wider uppercase shadow">
-                  🔍 AKUN PENGAWAS & PEMERIKSA FORMAT
-                </span>
-                <span className="text-slate-300 font-bold text-xs">
-                  Akses Bebas Semua 13 Mata Lomba, Tingkat & Gender
-                </span>
-              </div>
-              <div className="text-[0.7rem] font-mono text-emerald-400 font-bold">
-                Format Aktif: <span className="underline">{currentLombaDef?.nama_lomba}</span> ({currentLombaDef?.rubrik?.length} Aspek Rubrik)
-              </div>
+        {/* Top Active Task Strip / Quick Switcher */}
+        <div className="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 mb-5 backdrop-blur-md shadow-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`font-black px-2.5 py-1 rounded-lg text-[0.65rem] tracking-wider uppercase shadow ${
+                !isLockedPos
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950"
+                  : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+              }`}>
+                {!isLockedPos ? "🔍 AKUN PENGAWAS / SUPER JURI" : "⚖️ DEWAN JURI CABANG LOMBA"}
+              </span>
+              <span className="text-slate-300 font-bold text-xs">
+                {!isLockedPos
+                  ? "Akses Bebas Semua 13 Mata Lomba, Tingkat & Gender"
+                  : `Terkunci Khusus Cabang: ${currentLombaDef?.nama_lomba || "Pionering"}`}
+              </span>
             </div>
+            <div className="text-[0.7rem] font-mono text-emerald-400 font-bold">
+              Format Aktif: <span className="underline">{currentLombaDef?.nama_lomba}</span> ({currentLombaDef?.rubrik?.length || 0} Aspek Rubrik)
+            </div>
+          </div>
 
-            {/* Quick Switcher Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3">
-              <div>
-                <label className="block text-[0.65rem] text-amber-400 font-bold uppercase mb-1 flex items-center gap-1">
-                  <span>🏆</span> 1. Pilih Cabang Perlombaan:
-                </label>
+          {/* Quick Switcher Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3">
+            {/* 1. Cabang Perlombaan */}
+            <div>
+              <label className="block text-[0.65rem] text-amber-400 font-bold uppercase mb-1 flex items-center gap-1">
+                <span>🏆</span> 1. Cabang Perlombaan:
+              </label>
+              {isLockedPos ? (
+                <div className="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-3 py-2 text-amber-300 font-black text-xs flex items-center justify-between shadow-inner">
+                  <span className="truncate">[{assignedLombaKode || currentLombaDef?.kode || "PNR"}] {currentLombaDef?.nama_lomba || "Pionering"}</span>
+                  <span className="text-[0.6rem] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-bold uppercase border border-amber-500/30 shrink-0 ml-1">
+                    🔒 Terkunci
+                  </span>
+                </div>
+              ) : (
                 <select
                   value={selectedLombaId}
                   onChange={(e) => {
@@ -1101,12 +1131,22 @@ export default function DashboardJuri() {
                     </option>
                   ))}
                 </select>
-              </div>
+              )}
+            </div>
 
-              <div>
-                <label className="block text-[0.65rem] text-cyan-400 font-bold uppercase mb-1 flex items-center gap-1">
-                  <span>🏫</span> 2. Tingkat Satuan:
-                </label>
+            {/* 2. Tingkat Satuan (SD/MI vs SMP/MTs) */}
+            <div>
+              <label className="block text-[0.65rem] text-cyan-400 font-bold uppercase mb-1 flex items-center gap-1">
+                <span>🏫</span> 2. Tingkat Satuan:
+              </label>
+              {isLockedKategori ? (
+                <div className="w-full bg-slate-950 border border-cyan-500/40 rounded-xl px-3 py-2 text-cyan-300 font-bold text-xs flex items-center justify-between shadow-inner">
+                  <span>{selectedKategori === "SD" ? "SD / MI" : "SMP / MTs"}</span>
+                  <span className="text-[0.6rem] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded font-bold uppercase border border-cyan-500/30">
+                    🔒 Terkunci
+                  </span>
+                </div>
+              ) : (
                 <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
                   <button
                     type="button"
@@ -1131,12 +1171,22 @@ export default function DashboardJuri() {
                     SMP / MTs
                   </button>
                 </div>
-              </div>
+              )}
+            </div>
 
-              <div>
-                <label className="block text-[0.65rem] text-emerald-400 font-bold uppercase mb-1 flex items-center gap-1">
-                  <span>👦👧</span> 3. Gender Peserta:
-                </label>
+            {/* 3. Gender Peserta */}
+            <div>
+              <label className="block text-[0.65rem] text-emerald-400 font-bold uppercase mb-1 flex items-center gap-1">
+                <span>👦👧</span> 3. Gender Peserta:
+              </label>
+              {isLockedGender ? (
+                <div className="w-full bg-slate-950 border border-emerald-500/40 rounded-xl px-3 py-2 text-emerald-300 font-bold text-xs flex items-center justify-between shadow-inner">
+                  <span>{selectedGender === "Laki-laki" ? "👦 Putra" : "👧 Putri"}</span>
+                  <span className="text-[0.6rem] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold uppercase border border-emerald-500/30">
+                    🔒 Terkunci
+                  </span>
+                </div>
+              ) : (
                 <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
                   <button
                     type="button"
@@ -1172,28 +1222,10 @@ export default function DashboardJuri() {
                     Putri
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        ) : (
-          <div className="bg-slate-900/70 border border-amber-500/20 rounded-2xl p-3.5 mb-5 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shadow-lg">
-            <div className="flex items-center gap-2 flex-wrap text-xs">
-              <span className="text-slate-400 font-bold uppercase text-[0.65rem] tracking-wider">Penugasan Terkunci:</span>
-              <span className="bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black px-2.5 py-1 rounded-lg">
-                🏆 {currentLombaDef?.nama_lomba || "Pos Lomba"}
-              </span>
-              <span className="bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold px-2.5 py-1 rounded-lg">
-                🏫 {selectedKategori === "SD" ? "SD / MI" : "SMP / MTs"}
-              </span>
-              <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold px-2.5 py-1 rounded-lg">
-                {isLockedGender ? (selectedGender === "Laki-laki" ? "👦 Putra (Laki-laki)" : "👧 Putri (Perempuan)") : "👦👧 Putra & Putri"}
-              </span>
-            </div>
-            <div className="text-[0.68rem] text-slate-400 italic hidden md:block">
-              "Satyaku Kudarmakan Darmaku Kubaktikan"
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
