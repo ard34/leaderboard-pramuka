@@ -135,12 +135,29 @@ export default function DashboardAdmin() {
     setAdminPasswordSaving(true);
     setAdminPasswordMsg({ type: "", text: "" });
     try {
-      // 1. Perbarui hash di server
-      await fetch("/api/admin/update-password", {
+      // 1. Perbarui hash di server dengan token otorisasi admin
+      let sessionToken = null;
+      try {
+        const raw = sessionStorage.getItem("_admin_session");
+        if (raw) sessionToken = JSON.parse(raw)?.token;
+      } catch (_) {}
+
+      const res = await fetch("/api/admin/update-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword: newAdminPassword }),
-      }).catch(() => {});
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+        },
+        body: JSON.stringify({
+          newPassword: newAdminPassword,
+          token: sessionToken,
+        }),
+      });
+
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(resData.error || "Gagal memperbarui kata sandi di server.");
+      }
 
       // 2. Coba perbarui di Supabase Auth jika sesi ada
       try {
@@ -370,49 +387,55 @@ export default function DashboardAdmin() {
   }, [pesertaList]);
 
   const cekAuth = async () => {
-    // 1. Cek sesi lokal admin_session terlebih dahulu
+    // 1. Cek sesi lokal dan verifikasi keabsahan kriptografis token sesi
+    let verifiedAdminUser = null;
     let localAdminSession = null;
     try {
       const raw = sessionStorage.getItem("_admin_session");
       if (raw) localAdminSession = JSON.parse(raw);
     } catch (_) {}
 
-    if (localAdminSession && localAdminSession.user && localAdminSession.user.role === "admin") {
-      setAdmin(localAdminSession.user);
-      setLoading(false);
-      fetchAllData();
-      return;
+    // Verifikasi token sesi dengan server jika ada token lokal
+    if (localAdminSession?.token) {
+      try {
+        const verifyRes = await fetch("/api/admin/login", {
+          headers: { Authorization: `Bearer ${localAdminSession.token}` },
+        });
+        const vData = await verifyRes.json();
+        if (verifyRes.ok && vData.valid && vData.user) {
+          verifiedAdminUser = vData.user;
+        }
+      } catch (_) {}
     }
 
     // 2. Verifikasi sesi autentikasi resmi dari Supabase Auth
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
+    if (!verifiedAdminUser) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (!sessionError && session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, nama_lengkap, role")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
+        if (profile && profile.role === "admin") {
+          verifiedAdminUser = profile;
+        }
+      }
+    }
+
+    // Jika tidak terverifikasi sama sekali, bersihkan sesi dan redirect ke halaman login
+    if (!verifiedAdminUser) {
       try {
         sessionStorage.removeItem("_profile_cache");
         sessionStorage.removeItem("_admin_session");
       } catch (_) {}
+      await supabase.auth.signOut().catch(() => {});
       router.replace("/login");
       return;
     }
 
-    // Ambil profil resmi berdasarkan session.user.id
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, nama_lengkap, role")
-      .eq("id", session.user.id)
-      .maybeSingle();
-
-    if (profileError || !profile || profile.role !== "admin") {
-      try {
-        sessionStorage.removeItem("_profile_cache");
-        sessionStorage.removeItem("_admin_session");
-      } catch (_) {}
-      await supabase.auth.signOut();
-      router.replace("/login");
-      return;
-    }
-
-    setAdmin(profile);
+    setAdmin(verifiedAdminUser);
     setLoading(false);
     fetchAllData();
   };
