@@ -27,19 +27,23 @@ export async function GET() {
 
     if (profileError) throw profileError;
 
-    // 2. Fetch auth users to get emails (safely)
+    // 2. Fetch auth users to get emails & initial_password safely
     const usersMap = {};
     try {
       const { data: authData } = await supabaseAdmin.auth.admin.listUsers();
-      authData?.users?.forEach(u => {
-        usersMap[u.id] = u.email;
+      authData?.users?.forEach((u) => {
+        usersMap[u.id] = {
+          email: u.email,
+          password: u.user_metadata?.initial_password || u.user_metadata?.password || null,
+        };
       });
     } catch (_) {}
 
-    // 3. Merge email into profiles
-    const mergedProfiles = profiles.map(p => ({
+    // 3. Merge email & initial_password into profiles
+    const mergedProfiles = profiles.map((p) => ({
       ...p,
-      email: usersMap[p.id] || "No Email"
+      email: usersMap[p.id]?.email || "No Email",
+      initial_password: usersMap[p.id]?.password || null,
     }));
 
     return NextResponse.json({ success: true, data: mergedProfiles });

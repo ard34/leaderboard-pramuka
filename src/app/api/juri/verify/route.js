@@ -33,10 +33,13 @@ export async function POST(request) {
       );
     }
 
-    // 1. Update auth user password
+    // 1. Update auth user password dan simpan initial_password di user_metadata
     try {
       await supabaseAdmin.auth.admin.updateUserById(userId, {
         password: password,
+        user_metadata: {
+          initial_password: password,
+        },
       });
     } catch (updateAuthError) {
       console.warn("Gagal update password auth admin:", updateAuthError);

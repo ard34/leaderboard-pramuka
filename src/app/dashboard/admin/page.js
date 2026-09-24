@@ -901,32 +901,62 @@ Terima kasih atas kerja samanya! Salam Pramuka! ⚜️🙏`;
     }
     if (cleanPhone.length < 9) return null;
 
+    let savedPwd = customPassword;
+    if (!savedPwd && j.initial_password) savedPwd = j.initial_password;
+    if (!savedPwd && typeof window !== "undefined") {
+      try {
+        savedPwd = localStorage.getItem(`juri_pwd_${j.id}`);
+      } catch (_) {}
+    }
+
     const emailLogin = j.email && j.email !== "No Email" ? j.email : "-";
-    const passText = customPassword ? customPassword : "(Gunakan kata sandi yang telah didaftarkan oleh Admin)";
+    const passText = savedPwd ? savedPwd : "(Silakan hubungi Admin untuk kata sandi akun Anda)";
+
+    // Rincian penugasan sesuai format resmi email
+    const namaLomba = j.lomba?.nama_lomba || "Bebas Akses (Semua Pos Lomba)";
+    const tingkatName =
+      j.assigned_kategori === "SEMUA" || !j.assigned_kategori
+        ? "Bebas Akses (Semua Tingkat)"
+        : j.assigned_kategori === "SD"
+        ? "Khusus SD / MI"
+        : "Khusus SMP / MTs";
+    const genderName =
+      j.assigned_gender === "SEMUA" || !j.assigned_gender
+        ? "Bebas Akses (Semua Gender)"
+        : j.assigned_gender === "Laki-laki"
+        ? "Khusus Putra (Laki-laki)"
+        : "Khusus Putri (Perempuan)";
 
     const message = 
-`Salam Pramuka, Kak ${j.nama_lengkap || "Dewan Juri"}! 🙏
+`*Salam Pramuka, Kak ${j.nama_lengkap || "Dewan Juri"}!*
 
-Pemberitahuan Resmi Panitia Pelaksana Lomba Tingkat II (LT-II) Kwartir Ranting Mekar Baru Tahun 2026.
+*Pemberitahuan Resmi Panitia Pelaksana Lomba Tingkat II (LT-II)*
+*Kwartir Ranting Gerakan Pramuka Mekar Baru Tahun 2026*
 
 Akun Dewan Juri Kakak telah berhasil diverifikasi dan saat ini sudah aktif dalam Sistem Penilaian Real-Time.
 
-Berikut rincian data akses login Kakak:
-━━━━━━━━━━━━━━━━━━━━━━
-👤 *Username / Email* : ${emailLogin}
-🔑 *Kata Sandi*       : ${passText}
-🔗 *Link Login Panel* : https://kwaranmekarbaru.my.id/login
-━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------
+*TUGAS PENILAIAN ANDA:*
+- Pos Lomba: ${namaLomba}
+- Tingkatan: ${tingkatName}
+- Kategori Regu: ${genderName}
+----------------------------------------
+*AKSES LOGIN AKUN ANDA:*
+- Username/Email: ${emailLogin}
+- Password: ${passText}
+- Link Login: https://www.siloti-kwaranmekarbaru.my.id/login
+----------------------------------------
 
 *Petunjuk Akses Penilaian:*
-1. Buka tautan login di atas menggunakan browser di perangkat HP atau Laptop Kakak.
-2. Masukkan Email dan Kata Sandi sesuai rincian di atas.
+1. Buka tautan login di atas menggunakan browser di HP atau Laptop Kakak.
+2. Masukkan Username / Email dan Password sesuai rincian di atas.
 3. Silakan memulai penilaian peserta sesuai dengan cabang lomba dan petunjuk teknis yang ditugaskan.
 
 Apabila Kakak memerlukan bantuan teknis saat login maupun pengisian nilai, silakan langsung menghubungi Panitia / Administrator.
 
 Terima kasih banyak atas partisipasi, integritas, dan dedikasi Kakak dalam menyukseskan LT-II Kwarran Mekar Baru 2026.
-_Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
+
+_Satyaku Kudarmakan, Darmaku Kubaktikan._`;
 
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
   };
@@ -1195,9 +1225,16 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
       if (res.ok && data.success) {
         showPesan("success", `🎉 Juri berhasil diverifikasi! ${data.emailMessage || ""}`);
         
+        // Simpan password juri ke local cache agar selalu siap saat klik kirim WA
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(`juri_pwd_${id}`, pwdToSave);
+          } catch (_) {}
+        }
+
         // Buka WhatsApp konfirmasi langsung ke dewan juri dengan pesan lengkap & sopan
         if (targetJuri?.no_wa) {
-          const waUrl = getWaJuriUrl(targetJuri, pwdToSave);
+          const waUrl = getWaJuriUrl({ ...targetJuri, initial_password: pwdToSave }, pwdToSave);
           if (waUrl) {
             window.open(waUrl, "_blank");
           }
@@ -2931,16 +2968,35 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           {j.no_wa ? (
-                            <a 
-                              href={getWaJuriUrl(j)} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-xs text-amber-400 flex items-center gap-1.5 font-mono hover:text-amber-300 hover:underline transition-colors w-fit"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                let pwd = j.initial_password;
+                                if (!pwd && typeof window !== "undefined") {
+                                  try {
+                                    pwd = localStorage.getItem(`juri_pwd_${j.id}`);
+                                  } catch (_) {}
+                                }
+                                if (!pwd) {
+                                  pwd = window.prompt(`Masukkan kata sandi akun untuk Kak ${j.nama_lengkap}:`, "");
+                                  if (pwd && pwd.trim()) {
+                                    pwd = pwd.trim();
+                                    try {
+                                      localStorage.setItem(`juri_pwd_${j.id}`, pwd);
+                                    } catch (_) {}
+                                  } else {
+                                    return;
+                                  }
+                                }
+                                const url = getWaJuriUrl(j, pwd);
+                                if (url) window.open(url, "_blank");
+                              }}
+                              className="text-xs text-amber-400 flex items-center gap-1.5 font-mono hover:text-amber-300 hover:underline transition-colors w-fit text-left"
                               title="Kirim Rincian Akun & Link Login via WhatsApp Resmi"
                             >
                               <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                               <span>{j.no_wa} (💬 Kirim Akses WA)</span>
-                            </a>
+                            </button>
                           ) : (
                             <span className="text-xs text-slate-600 italic">—</span>
                           )}
