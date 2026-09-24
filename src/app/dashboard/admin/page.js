@@ -808,26 +808,34 @@ export default function DashboardAdmin() {
 
     let message = "";
     if (actualType === "selesai") {
+      const kaplingFormatted = peserta.nomor_dada ? String(peserta.nomor_dada).padStart(3, '0') : '-';
+      const cetakUrl = `https://www.siloti-kwaranmekarbaru.my.id/peserta/cetak/${peserta.id}`;
       message = 
 `Halo Kak Pembina Regu *${peserta.nama_regu}* (${peserta.pangkalan}),
 
 Salam Pramuka! ⚜️
-Panitia Lomba Tingkat II (LT-II) Kwarran Mekar Baru menginformasikan bahwa berkas persyaratan pendaftaran regu Kakak telah *SELESAI & DINYATAKAN LENGKAP*. ✅
+Panitia Lomba Tingkat II (LT-II) Kwartir Ranting Mekar Baru Tahun 2026 menginformasikan bahwa pendaftaran dan berkas regu Kakak telah *DIVERIFIKASI RESMI & LENGKAP*. ✅
 
-📋 *Data Regu Terverifikasi:*
-• Regu: ${peserta.nama_regu} (${peserta.gender === 'Laki-laki' ? 'Putra' : 'Putri'})
-• Pangkalan: ${peserta.pangkalan}
-• Gudep: ${effectiveGudep}
-• No. Kapling: ${peserta.nomor_dada ? String(peserta.nomor_dada).padStart(3, '0') : '-'}
-• Status: *TERVERIFIKASI RESMI*
+📋 *INFORMASI PENDAFTARAN & KAPLING:*
+• Nama Regu: *${peserta.nama_regu}* (${peserta.gender === 'Laki-laki' ? '👦 Putra' : '👧 Putri'})
+• Pangkalan: *${peserta.pangkalan}*
+• No. Gudep: *${effectiveGudep}*
+• Tingkat: *${peserta.kategori}*
+• No. Kapling Tenda: *#${kaplingFormatted}*
+• Status: *TERVERIFIKASI RESMI* ✅
 
-Silakan *cek email* Kakak untuk mengunduh Bukti Pendaftaran resmi. Bukti Pendaftaran tersebut wajib dibawa saat *pendaftaran ulang* untuk mendapatkan surat izin mendirikan tenda. 🖨️
+📄 *BUKTI PENDAFTARAN RESMI (UNDUH / CETAK):*
+Silakan buka dan unduh Bukti Pendaftaran resmi regu Kakak melalui tautan di bawah ini:
+👉 ${cetakUrl}
 
-👥 *Grup WhatsApp Resmi Pembina Pendamping:*
+*(Catatan: Bukti Pendaftaran fisik wajib dicetak dan dibawa saat Pendaftaran Ulang di Bumi Perkemahan untuk mendapatkan Surat Izin Mendirikan Tenda di Kapling #${kaplingFormatted}).*
+
+👥 *GRUP WHATSAPP RESMI PEMBINA PENDAMPING:*
 Mohon Kakak Pembina Pendamping segera bergabung ke grup koordinasi resmi melalui tautan berikut:
-https://chat.whatsapp.com/G8fYg03xvHjL2lsVKCorPG?s=cl&p=a&mlu=4&ilr=4
+👉 https://chat.whatsapp.com/G8fYg03xvHjL2lsVKCorPG?s=cl&p=a&mlu=4&ilr=4
 
-Terima kasih atas partisipasinya dan salam sukses! ⛺`;
+Terima kasih atas partisipasinya dan salam Pramuka! ⛺⚜️
+_Panitia Pelaksana LT-II Kwarran Mekar Baru 2026_`;
     } else {
       const missingKeys = Object.keys(berkasLabels).filter((k) => !statusObj[k]);
       let missingListStr = "";
@@ -982,13 +990,28 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        const finalKaplingNum = data.nomor_kapling || cleanKapling;
+        const currentP = (pesertaList || []).find((p) => p.id === id);
+        let waUrl = null;
+        if (currentP) {
+          const updatedP = {
+            ...currentP,
+            nomor_dada: finalKaplingNum,
+            is_verified: true,
+          };
+          waUrl = getWaPesertaUrl(updatedP, "selesai");
+        }
+
         showPesan(
           "success",
-          `🎉 Regu berhasil diverifikasi! ${data.nomor_kapling_formatted ? `Nomor Kapling: #${data.nomor_kapling_formatted}. ` : ""}${data.emailMessage || ""}`
+          `🎉 Regu berhasil diverifikasi! Nomor Kapling: #${data.nomor_kapling_formatted || String(cleanKapling).padStart(3, "0")}. Membuka pesan WhatsApp Bukti Pendaftaran untuk Pembina...`
         );
-        if (data.mailtoUrl && !data.emailSent) {
-          window.open(data.mailtoUrl, "_blank");
+        
+        // Buka otomatis WhatsApp chat dengan tautan Bukti Pendaftaran resmi
+        if (waUrl) {
+          window.open(waUrl, "_blank");
         }
+        
         setVerifyingId(null);
         setNoDadaInput("");
         await fetchAllData();
@@ -2040,9 +2063,14 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
                                 href={getWaPesertaUrl(p, "auto")}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                                title={p.is_verified ? "Kirim Bukti Pendaftaran Resmi ke WhatsApp Pembina" : "Chat WhatsApp Pembina"}
+                                className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm ${
+                                  p.is_verified
+                                    ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400 font-black shadow-emerald-500/20"
+                                    : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white"
+                                }`}
                               >
-                                <span>💬 WA</span>
+                                <span>{p.is_verified ? "📲 Kirim Bukti ke WA" : "💬 Chat WA"}</span>
                               </a>
                             )}
                           </div>
@@ -2308,17 +2336,17 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
                                         href={getWaPesertaUrl(p, "auto")}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        title={`Chat WhatsApp: Konfirmasi ${p.is_verified ? 'Selesai/Lengkap' : 'Belum Selesai'}`}
-                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.65rem] font-sans font-bold transition-all shadow-sm ${
+                                        title={p.is_verified ? "Kirim Bukti Pendaftaran Resmi ke WhatsApp Pembina" : "Chat WhatsApp: Konfirmasi Berkas Belum Selesai"}
+                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-sans font-bold transition-all shadow-sm ${
                                           p.is_verified
-                                            ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/40"
+                                            ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400 font-black shadow-emerald-500/20"
                                             : "bg-amber-500/20 text-amber-300 hover:bg-amber-500 hover:text-black border border-amber-500/40"
                                         }`}
                                       >
-                                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                                           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
                                         </svg>
-                                        <span>Chat WA</span>
+                                        <span>{p.is_verified ? "📲 Kirim Bukti ke WA" : "💬 Chat WA"}</span>
                                       </a>
                                     )}
                                   </div>
