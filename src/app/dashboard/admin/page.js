@@ -92,6 +92,10 @@ export default function DashboardAdmin() {
   const [seedingPeserta, setSeedingPeserta] = useState(false);
   const [clearingData, setClearingData] = useState(false);
 
+  // State Edit Email & Kirim Ulang Peserta
+  const [modalEmailPeserta, setModalEmailPeserta] = useState({ open: false, peserta: null, emailInput: "" });
+  const [resendingEmailId, setResendingEmailId] = useState(null);
+
   // State Ganti Password & Reset Token Admin
   const [modalPasswordOpen, setModalPasswordOpen] = useState(false);
   const [newAdminPassword, setNewAdminPassword] = useState("");
@@ -422,10 +426,10 @@ export default function DashboardAdmin() {
         .select("id, nama_lomba, kode_lomba, kategori")
         .order("nama_lomba", { ascending: true }),
 
-      // Fetch all peserta (including Gudep, CP, is_verified)
+      // Fetch all peserta (including Gudep, CP, Email, is_verified)
       supabase
         .from("peserta")
-        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai, no_gudep, kontak_person, is_verified, created_at, status_berkas, catatan_berkas, berkas_ketersediaan, berkas_pendaftaran, berkas_biodata_peserta, berkas_biodata_pembina, berkas_bukti_pembayaran")
+        .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, total_nilai, no_gudep, kontak_person, email, is_verified, created_at, status_berkas, catatan_berkas, berkas_ketersediaan, berkas_pendaftaran, berkas_biodata_peserta, berkas_biodata_pembina, berkas_bukti_pembayaran")
         .order("is_verified", { ascending: true })
         .order("nomor_dada", { ascending: true }),
 
@@ -995,6 +999,94 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
       showPesan("error", "Gagal memproses verifikasi: " + err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleOpenEditEmail = (peserta) => {
+    setModalEmailPeserta({
+      open: true,
+      peserta,
+      emailInput: peserta.email || "",
+    });
+  };
+
+  const handleSimpanEmailPeserta = async (shouldResend = false) => {
+    const { peserta, emailInput } = modalEmailPeserta;
+    if (!peserta) return;
+    const cleanEmail = (emailInput || "").trim();
+    if (!cleanEmail) {
+      showPesan("error", "Alamat email tidak boleh kosong.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // 1. Simpan email baru ke database
+      const res = await fetch("/api/peserta/update-berkas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: peserta.id, email: cleanEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Gagal menyimpan email.");
+      }
+
+      // 2. Jika peserta sudah terverifikasi dan admin memilih untuk kirim ulang email
+      if (shouldResend && peserta.is_verified) {
+        showPesan("info", `Mengirimkan ulang email bukti pendaftaran resmi ke ${cleanEmail}...`);
+        const resVerify = await fetch("/api/peserta/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ peserta_id: peserta.id, nomor_kapling: peserta.nomor_dada }),
+        });
+        const dataVerify = await resVerify.json();
+        if (dataVerify.success && dataVerify.emailSent) {
+          showPesan("success", `✅ Email peserta ${peserta.nama_regu} diperbarui & Bukti Pendaftaran berhasil dikirim ke ${cleanEmail}!`);
+        } else {
+          showPesan("success", `✅ Email peserta berhasil diperbarui. ${dataVerify.emailMessage || ""}`);
+        }
+      } else {
+        showPesan("success", `✅ Email peserta ${peserta.nama_regu} berhasil diperbarui menjadi ${cleanEmail}!`);
+      }
+
+      setModalEmailPeserta({ open: false, peserta: null, emailInput: "" });
+      await fetchAllData();
+    } catch (err) {
+      showPesan("error", "Gagal memperbarui email: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleKirimUlangEmail = async (peserta) => {
+    if (!peserta.email) {
+      showPesan("error", "Peserta ini belum memiliki email terdaftar. Silakan masukkan email terlebih dahulu.");
+      handleOpenEditEmail(peserta);
+      return;
+    }
+    setResendingEmailId(peserta.id);
+    showPesan("info", `Sedang mengirim ulang email bukti pendaftaran ke ${peserta.email}...`);
+    try {
+      const res = await fetch("/api/peserta/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ peserta_id: peserta.id, nomor_kapling: peserta.nomor_dada }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.emailSent) {
+          showPesan("success", `✅ Surat Bukti Pendaftaran resmi berhasil dikirimkan ulang ke ${peserta.email}!`);
+        } else {
+          showPesan("info", `Status pengiriman: ${data.emailMessage || "Diproses"}`);
+        }
+      } else {
+        showPesan("error", "Gagal mengirim email: " + (data.error || "Terjadi kesalahan"));
+      }
+    } catch (err) {
+      showPesan("error", "Gagal mengirim email: " + err.message);
+    } finally {
+      setResendingEmailId(null);
     }
   };
 
@@ -1910,9 +2002,32 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
 
                         {/* Kontak & Email Lengkap */}
                         <div className="py-2 space-y-1.5 border-t border-slate-800/60 text-xs">
-                          <div className="flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1 rounded-lg border border-cyan-500/30">
-                            <span className="text-cyan-400 text-xs">✉️</span>
-                            <span className="font-mono text-cyan-300 font-bold text-xs select-all break-all">{p.email || "⚠️ Belum ada email"}</span>
+                          <div className="flex items-center justify-between gap-1.5 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-cyan-500/30">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-cyan-400 text-xs shrink-0">✉️</span>
+                              <span className="font-mono text-cyan-300 font-bold text-xs select-all break-all">{p.email || "⚠️ Belum ada email"}</span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditEmail(p)}
+                                title="Edit / Ganti Email Peserta"
+                                className="px-1.5 py-0.5 rounded bg-slate-800 text-[0.65rem] text-slate-300 hover:text-cyan-300 border border-slate-700 font-sans"
+                              >
+                                ✏️ Ubah
+                              </button>
+                              {p.is_verified && p.email && (
+                                <button
+                                  type="button"
+                                  disabled={resendingEmailId === p.id}
+                                  onClick={() => handleKirimUlangEmail(p)}
+                                  title="Kirim Ulang Email Bukti Pendaftaran (PDF)"
+                                  className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-[0.65rem] text-emerald-300 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 font-sans disabled:opacity-50"
+                                >
+                                  {resendingEmailId === p.id ? "⏳..." : "🔄 Kirim Ulang"}
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
@@ -2150,14 +2265,37 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
                           </td>
                           <td className="p-3 text-xs font-mono text-slate-300">
                             <div className="space-y-1.5 min-w-[200px]">
-                              {/* Email Pembina / Pangkalan (Jelas & Menonjol) */}
-                              <div className="flex items-center gap-1.5 bg-slate-900/90 px-2 py-1 rounded-md border border-cyan-500/30">
-                                <span className="text-cyan-400 text-xs">✉️</span>
-                                {p.email ? (
-                                  <span className="font-mono text-cyan-300 font-bold text-xs select-all break-all" title="Email terdaftar untuk pengiriman surat resmi">{p.email}</span>
-                                ) : (
-                                  <span className="text-red-400 font-sans text-[0.65rem] italic font-semibold">⚠️ Email Belum Diisi</span>
-                                )}
+                              {/* Email Pembina / Pangkalan (Jelas, Menonjol & Bisa Diedit / Dikirim Ulang) */}
+                              <div className="flex items-center justify-between gap-1.5 bg-slate-900/90 px-2 py-1 rounded-md border border-cyan-500/30">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="text-cyan-400 text-xs shrink-0">✉️</span>
+                                  {p.email ? (
+                                    <span className="font-mono text-cyan-300 font-bold text-xs select-all break-all" title="Email terdaftar untuk pengiriman surat resmi">{p.email}</span>
+                                  ) : (
+                                    <span className="text-red-400 font-sans text-[0.65rem] italic font-semibold">⚠️ Email Belum Diisi</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditEmail(p)}
+                                    title="Edit / Ganti Email Peserta"
+                                    className="p-1 rounded bg-slate-800 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 transition-colors text-[0.65rem]"
+                                  >
+                                    ✏️
+                                  </button>
+                                  {p.is_verified && p.email && (
+                                    <button
+                                      type="button"
+                                      disabled={resendingEmailId === p.id}
+                                      onClick={() => handleKirimUlangEmail(p)}
+                                      title="Kirim Ulang Email Bukti Pendaftaran (PDF)"
+                                      className="p-1 rounded bg-slate-800 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-300 transition-colors text-[0.65rem] disabled:opacity-50"
+                                    >
+                                      {resendingEmailId === p.id ? "⏳" : "🔄"}
+                                    </button>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Kontak WhatsApp & Pembina */}
@@ -3641,6 +3779,81 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._ ⚜️`;
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDIT & KIRIM ULANG EMAIL PESERTA */}
+      {modalEmailPeserta.open && modalEmailPeserta.peserta && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in no-print overflow-y-auto">
+          <div className="glass-card max-w-md w-full p-6 border border-cyan-500/40 shadow-2xl relative my-8 bg-slate-950/95">
+            <button
+              type="button"
+              onClick={() => setModalEmailPeserta({ open: false, peserta: null, emailInput: "" })}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors"
+            >
+              ✕
+            </button>
+
+            <div className="text-center space-y-1.5 mb-5">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 mb-1">
+                <span className="text-xl">✉️</span>
+              </div>
+              <h2 className="text-base font-black tracking-wider text-white uppercase">
+                Ubah Alamat Email Peserta
+              </h2>
+              <p className="text-xs text-slate-400">
+                Regu <strong className="text-white">{modalEmailPeserta.peserta.nama_regu}</strong> ({modalEmailPeserta.peserta.pangkalan})
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[0.7rem] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Alamat Email Baru (Untuk Pengiriman Bukti & Surat)
+                </label>
+                <input
+                  type="email"
+                  value={modalEmailPeserta.emailInput}
+                  onChange={(e) => setModalEmailPeserta((prev) => ({ ...prev, emailInput: e.target.value }))}
+                  placeholder="contoh: sdnjenggot1@gmail.com"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none focus:border-cyan-500 shadow-inner"
+                />
+                <p className="text-[0.68rem] text-slate-400 mt-1.5">
+                  💡 <em>Penting:</em> Gunakan email <strong>@gmail.com</strong> biasa yang aktif dan penyimpanannya tidak penuh. Hindari email @belajar.id karena sering diblokir otomatis oleh kementerian.
+                </p>
+              </div>
+
+              <div className="pt-2 flex flex-col gap-2">
+                {modalEmailPeserta.peserta.is_verified && (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => handleSimpanEmailPeserta(true)}
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <span>💾 Simpan & Kirim Ulang Bukti (PDF)</span>
+                  </button>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalEmailPeserta({ open: false, peserta: null, emailInput: "" })}
+                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => handleSimpanEmailPeserta(false)}
+                    className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md disabled:opacity-50"
+                  >
+                    {saving ? "Menyimpan..." : "Hanya Simpan Email"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

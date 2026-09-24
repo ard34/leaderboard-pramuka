@@ -21,12 +21,14 @@ export async function POST(request) {
       );
     }
 
+    const updateData = {};
+    if (status_berkas !== undefined) updateData.status_berkas = status_berkas;
+    if (catatan_berkas !== undefined) updateData.catatan_berkas = catatan_berkas;
+    if (email !== undefined) updateData.email = email.trim();
+
     const { data, error } = await supabase
       .from("peserta")
-      .update({
-        status_berkas: status_berkas || {},
-        catatan_berkas: catatan_berkas !== undefined ? catatan_berkas : "",
-      })
+      .update(updateData)
       .eq("id", id)
       .select();
 
