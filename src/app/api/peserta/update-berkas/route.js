@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseServerAdmin";
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { id, status_berkas, catatan_berkas } = body;
+    const { id, status_berkas, catatan_berkas, email } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function POST(request) {
     const updateData = {};
     if (status_berkas !== undefined) updateData.status_berkas = status_berkas;
     if (catatan_berkas !== undefined) updateData.catatan_berkas = catatan_berkas;
-    if (email !== undefined) updateData.email = email.trim();
+    if (email !== undefined && email !== null) updateData.email = String(email).trim();
 
     const { data, error } = await supabase
       .from("peserta")
