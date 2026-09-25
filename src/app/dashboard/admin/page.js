@@ -373,8 +373,36 @@ export default function DashboardAdmin() {
 
   // Auth check
   useEffect(() => {
+    // Purge obsolete offline cache to avoid resurrection of deleted test scores
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("offline_penilaian");
+      }
+    } catch (_) {}
     cekAuth();
   }, []);
+
+  // Real-time synchronization for Penilaian, Peserta, and Informasi tables
+  useEffect(() => {
+    if (!admin) return;
+
+    const channel = supabase
+      .channel("admin-realtime-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "penilaian" }, () => {
+        fetchAllData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "peserta" }, () => {
+        fetchAllData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "informasi" }, () => {
+        fetchAllData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [admin]);
 
   // Auto-sync next nomor kapling when peserta list updates or is emptied (starts from 001 for Putra, 002 for Putri)
   useEffect(() => {
@@ -529,18 +557,6 @@ export default function DashboardAdmin() {
     if (informasiRes?.data) setInformasiList(Array.isArray(informasiRes.data) ? informasiRes.data : []);
 
     let allPenilaian = [...(penilaianRes?.data || [])];
-    try {
-      if (typeof window !== "undefined") {
-        const rawOffline = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
-        const validOffline = rawOffline.filter((off) => dbPeserta.some((p) => p.id === off.peserta_id));
-        validOffline.forEach((off) => {
-          if (!allPenilaian.some((s) => s.peserta_id === off.peserta_id && s.lomba_id === off.lomba_id)) {
-            allPenilaian.push(off);
-          }
-        });
-      }
-    } catch (_) {}
-
     setPenilaianList(allPenilaian);
 
     // Sync publish status from /api/admin/publish-score
@@ -573,23 +589,20 @@ export default function DashboardAdmin() {
       }
     }
 
-
     // Process penilaian map (Akumulasi / Jumlahkan langsung jika terdapat multiple dewan juri pada cabang lomba yang sama)
-    const activePenilaian = allPenilaian && allPenilaian.length > 0 ? allPenilaian : (penilaianRes?.data || []);
-    if (activePenilaian.length > 0) {
-      const map = {};
-      activePenilaian.forEach((p) => {
-        const key = `${p.peserta_id}_${p.lomba_id}`;
-        if (!map[key]) {
-          map[key] = 0;
-        }
-        map[key] += Number(p.nilai) || 0;
-      });
-      Object.keys(map).forEach((key) => {
-        map[key] = Math.round(map[key] * 100) / 100;
-      });
-      setNilaiMap(map);
-    }
+    const activePenilaian = allPenilaian || [];
+    const map = {};
+    activePenilaian.forEach((p) => {
+      const key = `${p.peserta_id}_${p.lomba_id}`;
+      if (!map[key]) {
+        map[key] = 0;
+      }
+      map[key] += Number(p.nilai) || 0;
+    });
+    Object.keys(map).forEach((key) => {
+      map[key] = Math.round(map[key] * 100) / 100;
+    });
+    setNilaiMap(map);
   };
 
   // Add local log helper (for simple UI actions)
@@ -635,29 +648,6 @@ export default function DashboardAdmin() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) currentUserId = session.user.id;
-    } catch (_) {}
-
-    // Update offline_penilaian in localStorage so changes persist locally
-    try {
-      if (typeof window !== "undefined") {
-        const offlinePenilaian = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
-        for (const [key, nilai] of Object.entries(editedNilai)) {
-          const [pesertaId, lombaId] = key.split("_");
-          const idx = offlinePenilaian.findIndex((o) => o.peserta_id === pesertaId && o.lomba_id === lombaId);
-          if (idx !== -1) offlinePenilaian.splice(idx, 1);
-          if (nilai !== "") {
-            offlinePenilaian.push({
-              id: `admin-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-              peserta_id: pesertaId,
-              juri_id: currentUserId,
-              lomba_id: lombaId,
-              nilai: Number(nilai),
-              updated_at: new Date().toISOString(),
-            });
-          }
-        }
-        localStorage.setItem("offline_penilaian", JSON.stringify(offlinePenilaian));
-      }
     } catch (_) {}
 
     let successCount = 0, errorCount = 0;

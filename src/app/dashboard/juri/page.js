@@ -365,8 +365,29 @@ export default function DashboardJuri() {
   const [riwayat, setRiwayat] = useState([]);
 
   useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("offline_penilaian");
+      }
+    } catch (_) {}
     cekAuthDanAmbilData();
   }, []);
+
+  // Real-time listener for Juri page
+  useEffect(() => {
+    if (!juri?.id) return;
+
+    const channel = supabase
+      .channel(`juri-realtime-${juri.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "penilaian" }, () => {
+        cekAuthDanAmbilData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [juri?.id]);
 
   // Penilaian raw list state
   const [penilaianList, setPenilaianList] = useState([]);
@@ -578,17 +599,6 @@ export default function DashboardJuri() {
       const combinedPeserta = [...(pesertaRes?.data || [])];
       setPesertaList(combinedPeserta);
 
-      // Merge DB scores and local offline scores (hanya untuk peserta yang benar-benar ada di DB)
-      let offlineScores = [];
-      try {
-        if (typeof window !== "undefined") {
-          const rawOffline = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
-          offlineScores = rawOffline.filter((off) =>
-            combinedPeserta.some((p) => p.id === off.peserta_id)
-          );
-        }
-      } catch (_) {}
-
       let allScores = [...(penilaianRes?.data || [])];
       if (activeRole === "admin") {
         const [c1, c2] = await Promise.all([
@@ -600,11 +610,6 @@ export default function DashboardJuri() {
           allScores = fetchedScores;
         }
       }
-      offlineScores.forEach((off) => {
-        if (!allScores.some((s) => s.peserta_id === off.peserta_id && s.lomba_id === off.lomba_id)) {
-          allScores.push(off);
-        }
-      });
 
       setPenilaianList(allScores);
       const map = {};
@@ -806,26 +811,6 @@ export default function DashboardJuri() {
     } catch (e) {
       console.warn("DB upsert notice:", e);
     }
-
-    // Update local offline storage so data is never lost
-    try {
-      if (typeof window !== "undefined") {
-        const offlinePenilaian = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
-        const filteredOffline = offlinePenilaian.filter(
-          (o) => !(o.peserta_id === selectedPeserta && o.lomba_id === targetLombaId)
-        );
-        filteredOffline.push({
-          id: `local-${Date.now()}`,
-          peserta_id: selectedPeserta,
-          juri_id: targetJuriId,
-          lomba_id: targetLombaId,
-          nilai: finalScore,
-          rubrik: rubrikPayload,
-          updated_at: new Date().toISOString(),
-        });
-        localStorage.setItem("offline_penilaian", JSON.stringify(filteredOffline));
-      }
-    } catch (_) {}
 
     {
       const pesertaData = pesertaList.find((p) => p.id === selectedPeserta);
