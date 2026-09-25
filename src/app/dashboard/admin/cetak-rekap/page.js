@@ -112,12 +112,39 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
         targetJuri.assigned_kategori === "SEMUA" ||
         targetJuri.assigned_kategori === kat;
 
+      // Jika juri spesifik tidak ditugaskan untuk tingkat ini, lewati!
+      if (targetJuri && !isKatAllowed) {
+        continue;
+      }
+
+      // Cek apakah tingkat ini ada peserta terdaftar/diverifikasi di database
+      const hasPesertaInKat = pesertaList.some((p) => p.kategori === kat && p.is_verified);
+      const hasScoreInKat = (penilaianList || []).some((s) => {
+        const p = pesertaMap.get(s.peserta_id);
+        return p && p.kategori === kat;
+      });
+
+      // Jika di database tidak ada peserta atau nilai untuk tingkat ini, lewati!
+      if (!hasPesertaInKat && !hasScoreInKat) {
+        continue;
+      }
+
       for (const gen of ["Laki-laki", "Perempuan"]) {
         // Cek apakah gender ini diizinkan untuk juri ini sesuai penugasan di database
         const isGenAllowed =
           !targetJuri?.assigned_gender ||
           targetJuri.assigned_gender === "SEMUA" ||
           targetJuri.assigned_gender === gen;
+
+        // Jika juri spesifik tidak ditugaskan untuk gender ini, lewati!
+        if (targetJuri && !isGenAllowed) {
+          continue;
+        }
+
+        // Cek apakah ada peserta untuk kombinasi tingkat dan gender ini di database
+        const catPeserta = pesertaList
+          .filter((p) => p.kategori === kat && p.gender === gen && p.is_verified)
+          .sort((a, b) => (Number(a.nomor_dada) || 0) - (Number(b.nomor_dada) || 0));
 
         // Ambil nilai relevan untuk kombinasi lomba, tingkat (SD/SMP), dan gender ini
         const relevantScores = (penilaianList || []).filter((s) => {
@@ -131,8 +158,8 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           return p.kategori === kat && p.gender === gen;
         });
 
-        // Sinkronkan dengan isi database: jika tingkat atau gender bukan tugasnya dan tidak ada nilai, lewati!
-        if (!relevantScores.length && (!isKatAllowed || !isGenAllowed)) {
+        // Sinkronkan dengan isi database: jika tidak ada peserta terdaftar dan tidak ada nilai, jangan masukkan di cetak laporan!
+        if (catPeserta.length === 0 && relevantScores.length === 0) {
           continue;
         }
 
@@ -165,12 +192,8 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
 
           // Peringkat 1 s/d seterusnya:
           pesertaScores.sort(comparePesertaByScoreAndTime);
-        } else if (isKatAllowed && isGenAllowed && (targetJuriId || cleanTargetName)) {
-          // Jika juri spesifik memang ditugaskan untuk kategori ini di DB, tampilkan peserta terdaftar di kategori ini
-          const catPeserta = pesertaList
-            .filter((p) => p.kategori === kat && p.gender === gen && p.is_verified)
-            .sort((a, b) => (Number(a.nomor_dada) || 0) - (Number(b.nomor_dada) || 0));
-
+        } else if (catPeserta.length > 0) {
+          // Jika belum ada nilai, buat lembar rekap kosong siap nilai untuk peserta yang terdaftar di database
           pesertaScores = catPeserta.map((p) => ({
             ...p,
             nilai_lomba: "",
