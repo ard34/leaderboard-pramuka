@@ -542,11 +542,6 @@ function CetakBuktiSemuaContent() {
                 <div className="border-b border-black w-36 mx-auto"></div>
               </div>
             </div>
-
-            {/* Halaman info kecil di pojok bawah untuk memudahkan pengecekan fisik */}
-            <div className="text-right text-[8pt] text-slate-400 font-mono mt-3 print:block">
-              Halaman {idx + 1} dari {filteredPeserta.length} • LT-II 2026 Kwarran Mekar Baru
-            </div>
           </div>
         );
       })}
