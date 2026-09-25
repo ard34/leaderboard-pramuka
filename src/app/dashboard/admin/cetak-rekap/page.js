@@ -118,13 +118,18 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
       });
 
       // Tambahkan juga juri yang memiliki input penilaian di lomba ini
-      const juriIdsInPenilaian = new Set(
+      const juriIdsInPenilaian = Array.from(new Set(
         (penilaianList || []).filter((s) => matchingLombaIds.has(s.lomba_id)).map((s) => s.juri_id)
-      );
+      ));
+      
       juriIdsInPenilaian.forEach((jId) => {
         if (!judgesForDef.some((j) => j.id === jId)) {
           const foundProfile = (juriList || []).find((j) => j.id === jId);
-          if (foundProfile) judgesForDef.push(foundProfile);
+          if (foundProfile) {
+            judgesForDef.push(foundProfile);
+          } else {
+            judgesForDef.push({ id: jId, nama_lengkap: juriMap.get(jId) || "Dewan Juri" });
+          }
         }
       });
 
@@ -135,10 +140,9 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
       }
     }
 
-    // Setiap juri cabang lomba memiliki lembar rekapitulasi tersendiri
+    // 1. Lembar Penilaian Masing-masing Juri (Nilai Murni sesuai Database)
     for (const judge of assignedJudges) {
       for (const kat of ["SD", "SMP"]) {
-        // Cek apakah tingkat ini diizinkan untuk juri ini sesuai penugasan di database
         const isKatAllowed =
           !judge?.assigned_kategori ||
           judge.assigned_kategori === "SEMUA" ||
@@ -148,11 +152,10 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           continue;
         }
 
-        // Cek apakah tingkat ini ada peserta terdaftar/diverifikasi di database
         const hasPesertaInKat = pesertaList.some((p) => p.kategori === kat && p.is_verified);
         const hasScoreInKat = (penilaianList || []).some((s) => {
           if (matchingLombaIds.size > 0 && !matchingLombaIds.has(s.lomba_id)) return false;
-          if (judge && s.juri_id !== judge.id && assignedJudges.length > 1) return false;
+          if (judge && judge.id && s.juri_id !== judge.id) return false;
           const p = pesertaMap.get(s.peserta_id);
           return p && p.kategori === kat;
         });
@@ -181,7 +184,7 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
               const sLomba = lombaList.find((l) => l.id === s.lomba_id);
               if (!sLomba || findOfficialLombaDef(sLomba)?.kode !== def.kode) return false;
             }
-            if (judge && s.juri_id !== judge.id && assignedJudges.length > 1) {
+            if (judge && judge.id && s.juri_id !== judge.id) {
               return false;
             }
             const p = pesertaMap.get(s.peserta_id);
