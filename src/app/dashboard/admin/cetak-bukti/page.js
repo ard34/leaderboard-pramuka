@@ -152,37 +152,62 @@ function CetakBuktiSemuaContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-200/90 flex flex-col items-center py-6 print:py-0 print:bg-white text-black font-serif">
+    <div className="print-wrapper min-h-screen bg-slate-200/90 flex flex-col items-center py-6 print:py-0 print:m-0 print:p-0 print:bg-white print:block print:w-full print:min-h-0 text-black font-serif">
       <style>{`
         @page {
           size: A4 portrait;
           margin: 8mm 12mm;
         }
         @media print {
+          *, *::before, *::after {
+            box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+            text-shadow: none !important;
+            filter: none !important;
+            outline: none !important;
+          }
           html, body {
-            height: 100% !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
+            overflow: visible !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
           .no-print {
             display: none !important;
           }
+          .print-wrapper {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+          }
           .a4-page {
             box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+            filter: none !important;
+            border: none !important;
+            outline: none !important;
             margin: 0 !important;
-            padding: 10mm 14mm !important;
+            padding: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
-            border: none !important;
-            page-break-inside: avoid !important;
+            height: auto !important;
+            min-height: auto !important;
+            page-break-before: auto !important;
             page-break-after: always !important;
-            min-height: 275mm;
+            break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           .a4-page:last-child {
             page-break-after: auto !important;
+            break-after: auto !important;
           }
         }
       `}</style>
@@ -397,7 +422,7 @@ function CetakBuktiSemuaContent() {
         return (
           <div
             key={peserta.id}
-            className="a4-page bg-white w-full max-w-[210mm] shadow-2xl p-[10mm_14mm] relative text-black text-[10.5pt] leading-normal mb-8 print:mb-0"
+            className="a4-page bg-white w-full max-w-[210mm] shadow-2xl print:shadow-none print:border-none print:outline-none print:filter-none p-[10mm_14mm] print:p-0 relative text-black text-[10.5pt] leading-normal mb-8 print:mb-0"
           >
             {/* KOP SURAT RESMI KWARRAN MEKAR BARU */}
             <div
@@ -451,15 +476,15 @@ function CetakBuktiSemuaContent() {
             </p>
 
             {/* TABEL DATA REGU PESERTA */}
-            <table className="w-full ml-2 md:ml-4 mb-2 text-[10pt] font-bold border-collapse">
+            <table className="w-full mb-2 text-[10pt] font-bold border-collapse">
               <tbody>
                 <tr>
-                  <td className="py-0.5 w-44">Nama Regu</td>
+                  <td className="py-0.5 pl-2 w-44">Nama Regu</td>
                   <td className="py-0.5 w-4">:</td>
                   <td className="py-0.5 text-black font-extrabold">{peserta.nama_regu}</td>
                 </tr>
                 <tr>
-                  <td className="py-0.5">No. Kapling (Tenda)</td>
+                  <td className="py-0.5 pl-2">No. Kapling (Tenda)</td>
                   <td className="py-0.5">:</td>
                   <td className="py-0.5 font-mono text-[11pt]">
                     <span className="bg-slate-100 px-2.5 py-0.5 rounded font-black border border-slate-300">
@@ -468,31 +493,31 @@ function CetakBuktiSemuaContent() {
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-0.5">Pangkalan / Sekolah</td>
+                  <td className="py-0.5 pl-2">Pangkalan / Sekolah</td>
                   <td className="py-0.5">:</td>
                   <td className="py-0.5">{peserta.pangkalan}</td>
                 </tr>
                 <tr>
-                  <td className="py-0.5">No. Gugus Depan</td>
+                  <td className="py-0.5 pl-2">No. Gugus Depan</td>
                   <td className="py-0.5">:</td>
                   <td className="py-0.5 font-mono">{noGudepDisplay}</td>
                 </tr>
                 <tr>
-                  <td className="py-0.5">Kategori Peserta</td>
+                  <td className="py-0.5 pl-2">Kategori Peserta</td>
                   <td className="py-0.5">:</td>
                   <td className="py-0.5">
                     {peserta.kategori === "SD" ? "SD / MI" : "SMP / MTs"}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-0.5">Jenis Kelamin</td>
+                  <td className="py-0.5 pl-2">Jenis Kelamin</td>
                   <td className="py-0.5">:</td>
                   <td className="py-0.5">
                     {peserta.gender === "Laki-laki" ? "Laki-laki (Putra)" : "Perempuan (Putri)"}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-0.5">Tanggal Daftar</td>
+                  <td className="py-0.5 pl-2">Tanggal Daftar</td>
                   <td className="py-0.5">:</td>
                   <td className="py-0.5">{tglDaftar}</td>
                 </tr>
