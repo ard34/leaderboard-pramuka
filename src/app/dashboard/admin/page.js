@@ -1757,10 +1757,29 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
                 } catch (_) {}
                 router.push("/dashboard/admin/cetak-rekap");
               }}
-              className="text-[0.65rem] sm:text-xs font-bold tracking-wider px-3 py-1.5 sm:py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 transition-all shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+              className="text-[0.65rem] sm:text-xs font-bold tracking-wider px-3 py-1.5 sm:py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 transition-all shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer"
               title="Buka halaman cetak laporan hasil rekap nilai resmi per mata lomba"
             >
               <span>🖨️ Cetak Rekap</span>
+            </button>
+
+            <button
+              onClick={() => {
+                try {
+                  localStorage.setItem("_cetak_cache", JSON.stringify({
+                    lombaList,
+                    pesertaList,
+                    juriList,
+                    penilaianList,
+                    ts: Date.now(),
+                  }));
+                } catch (_) {}
+                window.open("/dashboard/admin/cetak-bukti", "_blank");
+              }}
+              className="text-[0.65rem] sm:text-xs font-black tracking-wider px-3.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/40 transition-all shadow-md flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer"
+              title="Buka halaman cetak semua bukti pendaftaran resmi peserta yang sudah diverifikasi (1 lembar A4 per regu)"
+            >
+              <span>📄 Cetak Bukti Terverifikasi</span>
             </button>
 
             <button
@@ -2022,6 +2041,28 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
                     <option value="VERIFIED">✅ Aktif (Verified)</option>
                     <option value="PENDING">⏳ Menunggu Verifikasi</option>
                   </select>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        localStorage.setItem("_cetak_cache", JSON.stringify({
+                          lombaList,
+                          pesertaList,
+                          juriList,
+                          penilaianList,
+                          ts: Date.now(),
+                        }));
+                      } catch (_) {}
+                      const qTingkat = pesertaFilterTingkat !== "SEMUA" ? `tingkat=${pesertaFilterTingkat}` : "";
+                      const query = qTingkat ? `?${qTingkat}` : "";
+                      window.open(`/dashboard/admin/cetak-bukti${query}`, "_blank");
+                    }}
+                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 whitespace-nowrap shadow-md shadow-emerald-500/20 cursor-pointer"
+                    title="Cetak seluruh bukti pendaftaran peserta yang sudah diverifikasi (SD/SMP Putra & Putri, 1 lembar A4 per regu)"
+                  >
+                    <span>📄 Cetak Bukti Terverifikasi</span>
+                  </button>
 
                   <button
                     type="button"
