@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
-import { generateExampleTime } from "@/lib/timeUtils";
+import { generateExampleTime, isZeroOrEmptyTime } from "@/lib/timeUtils";
 
 // Helper untuk mengambil rubrik sesuai tingkat (SD vs SMP)
 export function getLombaRubrik(lombaDef, kategori = "SD") {
@@ -397,7 +397,7 @@ export default function DashboardJuri() {
       const initialRubrik = {};
       activeRubriks.forEach((r) => {
         if (r.isTime) {
-          initialRubrik[r.id] = generateExampleTime(selectedPeserta || "sample", selectedLombaId);
+          initialRubrik[r.id] = "";
         } else {
           const maxVal = r.max || r.weight || 100;
           initialRubrik[r.id] = Math.round(maxVal * 0.7); // default ~70% score
@@ -659,7 +659,7 @@ export default function DashboardJuri() {
             const scoreItem = activeRubriks.find((r) => r.isScore) || activeRubriks[0];
             updatedRubrik[scoreItem.id] = Math.min(scoreItem.max, Number(existing.nilai));
             const timeItem = activeRubriks.find((r) => r.isTime);
-            if (timeItem) updatedRubrik[timeItem.id] = generateExampleTime(pesertaId, selectedLombaId);
+            if (timeItem) updatedRubrik[timeItem.id] = "";
           } else {
             const ratio = Math.min(1, Math.max(0, existing.nilai / 100));
             activeRubriks.forEach((r) => {
@@ -675,7 +675,7 @@ export default function DashboardJuri() {
         const initialRubrik = {};
         activeRubriks.forEach((r) => {
           if (r.isTime) {
-            initialRubrik[r.id] = generateExampleTime(pesertaId, selectedLombaId);
+            initialRubrik[r.id] = "";
           } else {
             const maxVal = r.max || r.weight || 100;
             initialRubrik[r.id] = Math.round(maxVal * 0.7);
@@ -718,18 +718,14 @@ export default function DashboardJuri() {
       return;
     }
 
-    // Validasi Kecepatan Waktu: Wajib diisi jika lomba memiliki aspek waktu
+    // Kecepatan waktu: jika juri mengisi 00:00:00.00 atau mengosongkan waktu, jangan diblokir, tetap izinkan dan simpan kosong
     if (currentLombaDef) {
       const activeRubriks = getLombaRubrik(currentLombaDef, selectedKategori);
       const timeRubrik = activeRubriks.find((r) => r.isTime);
       if (timeRubrik) {
         const val = rubrikScores[timeRubrik.id];
-        if (!val || String(val).trim() === "") {
-          setPesan({
-            type: "error",
-            text: "⚠️ Kecepatan waktu WAJIB diisi! Masukkan waktu pengerjaan (jam:menit:detik.milidetik) sebelum nilai dapat dikunci dan diupload.",
-          });
-          return;
+        if (isZeroOrEmptyTime(val)) {
+          rubrikScores[timeRubrik.id] = "";
         }
       }
     }
@@ -805,12 +801,31 @@ export default function DashboardJuri() {
 
       try {
         if (typeof window !== "undefined") {
-          localStorage.setItem(`rubrik_scores_${selectedPeserta}_${targetLombaId}`, JSON.stringify(rubrikScores));
+          const rawWaktu = rubrikScores["waktu"];
+          const cleanWaktu = isZeroOrEmptyTime(rawWaktu) ? "" : String(rawWaktu).trim();
+
+          localStorage.setItem(`rubrik_scores_${selectedPeserta}_${targetLombaId}`, JSON.stringify({
+            ...rubrikScores,
+            waktu: cleanWaktu,
+          }));
           const allTime = JSON.parse(localStorage.getItem("all_time_scores") || "{}");
-          if (rubrikScores["waktu"]) {
-            allTime[`${selectedPeserta}_${targetLombaId}`] = rubrikScores["waktu"];
-            localStorage.setItem("all_time_scores", JSON.stringify(allTime));
+          if (cleanWaktu) {
+            allTime[`${selectedPeserta}_${targetLombaId}`] = cleanWaktu;
+          } else {
+            delete allTime[`${selectedPeserta}_${targetLombaId}`];
           }
+          localStorage.setItem("all_time_scores", JSON.stringify(allTime));
+
+          // Sinkronkan ke API server agar Admin dan Cetak Rekap di perangkat lain langsung menerima data waktu
+          fetch("/api/juri/waktu", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              peserta_id: selectedPeserta,
+              lomba_id: targetLombaId,
+              waktu: cleanWaktu,
+            }),
+          }).catch(() => {});
         }
       } catch (_) {}
 
@@ -1669,18 +1684,18 @@ export default function DashboardJuri() {
                         </div>
                       )}
 
-                      {/* Card Khusus Form Input Manual Kecepatan Waktu (Wajib Diisi) */}
+                      {/* Card Khusus Form Input Manual Kecepatan Waktu (Opsional/Bisa Kosong) */}
                       {timeRubriks.map((tr) => {
                         const timeVal = rubrikScores[tr.id] ?? "";
-                        const isMissing = !timeVal || String(timeVal).trim() === "";
+                        const isFilled = !isZeroOrEmptyTime(timeVal);
 
                         return (
                           <div
                             key={tr.id}
                             className={`rounded-2xl p-4 md:p-5 shadow-lg space-y-3 transition-all ${
-                              isMissing
-                                ? "bg-gradient-to-br from-red-950/30 via-slate-950 to-amber-950/20 border-2 border-red-500/70 shadow-[0_0_25px_rgba(239,68,68,0.15)]"
-                                : "bg-gradient-to-br from-blue-950/60 via-slate-950 to-emerald-950/30 border-2 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                              isFilled
+                                ? "bg-gradient-to-br from-blue-950/60 via-slate-950 to-emerald-950/30 border-2 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                                : "bg-slate-900/80 border border-slate-700/60"
                             }`}
                           >
                             <div>
@@ -1688,13 +1703,13 @@ export default function DashboardJuri() {
                                 <label className="text-xs md:text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
                                   <span>⏱️</span>
                                   <span>{tr.name}</span>
-                                  {isMissing ? (
-                                    <span className="bg-red-500 text-slate-950 text-[0.62rem] px-2.5 py-0.5 rounded-full font-mono uppercase font-black tracking-wider animate-pulse shadow">
-                                      🔴 WAJIB DIISI
+                                  {isFilled ? (
+                                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 text-[0.62rem] px-2 py-0.5 rounded-full font-mono uppercase font-bold">
+                                      ✓ Terisi: {timeVal}
                                     </span>
                                   ) : (
-                                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 text-[0.62rem] px-2 py-0.5 rounded-full font-mono uppercase font-bold">
-                                      ✓ Sudah Terisi
+                                    <span className="bg-slate-800 text-slate-400 border border-slate-700 text-[0.62rem] px-2.5 py-0.5 rounded-full font-mono uppercase font-bold">
+                                      ⚪ Opsional / Kosong
                                     </span>
                                   )}
                                 </label>
@@ -1710,33 +1725,29 @@ export default function DashboardJuri() {
                                 )}
                               </div>
                               <p className="text-[0.72rem] text-slate-300 mt-1">
-                                Masukkan catatan waktu penyelesaian regu. Contoh format: <span className="font-mono text-amber-400 font-bold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">jam:menit:detik.milidetik</span> (misal: <span className="font-mono text-emerald-400 font-bold">00:15:30.45</span> atau <span className="font-mono text-emerald-400 font-bold">00:08:20.00</span>)
+                                Catatan waktu penyelesaian regu (penentu peringkat jika nilai ketepatan sama). Jika <strong>00:00:00.00</strong> atau belum ada waktu, biarkan kosong. Format: <span className="font-mono text-amber-400 font-bold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">jam:menit:detik.milidetik</span> (misal: <span className="font-mono text-emerald-400 font-bold">00:05:33.44</span>)
                               </p>
                             </div>
 
                             <div className="relative">
                               <input
                                 type="text"
-                                placeholder="Contoh format: 00:15:30.45 (jam:menit:detik.milidetik)"
+                                placeholder="00:00:00.00 (Biarkan kosong jika tidak ada catatan waktu)"
                                 value={timeVal}
                                 onChange={(e) => handleRubrikChange(tr.id, e.target.value)}
                                 className={`w-full bg-slate-950 border-2 rounded-xl py-2.5 px-4 text-sm md:text-base font-bold text-white placeholder:text-slate-600 placeholder:font-normal placeholder:text-xs font-mono outline-none transition-all shadow-inner ${
-                                  isMissing
-                                    ? "border-red-500/70 focus:border-red-400 ring-2 ring-red-500/20"
-                                    : "border-emerald-500/70 focus:border-emerald-400"
+                                  isFilled
+                                    ? "border-emerald-500/70 focus:border-emerald-400 ring-2 ring-emerald-500/20"
+                                    : "border-slate-700 focus:border-amber-400"
                                 }`}
                               />
                             </div>
 
                             <div className="flex flex-wrap items-center justify-between gap-2 text-[0.68rem]">
                               <span className="text-slate-400">
-                                ℹ️ Format pengisian: <strong className="text-slate-300 font-mono">jam:menit:detik.milidetik</strong>
+                                ℹ️ Urutan tie-breaker: <strong>Tercepat ke Terlambat</strong>. Jika kosong/00:00:00.00 tidak akan mengubah nilai utama.
                               </span>
-                              {isMissing ? (
-                                <span className="text-red-400 font-bold flex items-center gap-1 bg-red-950/40 px-2 py-0.5 rounded border border-red-500/30">
-                                  <span>⚠️</span> Wajib diisi! Nilai tidak bisa dikunci jika waktu kosong.
-                                </span>
-                              ) : (
+                              {isFilled && (
                                 <span className="text-emerald-400 font-mono font-bold flex items-center gap-1 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30">
                                   <span>✅ Terisi:</span>
                                   <span className="text-white font-black">{timeVal}</span>
@@ -1757,7 +1768,6 @@ export default function DashboardJuri() {
                   const timeRubrik = activeRubrikList.find((r) => r.isTime);
                   const maxScorePossible = scoreRubriks.reduce((acc, r) => acc + (r.max || 0), 0) || 100;
                   const currentTimeVal = timeRubrik ? rubrikScores[timeRubrik.id] : null;
-                  const isTimeMissing = Boolean(timeRubrik && (!currentTimeVal || String(currentTimeVal).trim() === ""));
 
                   return (
                     <div className="space-y-4">
@@ -1779,8 +1789,8 @@ export default function DashboardJuri() {
                           {timeRubrik && (
                             <div className="text-[0.68rem] text-blue-300 font-medium flex items-center gap-1.5 pt-0.5">
                               <span>⏱️ Waktu Pengerjaan:</span>
-                              <span className={`font-mono font-black ${isTimeMissing ? "text-red-400 font-bold" : "text-emerald-400"}`}>
-                                {currentTimeVal ? currentTimeVal : "Belum Diisi (Wajib)"}
+                              <span className={`font-mono font-black ${isZeroOrEmptyTime(currentTimeVal) ? "text-slate-400" : "text-emerald-400"}`}>
+                                {!isZeroOrEmptyTime(currentTimeVal) ? currentTimeVal : "Kosong / Belum Diisi"}
                               </span>
                             </div>
                           )}
@@ -1810,11 +1820,9 @@ export default function DashboardJuri() {
                       {/* 4. Tombol Kunci & Simpan */}
                       <button
                         type="submit"
-                        disabled={saving || !isOnline || !selectedPeserta || isTimeMissing}
+                        disabled={saving || !isOnline || !selectedPeserta}
                         className={`w-full font-black py-4 px-6 rounded-2xl transition-all duration-300 tracking-wider text-sm uppercase flex items-center justify-center gap-2 ${
-                          isTimeMissing
-                            ? "bg-slate-800 text-slate-400 border-2 border-red-500/50 cursor-not-allowed opacity-75 shadow-none"
-                            : selectedPeserta && activeScoresMap[selectedPeserta]
+                          selectedPeserta && activeScoresMap[selectedPeserta]
                             ? "bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 shadow-[0_8px_30px_rgba(6,182,212,0.3)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.45)]"
                             : "bg-gradient-to-r from-amber-500 via-amber-600 to-emerald-600 hover:from-amber-400 hover:to-emerald-500 text-slate-950 shadow-[0_8px_30px_rgba(245,166,35,0.3)] hover:shadow-[0_12px_40px_rgba(245,166,35,0.45)]"
                         } hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
@@ -1826,11 +1834,6 @@ export default function DashboardJuri() {
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
                             MENYIMPAN & MENYINKRONKAN NILAI...
-                          </span>
-                        ) : isTimeMissing ? (
-                          <span className="flex items-center gap-2 text-red-300">
-                            <span>⚠️</span>
-                            <span>ISI KECEPATAN WAKTU UNTUK MENGUNCI NILAI</span>
                           </span>
                         ) : selectedPeserta && activeScoresMap[selectedPeserta] ? (
                           <>
@@ -1844,13 +1847,6 @@ export default function DashboardJuri() {
                           </>
                         )}
                       </button>
-
-                      {isTimeMissing && selectedPeserta && (
-                        <div className="bg-red-500/15 border border-red-500/40 rounded-xl p-3 text-center text-xs text-red-300 font-bold flex items-center justify-center gap-2 shadow-inner">
-                          <span>⚠️</span>
-                          <span>Form Kecepatan Waktu belum diisi. Masukkan catatan waktu (misal: 00:15:30.45) di form atas agar nilai dapat dikunci dan diupload.</span>
-                        </div>
-                      )}
 
                       {!selectedPeserta && (
                         <p className="text-center text-[0.68rem] text-slate-500 italic">

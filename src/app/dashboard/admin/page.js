@@ -469,6 +469,17 @@ export default function DashboardAdmin() {
       // Fetch all juri from profiles via API to get emails
       fetch("/api/juri/get-all").then(res => res.json()).then(res => ({ data: res.data, error: res.error })),
 
+      // Fetch all real recorded times from server
+      fetch("/api/juri/waktu").then(res => res.json()).then(res => {
+        if (res && res.times) {
+          try {
+            const allTime = JSON.parse(localStorage.getItem("all_time_scores") || "{}");
+            localStorage.setItem("all_time_scores", JSON.stringify({ ...allTime, ...res.times }));
+          } catch (_) {}
+        }
+        return { data: res?.times || {} };
+      }).catch(() => ({ data: {} })),
+
       // Fetch scoring activity logs (Join tables dynamically)
       supabase
         .from("penilaian")
@@ -1465,11 +1476,16 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
     const withScores = filtered.map((p) => {
       const score = getPesertaScoreDynamic(p.id, p.total_nilai);
       let totalTimeMs = 0;
+      let countTime = 0;
       activeReportLomba.forEach((l) => {
         const tMs = parseTimeToMs(getSavedTimeForPesertaLomba(p.id, l.id));
-        if (tMs !== Infinity) totalTimeMs += tMs;
+        if (tMs !== Infinity) {
+          totalTimeMs += tMs;
+          countTime++;
+        }
       });
-      return { ...p, calculatedScore: score, totalTimeMs };
+      const finalTimeMs = countTime > 0 ? totalTimeMs : Infinity;
+      return { ...p, calculatedScore: score, totalTimeMs: finalTimeMs };
     });
 
     // Urutkan nilai tertinggi ke terendah secara mutlak.
@@ -1478,7 +1494,10 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
       if (b.calculatedScore !== a.calculatedScore) {
         return b.calculatedScore - a.calculatedScore;
       }
-      return a.totalTimeMs - b.totalTimeMs;
+      if (a.totalTimeMs !== b.totalTimeMs) {
+        return a.totalTimeMs - b.totalTimeMs;
+      }
+      return (a.nama_regu || "").localeCompare(b.nama_regu || "");
     });
     return withScores;
   }, [pesertaList, reportTingkat, reportGender, getPesertaScoreDynamic, activeReportLomba]);
@@ -1531,6 +1550,7 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
 
     Object.values(pangkalanMap).forEach((item) => {
       let cumulativeTimeMs = 0;
+      let countTime = 0;
       activeReportLomba.forEach((l) => {
         let totalLomba = 0;
         let hasScore = false;
@@ -1541,11 +1561,14 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
             hasScore = true;
           }
           const tMs = parseTimeToMs(getSavedTimeForPesertaLomba(p.id, l.id));
-          if (tMs !== Infinity) cumulativeTimeMs += tMs;
+          if (tMs !== Infinity) {
+            cumulativeTimeMs += tMs;
+            countTime++;
+          }
         });
         item.lombaScores[l.id] = hasScore ? Math.round(totalLomba * 10) / 10 : "—";
       });
-      item.totalTimeMs = cumulativeTimeMs;
+      item.totalTimeMs = countTime > 0 ? cumulativeTimeMs : Infinity;
     });
 
     const list = Object.values(pangkalanMap);
@@ -1554,7 +1577,10 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
       if (b.totalScore !== a.totalScore) {
         return b.totalScore - a.totalScore;
       }
-      return a.totalTimeMs - b.totalTimeMs;
+      if (a.totalTimeMs !== b.totalTimeMs) {
+        return a.totalTimeMs - b.totalTimeMs;
+      }
+      return (a.pangkalan || "").localeCompare(b.pangkalan || "");
     });
     return list;
   }, [pesertaList, reportTingkat, getPesertaScoreDynamic, activeReportLomba, getScoreForReguLomba]);
@@ -1636,7 +1662,10 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
       }
       const timeA = parseTimeToMs(getSavedTimeForPesertaLomba(a.id, lombaId));
       const timeB = parseTimeToMs(getSavedTimeForPesertaLomba(b.id, lombaId));
-      return timeA - timeB;
+      if (timeA !== timeB) {
+        return timeA - timeB;
+      }
+      return (a.nama_regu || "").localeCompare(b.nama_regu || "");
     });
     return scores.slice(0, 3);
   };

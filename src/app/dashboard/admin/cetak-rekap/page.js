@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { OFFICIAL_LOMBA_DEFINITIONS, getLombaRubrik, findOfficialLombaDef } from "@/app/dashboard/juri/page";
-import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
+import { parseTimeToMs, getSavedTimeForPesertaLomba, isZeroOrEmptyTime, comparePesertaByScoreAndTime } from "@/lib/timeUtils";
 
 // Helper untuk menghitung/mendistribusikan poin rubrik secara proporsional & aman (bebas infinite loop)
-function getRubrikPoints(totalScore, rubriks, pesertaId = "", lombaId = "", rankIdx = 0) {
+function getRubrikPoints(totalScore, rubriks, pesertaId = "", lombaId = "", pesertaWaktu = "") {
   if (!rubriks || rubriks.length === 0 || totalScore === undefined || totalScore === null) {
     return {};
   }
@@ -25,7 +25,8 @@ function getRubrikPoints(totalScore, rubriks, pesertaId = "", lombaId = "", rank
   }
 
   if (timeRubrik) {
-    result[timeRubrik.id] = getSavedTimeForPesertaLomba(pesertaId, lombaId, rankIdx, true);
+    // Konsisten gunakan waktu asli peserta, jika 00:00:00.00 atau kosong maka tetap kosong
+    result[timeRubrik.id] = isZeroOrEmptyTime(pesertaWaktu) ? "" : String(pesertaWaktu).trim();
   }
 
   return result;
@@ -60,31 +61,29 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           if (cleanTargetName && jName.trim().toLowerCase() !== cleanTargetName) continue;
 
           const thisJuriScores = relevantScores.filter((s) => s.juri_id === jId);
-          // Urutkan nilai awal
-          thisJuriScores.sort((a, b) => b.nilai - a.nilai);
 
           const pesertaScores = thisJuriScores
-            .map((s, sIdx) => {
+            .map((s) => {
               const pData = pesertaMap.get(s.peserta_id);
               if (!pData) return null;
-              const savedTime = getSavedTimeForPesertaLomba(s.peserta_id, lomba.id, sIdx, true);
+              // Ambil waktu asli tersimpan (jika kosong atau 00:00:00.00 jangan dibuatkan contoh palsu)
+              const savedTime = getSavedTimeForPesertaLomba(s.peserta_id, lomba.id, 0, false);
+              const waktuClean = isZeroOrEmptyTime(savedTime) ? "" : String(savedTime).trim();
               return {
                 ...pData,
                 nilai_lomba: s.nilai,
-                waktu_pengerjaan: savedTime,
-                waktu_ms: parseTimeToMs(savedTime),
+                waktu_pengerjaan: waktuClean,
+                waktu_ms: parseTimeToMs(waktuClean),
               };
             })
             .filter(Boolean);
 
-          // Peringkat 1 s/d seterusnya: Nilai ketepatan tertinggi.
-          // Jika nilai sama: Ditentukan dari waktu tercepat (milidetik terendah)!
-          pesertaScores.sort((a, b) => {
-            if (b.nilai_lomba !== a.nilai_lomba) {
-              return b.nilai_lomba - a.nilai_lomba;
-            }
-            return a.waktu_ms - b.waktu_ms;
-          });
+          // Peringkat 1 s/d seterusnya:
+          // 1. Nilai ketepatan / nilai utama tertinggi
+          // 2. Jika nilai sama: Waktu tercepat ke terlambat (milidetik terendah ke tertinggi)
+          // 3. Peserta dengan waktu kosong (Infinity) otomatis di bawah peserta yang memiliki catatan waktu
+          // 4. Jika nilai dan waktu sama persis, urutkan nama regu
+          pesertaScores.sort(comparePesertaByScoreAndTime);
 
           if (pesertaScores.length > 0) {
             groups.push({
@@ -196,6 +195,19 @@ export default function CetakRekapPerJuri() {
       const urlParams = new URLSearchParams(window.location.search);
       const targetJuriName = urlParams.get("juriName");
       const targetJuriId = urlParams.get("juriId");
+
+      // Sinkronkan catatan waktu tersimpan dari server agar juri dan admin selalu selaras
+      try {
+        const waktuRes = await fetch("/api/juri/waktu");
+        if (waktuRes.ok) {
+          const waktuJson = await waktuRes.json();
+          if (waktuJson && waktuJson.times) {
+            const allTime = JSON.parse(localStorage.getItem("all_time_scores") || "{}");
+            const merged = { ...allTime, ...waktuJson.times };
+            localStorage.setItem("all_time_scores", JSON.stringify(merged));
+          }
+        }
+      } catch (_) {}
 
       // 0. INSTANT MEMORY CACHE: If opened from Admin Dashboard, render in <5ms!
       let cached = null;
@@ -538,7 +550,7 @@ export default function CetakRekapPerJuri() {
                       } catch (_) {}
 
                       if (Object.keys(rubrikPoints).length === 0) {
-                        rubrikPoints = getRubrikPoints(peserta.nilai_lomba, rubriks, peserta.id, group.lomba.id, idx);
+                        rubrikPoints = getRubrikPoints(peserta.nilai_lomba, rubriks, peserta.id, group.lomba.id, peserta.waktu_pengerjaan);
                       }
 
                       return (
@@ -551,11 +563,15 @@ export default function CetakRekapPerJuri() {
                             {peserta.pangkalan}
                           </td>
                           {rubriks.map((r) => {
-                            let val = rubrikPoints[r.id];
-                            if ((val === undefined || val === null || val === "" || val === "—") && r.isTime) {
-                              val = peserta.waktu_pengerjaan || getSavedTimeForPesertaLomba(peserta.id, group.lomba.id, idx, true);
+                            let displayVal = "—";
+                            if (r.isTime) {
+                              const rawWaktu = peserta.waktu_pengerjaan || rubrikPoints[r.id];
+                              displayVal = isZeroOrEmptyTime(rawWaktu) ? "—" : String(rawWaktu).trim();
+                            } else {
+                              const rawScore = rubrikPoints[r.id];
+                              displayVal = (rawScore !== undefined && rawScore !== null && rawScore !== "") ? rawScore : "—";
                             }
-                            let displayVal = val || "—";
+
                             return (
                               <td key={r.id} className={`border border-black text-center font-bold ${isDense ? 'p-1 text-[8pt]' : 'p-1.5 text-[9.5pt]'} ${r.isTime ? 'font-mono text-[7.5pt] whitespace-nowrap' : ''}`}>
                                 {displayVal}
