@@ -441,6 +441,19 @@ export default function DashboardAdmin() {
   };
 
   const fetchAllData = async () => {
+    // Sinkronkan catatan waktu tersimpan dari server secara asinkron
+    fetch("/api/juri/waktu")
+      .then((res) => res.json())
+      .then((res) => {
+        if (res && res.times) {
+          try {
+            const allTime = JSON.parse(localStorage.getItem("all_time_scores") || "{}");
+            localStorage.setItem("all_time_scores", JSON.stringify({ ...allTime, ...res.times }));
+          } catch (_) {}
+        }
+      })
+      .catch(() => {});
+
     // Run ALL queries in parallel instead of sequential
     const [lombaRes, pesertaRes, penilaianRes, jurisRes, logsRes, informasiRes] = await Promise.all([
       // Fetch all cabang lomba
@@ -467,18 +480,10 @@ export default function DashboardAdmin() {
       })(),
 
       // Fetch all juri from profiles via API to get emails
-      fetch("/api/juri/get-all").then(res => res.json()).then(res => ({ data: res.data, error: res.error })),
-
-      // Fetch all real recorded times from server
-      fetch("/api/juri/waktu").then(res => res.json()).then(res => {
-        if (res && res.times) {
-          try {
-            const allTime = JSON.parse(localStorage.getItem("all_time_scores") || "{}");
-            localStorage.setItem("all_time_scores", JSON.stringify({ ...allTime, ...res.times }));
-          } catch (_) {}
-        }
-        return { data: res?.times || {} };
-      }).catch(() => ({ data: {} })),
+      fetch("/api/juri/get-all")
+        .then((res) => res.json())
+        .then((res) => ({ data: Array.isArray(res.data) ? res.data : [], error: res.error }))
+        .catch(() => ({ data: [], error: null })),
 
       // Fetch scoring activity logs (Join tables dynamically)
       supabase
@@ -512,14 +517,16 @@ export default function DashboardAdmin() {
     }
 
     if (pesertaRes.error) console.error("Error fetching peserta:", pesertaRes.error);
-    const dbPeserta = pesertaRes.data || [];
+    const dbPeserta = Array.isArray(pesertaRes.data) ? pesertaRes.data : [];
     setPesertaList(dbPeserta);
     
     if (jurisRes.error) console.error("Error fetching juri:", jurisRes.error);
-    if (jurisRes.data) setJuriList(jurisRes.data);
+    if (jurisRes.data) setJuriList(Array.isArray(jurisRes.data) ? jurisRes.data : []);
     
     if (logsRes.error) console.error("Error fetching logs:", logsRes.error);
-    if (logsRes.data) setLogEntries(logsRes.data);
+    if (logsRes.data) setLogEntries(Array.isArray(logsRes.data) ? logsRes.data : []);
+
+    if (informasiRes?.data) setInformasiList(Array.isArray(informasiRes.data) ? informasiRes.data : []);
 
     let allPenilaian = [...(penilaianRes?.data || [])];
     try {
