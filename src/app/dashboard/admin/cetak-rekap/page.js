@@ -177,9 +177,10 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           pesertaScores = relevantScores
             .map((s) => {
               const pData = pesertaMap.get(s.peserta_id);
-              if (!pData) return null;
-              // Ambil waktu asli tersimpan atau waktu deterministik peserta
-              const rawTime = s.rubrik?.waktu || getSavedTimeForPesertaLomba(s.peserta_id, s.lomba_id || matchingLombas[0]?.id, 0, true);
+              // Ambil waktu asli murni dari input Dewan Juri
+              const rawTime = (typeof s.rubrik === "object" && s.rubrik?.waktu !== undefined)
+                ? s.rubrik.waktu
+                : getSavedTimeForPesertaLomba(s.peserta_id, s.lomba_id || matchingLombas[0]?.id, 0, false);
               const waktuClean = isZeroOrEmptyTime(rawTime) ? "" : String(rawTime).trim();
               return {
                 ...pData,
