@@ -49,6 +49,27 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
   // Petakan seluruh definisi cabang lomba resmi
   const officialDefs = OFFICIAL_LOMBA_DEFINITIONS;
 
+  const nameKeywords = [
+    { key: "semap", kode: "SMP" },
+    { key: "morse", kode: "MRS" },
+    { key: "pioner", kode: "PNR" },
+    { key: "sandi", kode: "SND" },
+    { key: "taksir", kode: "TKS" },
+    { key: "naviga", kode: "NAV" },
+    { key: "ppgd", kode: "PGD" },
+    { key: "pppk", kode: "PGD" },
+    { key: "tari", kode: "TSB" },
+    { key: "seni", kode: "TSB" },
+    { key: "hymne", kode: "HMN" },
+    { key: "suara", kode: "HMN" },
+    { key: "masak", kode: "MSK" },
+    { key: "administrasi", kode: "ADM" },
+    { key: "karnaval", kode: "KRN" },
+    { key: "forum", kode: "FRP" },
+    { key: "kim", kode: "KIM" },
+    { key: "obat", kode: "KIM" },
+  ];
+
   // Jika target juri spesifik dipilih, tentukan cabang lomba yang dinilai
   let selectedDefs = officialDefs;
   if (targetJuri) {
@@ -57,26 +78,6 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
     const juriLombaDef = juriLombaObj ? findOfficialLombaDef(juriLombaObj) : null;
 
     const juriNameLower = (targetJuri.nama_lengkap || "").toLowerCase();
-    const nameKeywords = [
-      { key: "semap", kode: "SMP" },
-      { key: "morse", kode: "MRS" },
-      { key: "pioner", kode: "PNR" },
-      { key: "sandi", kode: "SND" },
-      { key: "taksir", kode: "TKS" },
-      { key: "naviga", kode: "NAV" },
-      { key: "ppgd", kode: "PGD" },
-      { key: "pppk", kode: "PGD" },
-      { key: "tari", kode: "TSB" },
-      { key: "seni", kode: "TSB" },
-      { key: "hymne", kode: "HMN" },
-      { key: "suara", kode: "HMN" },
-      { key: "masak", kode: "MSK" },
-      { key: "administrasi", kode: "ADM" },
-      { key: "karnaval", kode: "KRN" },
-      { key: "forum", kode: "FRP" },
-      { key: "kim", kode: "KIM" },
-      { key: "obat", kode: "KIM" },
-    ];
     const matchedKeyword = nameKeywords.find((k) => juriNameLower.includes(k.key));
 
     const targetKode = juriLombaDef?.kode || (matchedKeyword ? matchedKeyword.kode : null);
@@ -104,136 +105,163 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
     });
     const matchingLombaIds = new Set(matchingLombas.map((l) => l.id));
 
-    // Setiap juri cabang lomba bertugas sesuai penugasan di DB (assigned_kategori & assigned_gender)
-    for (const kat of ["SD", "SMP"]) {
-      // Cek apakah tingkat ini diizinkan untuk juri ini sesuai penugasan di database
-      const isKatAllowed =
-        !targetJuri?.assigned_kategori ||
-        targetJuri.assigned_kategori === "SEMUA" ||
-        targetJuri.assigned_kategori === kat;
-
-      // Jika juri spesifik tidak ditugaskan untuk tingkat ini, lewati!
-      if (targetJuri && !isKatAllowed) {
-        continue;
-      }
-
-      // Cek apakah tingkat ini ada peserta terdaftar/diverifikasi di database
-      const hasPesertaInKat = pesertaList.some((p) => p.kategori === kat && p.is_verified);
-      const hasScoreInKat = (penilaianList || []).some((s) => {
-        const p = pesertaMap.get(s.peserta_id);
-        return p && p.kategori === kat;
+    // Temukan juri-juri yang bertugas pada cabang lomba ini
+    let assignedJudges = [];
+    if (targetJuri) {
+      assignedJudges = [targetJuri];
+    } else {
+      // Cari semua profil juri yang ditugaskan ke lomba ini
+      const judgesForDef = (juriList || []).filter((j) => {
+        if (j.assigned_lomba_id && matchingLombaIds.has(j.assigned_lomba_id)) return true;
+        const jName = (j.nama_lengkap || "").toLowerCase();
+        return nameKeywords.some((k) => k.kode === def.kode && jName.includes(k.key));
       });
 
-      // Jika di database tidak ada peserta atau nilai untuk tingkat ini, lewati!
-      if (!hasPesertaInKat && !hasScoreInKat) {
-        continue;
+      // Tambahkan juga juri yang memiliki input penilaian di lomba ini
+      const juriIdsInPenilaian = new Set(
+        (penilaianList || []).filter((s) => matchingLombaIds.has(s.lomba_id)).map((s) => s.juri_id)
+      );
+      juriIdsInPenilaian.forEach((jId) => {
+        if (!judgesForDef.some((j) => j.id === jId)) {
+          const foundProfile = (juriList || []).find((j) => j.id === jId);
+          if (foundProfile) judgesForDef.push(foundProfile);
+        }
+      });
+
+      if (judgesForDef.length > 0) {
+        assignedJudges = judgesForDef;
+      } else {
+        assignedJudges = [null]; // Default jika belum ada profil juri spesifik
       }
+    }
 
-      for (const gen of ["Laki-laki", "Perempuan"]) {
-        // Cek apakah gender ini diizinkan untuk juri ini sesuai penugasan di database
-        const isGenAllowed =
-          !targetJuri?.assigned_gender ||
-          targetJuri.assigned_gender === "SEMUA" ||
-          targetJuri.assigned_gender === gen;
+    // Setiap juri cabang lomba memiliki lembar rekapitulasi tersendiri
+    for (const judge of assignedJudges) {
+      for (const kat of ["SD", "SMP"]) {
+        // Cek apakah tingkat ini diizinkan untuk juri ini sesuai penugasan di database
+        const isKatAllowed =
+          !judge?.assigned_kategori ||
+          judge.assigned_kategori === "SEMUA" ||
+          judge.assigned_kategori === kat;
 
-        // Jika juri spesifik tidak ditugaskan untuk gender ini, lewati!
-        if (targetJuri && !isGenAllowed) {
+        if (judge && !isKatAllowed) {
           continue;
         }
 
-        // Cek apakah ada peserta untuk kombinasi tingkat dan gender ini di database
-        const catPeserta = pesertaList
-          .filter((p) => p.kategori === kat && p.gender === gen && p.is_verified)
-          .sort((a, b) => (Number(a.nomor_dada) || 0) - (Number(b.nomor_dada) || 0));
-
-        // Ambil nilai relevan untuk kombinasi lomba, tingkat (SD/SMP), dan gender ini
-        const relevantScores = (penilaianList || []).filter((s) => {
-          if (matchingLombaIds.size > 0 && !matchingLombaIds.has(s.lomba_id)) {
-            const sLomba = lombaList.find((l) => l.id === s.lomba_id);
-            if (!sLomba || findOfficialLombaDef(sLomba)?.kode !== def.kode) return false;
-          }
+        // Cek apakah tingkat ini ada peserta terdaftar/diverifikasi di database
+        const hasPesertaInKat = pesertaList.some((p) => p.kategori === kat && p.is_verified);
+        const hasScoreInKat = (penilaianList || []).some((s) => {
+          if (matchingLombaIds.size > 0 && !matchingLombaIds.has(s.lomba_id)) return false;
+          if (judge && s.juri_id !== judge.id && assignedJudges.length > 1) return false;
           const p = pesertaMap.get(s.peserta_id);
-          if (!p) return false;
-          return p.kategori === kat && p.gender === gen;
+          return p && p.kategori === kat;
         });
 
-        // Sinkronkan dengan isi database: jika tidak ada peserta terdaftar dan tidak ada nilai, jangan masukkan di cetak laporan!
-        if (catPeserta.length === 0 && relevantScores.length === 0) {
+        if (!hasPesertaInKat && !hasScoreInKat) {
           continue;
         }
 
-        // Tentukan nama juri penanggung jawab
-        let displayJuriName = targetJuri?.nama_lengkap || targetJuriName || null;
-        if (!displayJuriName && relevantScores.length > 0) {
-          displayJuriName = juriMap.get(relevantScores[0].juri_id) || "Dewan Juri";
-        }
-        if (!displayJuriName) {
-          displayJuriName = "Dewan Juri";
-        }
+        for (const gen of ["Laki-laki", "Perempuan"]) {
+          const isGenAllowed =
+            !judge?.assigned_gender ||
+            judge.assigned_gender === "SEMUA" ||
+            judge.assigned_gender === gen;
 
-        // Map nilai dan waktu resmi dari penilaian
-        const scoredPesertaMap = new Map();
-        relevantScores.forEach((s) => {
-          // Jika ada multiple score, prioritaskan yang milik targetJuriId jika ada
-          if (!scoredPesertaMap.has(s.peserta_id) || (targetJuriId && s.juri_id === targetJuriId)) {
-            scoredPesertaMap.set(s.peserta_id, s);
-          }
-        });
-
-        // Gabungkan seluruh peserta terdaftar dalam kategori & gender ini
-        const allTargetPeserta = [...catPeserta];
-        relevantScores.forEach((s) => {
-          const p = pesertaMap.get(s.peserta_id);
-          if (p && !allTargetPeserta.some((tp) => tp.id === p.id)) {
-            allTargetPeserta.push(p);
-          }
-        });
-
-        const pesertaScores = allTargetPeserta.map((p) => {
-          const s = scoredPesertaMap.get(p.id);
-          let rawTime = "";
-          let rubrikObj = s?.rubrik || null;
-
-          if (rubrikObj && typeof rubrikObj === "object" && rubrikObj.waktu !== undefined) {
-            rawTime = rubrikObj.waktu;
-          } else {
-            rawTime = getSavedTimeForPesertaLomba(p.id, s?.lomba_id || matchingLombas[0]?.id, 0, false);
+          if (judge && !isGenAllowed) {
+            continue;
           }
 
-          const waktuClean = isZeroOrEmptyTime(rawTime) ? "" : String(rawTime).trim();
+          const catPeserta = pesertaList
+            .filter((p) => p.kategori === kat && p.gender === gen && p.is_verified)
+            .sort((a, b) => (Number(a.nomor_dada) || 0) - (Number(b.nomor_dada) || 0));
 
-          return {
-            ...p,
-            nilai_lomba: s ? s.nilai : "",
-            rubrik: rubrikObj,
-            waktu_pengerjaan: waktuClean,
-            waktu_ms: waktuClean ? parseTimeToMs(waktuClean) : Infinity,
-          };
-        });
-
-        // Urutkan peringkat: Nilai tertinggi -> Waktu tercepat (tie-breaker)
-        pesertaScores.sort(comparePesertaByScoreAndTime);
-
-        // Masukkan group HANYA jika memiliki baris peserta yang sah
-        if (pesertaScores.length > 0) {
-          const matchedLombaForKat = matchingLombas.find((l) => l.kategori === kat) || matchingLombas[0] || {
-            id: `lomba-${def.kode}-${kat}`,
-            nama_lomba: def.nama_lomba,
-            kode_lomba: def.kode,
-            kategori: kat,
-          };
-
-          groups.push({
-            lomba: {
-              ...matchedLombaForKat,
-              nama_lomba: def.nama_lomba,
-              kategori: kat,
-            },
-            kategori: kat,
-            gender: gen,
-            peserta: pesertaScores,
-            juriName: displayJuriName,
+          // Ambil nilai murni yang dinilai oleh juri ini
+          const relevantScores = (penilaianList || []).filter((s) => {
+            if (matchingLombaIds.size > 0 && !matchingLombaIds.has(s.lomba_id)) {
+              const sLomba = lombaList.find((l) => l.id === s.lomba_id);
+              if (!sLomba || findOfficialLombaDef(sLomba)?.kode !== def.kode) return false;
+            }
+            if (judge && s.juri_id !== judge.id && assignedJudges.length > 1) {
+              return false;
+            }
+            const p = pesertaMap.get(s.peserta_id);
+            if (!p) return false;
+            return p.kategori === kat && p.gender === gen;
           });
+
+          if (catPeserta.length === 0 && relevantScores.length === 0) {
+            continue;
+          }
+
+          // Tentukan nama juri penanggung jawab untuk lembar cetak ini
+          let displayJuriName = judge?.nama_lengkap || targetJuriName || null;
+          if (!displayJuriName && relevantScores.length > 0) {
+            displayJuriName = juriMap.get(relevantScores[0].juri_id) || "Dewan Juri";
+          }
+          if (!displayJuriName) {
+            displayJuriName = "Dewan Juri";
+          }
+
+          // Map nilai dan waktu resmi dari penilaian juri ini
+          const scoredPesertaMap = new Map();
+          relevantScores.forEach((s) => {
+            scoredPesertaMap.set(s.peserta_id, s);
+          });
+
+          const allTargetPeserta = [...catPeserta];
+          relevantScores.forEach((s) => {
+            const p = pesertaMap.get(s.peserta_id);
+            if (p && !allTargetPeserta.some((tp) => tp.id === p.id)) {
+              allTargetPeserta.push(p);
+            }
+          });
+
+          const pesertaScores = allTargetPeserta.map((p) => {
+            const s = scoredPesertaMap.get(p.id);
+            let rawTime = "";
+            let rubrikObj = s?.rubrik || null;
+
+            if (rubrikObj && typeof rubrikObj === "object" && rubrikObj.waktu !== undefined) {
+              rawTime = rubrikObj.waktu;
+            } else {
+              rawTime = getSavedTimeForPesertaLomba(p.id, s?.lomba_id || matchingLombas[0]?.id, 0, false);
+            }
+
+            const waktuClean = isZeroOrEmptyTime(rawTime) ? "" : String(rawTime).trim();
+
+            return {
+              ...p,
+              nilai_lomba: s ? s.nilai : "",
+              rubrik: rubrikObj,
+              waktu_pengerjaan: waktuClean,
+              waktu_ms: waktuClean ? parseTimeToMs(waktuClean) : Infinity,
+            };
+          });
+
+          // Urutkan peringkat: Nilai tertinggi -> Waktu tercepat (tie-breaker)
+          pesertaScores.sort(comparePesertaByScoreAndTime);
+
+          if (pesertaScores.length > 0) {
+            const matchedLombaForKat = matchingLombas.find((l) => l.kategori === kat) || matchingLombas[0] || {
+              id: `lomba-${def.kode}-${kat}`,
+              nama_lomba: def.nama_lomba,
+              kode_lomba: def.kode,
+              kategori: kat,
+            };
+
+            groups.push({
+              lomba: {
+                ...matchedLombaForKat,
+                nama_lomba: def.nama_lomba,
+                kategori: kat,
+              },
+              kategori: kat,
+              gender: gen,
+              peserta: pesertaScores,
+              juriName: displayJuriName,
+              juriId: judge?.id || null,
+            });
+          }
         }
       }
     }

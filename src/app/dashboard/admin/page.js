@@ -574,17 +574,18 @@ export default function DashboardAdmin() {
     }
 
 
-    // Process penilaian map
-    if (penilaianRes.data) {
+    // Process penilaian map (Rata-rata otomatis jika terdapat multiple dewan juri pada cabang lomba yang sama)
+    const activePenilaian = allPenilaian && allPenilaian.length > 0 ? allPenilaian : (penilaianRes?.data || []);
+    if (activePenilaian.length > 0) {
       const map = {};
       const counts = {};
-      penilaianRes.data.forEach((p) => {
+      activePenilaian.forEach((p) => {
         const key = `${p.peserta_id}_${p.lomba_id}`;
         if (!map[key]) {
           map[key] = 0;
           counts[key] = 0;
         }
-        map[key] += p.nilai;
+        map[key] += Number(p.nilai) || 0;
         counts[key] += 1;
       });
       Object.keys(map).forEach((key) => {
@@ -1952,7 +1953,16 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
                               <input type="number" min="0" max="100" value={getCellValue(peserta.id, lomba.id)} onChange={(e) => handleNilaiChange(peserta.id, lomba.id, e.target.value)} placeholder="—" className={`w-full bg-slate-950/60 border rounded-lg px-1.5 py-2 text-center text-xs font-bold outline-none ${editedNilai[`${peserta.id}_${lomba.id}`] !== undefined ? "border-amber-500/50 text-amber-400" : nilaiMap[`${peserta.id}_${lomba.id}`] !== undefined ? "border-slate-800 text-emerald-400" : "border-slate-800/50 text-slate-600"}`} />
                             </td>
                           ))}
-                          <td className="p-3 text-center text-lg font-black text-white">{peserta.total_nilai ?? 0}</td>
+                          <td className="p-3 text-center text-lg font-black text-white">
+                            {(() => {
+                              let tot = 0;
+                              dynamicLombaCols.forEach((l) => {
+                                const v = getCellValue(peserta.id, l.id);
+                                if (v !== "" && !isNaN(v)) tot += Number(v);
+                              });
+                              return Math.round(tot * 100) / 100;
+                            })()}
+                          </td>
                           <td className="p-3 text-center text-[0.6rem] font-bold">{assessedCount}/{dynamicLombaCols.length}</td>
                         </tr>
                       );
