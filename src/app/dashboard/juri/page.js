@@ -16,9 +16,10 @@ export function getLombaRubrik(lombaDef, kategori = "SD") {
   } else {
     rubriks = [...(lombaDef.rubrik || [])];
   }
-  // Pastikan SEMUA cabang lomba untuk SD/MI & SMP/MTs memiliki kriteria Kecepatan Waktu
+  
+  // Tambahkan kriteria Kecepatan Waktu hanya untuk cabang lomba yang memiliki input waktu
   const hasTime = rubriks.some((r) => r.isTime);
-  if (!hasTime) {
+  if (!hasTime && lombaDef.hasTimeInput) {
     rubriks.push({
       id: "waktu",
       name: "Kecepatan Waktu",

@@ -602,11 +602,14 @@ export default function CetakRekapPerJuri() {
             
             {(() => {
               const def = findOfficialLombaDef(group.lomba);
+              const cleanLombaTitle = (group.lomba.nama_lomba || "").toLowerCase().startsWith("lomba") 
+                ? group.lomba.nama_lomba 
+                : `Lomba ${group.lomba.nama_lomba}`;
               return (
                 <div className="text-left">
                   <h4 className="font-bold text-[13pt] mb-2">{def ? `Kelompok ${def.kategori_kelompok}` : ""}</h4>
                   <p className="font-bold text-[12pt] mb-2">
-                    Lomba {group.lomba.nama_lomba} (Tingkat: {group.kategori} {group.gender === "Laki-laki" ? "PUTRA" : "PUTRI"})
+                    {cleanLombaTitle} (Tingkat: {group.kategori} {group.gender === "Laki-laki" ? "PUTRA" : "PUTRI"})
                   </p>
                 </div>
               );
@@ -624,7 +627,8 @@ export default function CetakRekapPerJuri() {
                 <table className={`w-full border-collapse border border-black mb-6 ${isDense ? 'text-[8pt] leading-tight' : 'text-[9.5pt] leading-normal'}`}>
                   <thead>
                     <tr className="bg-gray-100">
-                      <th className={`border border-black text-center font-bold ${isDense ? 'p-1 w-6 text-[7.5pt]' : 'p-2 w-10 text-[9pt]'}`}>No</th>
+                      <th className={`border border-black text-center font-bold ${isDense ? 'p-1 w-6 text-[7.5pt]' : 'p-2 w-8 text-[9pt]'}`}>No</th>
+                      <th className={`border border-black text-center font-bold ${isDense ? 'p-1 w-12 text-[7.5pt]' : 'p-2 w-14 text-[9pt]'}`}>No Dada</th>
                       <th className={`border border-black text-center font-bold ${isDense ? 'p-1 text-[8pt] min-w-[70px]' : 'p-2 text-[9pt]'}`}>Nama Regu</th>
                       <th className={`border border-black text-center font-bold ${isDense ? 'p-1 text-[8pt] min-w-[80px]' : 'p-2 text-[9pt]'}`}>Pangkalan</th>
                       {rubriks.map((r) => (
@@ -667,6 +671,9 @@ export default function CetakRekapPerJuri() {
                       return (
                         <tr key={peserta.id}>
                           <td className={`border border-black text-center ${isDense ? 'p-1 text-[8pt]' : 'p-2 text-[9.5pt]'}`}>{idx + 1}</td>
+                          <td className={`border border-black text-center font-mono font-bold ${isDense ? 'p-1 text-[7.5pt]' : 'p-2 text-[9pt]'}`}>
+                            {peserta.nomor_dada ? String(peserta.nomor_dada).padStart(3, "0") : "—"}
+                          </td>
                           <td className={`border border-black font-bold ${isDense ? 'p-1 text-[8pt]' : 'p-2 text-[9.5pt]'}`}>
                             {peserta.nama_regu}
                           </td>
@@ -698,6 +705,7 @@ export default function CetakRekapPerJuri() {
                     {/* Tambahan baris kosong jika peserta sedikit untuk format form */}
                     {group.peserta.length < 5 && Array.from({ length: 5 - group.peserta.length }).map((_, i) => (
                       <tr key={`empty-${i}`}>
+                        <td className="border border-black p-1 text-center"></td>
                         <td className="border border-black p-1 text-center"></td>
                         <td className="border border-black p-1"></td>
                         <td className="border border-black p-1"></td>
