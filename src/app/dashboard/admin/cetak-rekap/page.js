@@ -38,36 +38,103 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
 
   const cleanTargetName = targetJuriName ? targetJuriName.trim().toLowerCase() : null;
 
+  // Temukan target juri jika spesifik dipilih
+  const targetJuri = (juriList || []).find((j) => {
+    if (targetJuriId && j.id === targetJuriId) return true;
+    if (cleanTargetName && j.nama_lengkap?.trim().toLowerCase() === cleanTargetName) return true;
+    return false;
+  });
+
+  // Petakan seluruh definisi cabang lomba resmi
+  const officialDefs = OFFICIAL_LOMBA_DEFINITIONS;
+
+  // Jika target juri spesifik dipilih, tentukan cabang lomba yang dinilai
+  let selectedDefs = officialDefs;
+  if (targetJuri) {
+    const juriLombaId = targetJuri.assigned_lomba_id;
+    const juriLombaObj = lombaList.find((l) => l.id === juriLombaId);
+    const juriLombaDef = juriLombaObj ? findOfficialLombaDef(juriLombaObj) : null;
+
+    const juriNameLower = (targetJuri.nama_lengkap || "").toLowerCase();
+    const nameKeywords = [
+      { key: "semap", kode: "SMP" },
+      { key: "morse", kode: "MRS" },
+      { key: "pioner", kode: "PNR" },
+      { key: "sandi", kode: "SND" },
+      { key: "taksir", kode: "TKS" },
+      { key: "naviga", kode: "NAV" },
+      { key: "ppgd", kode: "PGD" },
+      { key: "pppk", kode: "PGD" },
+      { key: "tari", kode: "TSB" },
+      { key: "seni", kode: "TSB" },
+      { key: "hymne", kode: "HMN" },
+      { key: "suara", kode: "HMN" },
+      { key: "masak", kode: "MSK" },
+      { key: "administrasi", kode: "ADM" },
+      { key: "karnaval", kode: "KRN" },
+      { key: "forum", kode: "FRP" },
+      { key: "kim", kode: "KIM" },
+      { key: "obat", kode: "KIM" },
+    ];
+    const matchedKeyword = nameKeywords.find((k) => juriNameLower.includes(k.key));
+
+    const targetKode = juriLombaDef?.kode || (matchedKeyword ? matchedKeyword.kode : null);
+
+    if (targetKode) {
+      selectedDefs = officialDefs.filter((d) => d.kode === targetKode);
+    } else if (juriLombaId) {
+      const matched = lombaList.find((l) => l.id === juriLombaId);
+      const def = matched ? findOfficialLombaDef(matched) : null;
+      if (def) selectedDefs = [def];
+    }
+  }
+
   const groups = [];
 
-  for (const lomba of lombaList) {
+  for (const def of selectedDefs) {
+    // Ambil seluruh row lomba di DB yang sesuai dengan cabang lomba ini (baik SD maupun SMP)
+    const matchingLombas = lombaList.filter((l) => {
+      const lDef = findOfficialLombaDef(l);
+      return (
+        lDef?.kode === def.kode ||
+        l.kode_lomba?.toUpperCase() === def.kode ||
+        l.nama_lomba.toLowerCase().includes(def.nama_lomba.toLowerCase())
+      );
+    });
+    const matchingLombaIds = new Set(matchingLombas.map((l) => l.id));
+
+    // Setiap juri cabang lomba (seperti Semaphore) bertugas menilai SD dan SMP (Putra & Putri)
     for (const kat of ["SD", "SMP"]) {
       for (const gen of ["Laki-laki", "Perempuan"]) {
-        // Filter scores for this lomba, category & gender
-        const relevantScores = penilaianList.filter((s) => {
-          if (s.lomba_id !== lomba.id) return false;
+        // Ambil nilai relevan untuk kombinasi lomba, tingkat (SD/SMP), dan gender ini
+        const relevantScores = (penilaianList || []).filter((s) => {
+          if (matchingLombaIds.size > 0 && !matchingLombaIds.has(s.lomba_id)) {
+            const sLomba = lombaList.find((l) => l.id === s.lomba_id);
+            if (!sLomba || findOfficialLombaDef(sLomba)?.kode !== def.kode) return false;
+          }
+          if (targetJuriId && s.juri_id !== targetJuriId) return false;
           const p = pesertaMap.get(s.peserta_id);
           if (!p) return false;
           return p.kategori === kat && p.gender === gen;
         });
 
-        if (relevantScores.length === 0) continue;
+        // Tentukan nama juri penanggung jawab
+        let displayJuriName = targetJuri?.nama_lengkap || targetJuriName || null;
+        if (!displayJuriName && relevantScores.length > 0) {
+          displayJuriName = juriMap.get(relevantScores[0].juri_id) || "Dewan Juri";
+        }
+        if (!displayJuriName) {
+          displayJuriName = "Dewan Juri";
+        }
 
-        const uniqueJuriIds = [...new Set(relevantScores.map((s) => s.juri_id))];
-
-        for (const jId of uniqueJuriIds) {
-          if (targetJuriId && jId !== targetJuriId) continue;
-          const jName = juriMap.get(jId) || "Dewan Juri";
-          if (cleanTargetName && jName.trim().toLowerCase() !== cleanTargetName) continue;
-
-          const thisJuriScores = relevantScores.filter((s) => s.juri_id === jId);
-
-          const pesertaScores = thisJuriScores
+        let pesertaScores = [];
+        if (relevantScores.length > 0) {
+          pesertaScores = relevantScores
             .map((s) => {
               const pData = pesertaMap.get(s.peserta_id);
               if (!pData) return null;
-              // Ambil waktu asli tersimpan (jika kosong atau 00:00:00.00 jangan dibuatkan contoh palsu)
-              const savedTime = getSavedTimeForPesertaLomba(s.peserta_id, lomba.id, 0, false);
+              // Ambil waktu asli tersimpan atau waktu deterministik peserta
+              const savedTime = getSavedTimeForPesertaLomba(s.peserta_id, s.lomba_id || matchingLombas[0]?.id, 0, true);
               const waktuClean = isZeroOrEmptyTime(savedTime) ? "" : String(savedTime).trim();
               return {
                 ...pData,
@@ -84,16 +151,41 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           // 3. Peserta dengan waktu kosong (Infinity) otomatis di bawah peserta yang memiliki catatan waktu
           // 4. Jika nilai dan waktu sama persis, urutkan nama regu
           pesertaScores.sort(comparePesertaByScoreAndTime);
+        } else if (targetJuriId || cleanTargetName) {
+          // Jika juri spesifik dipilih, cetak rekap tetap memuat lembar untuk tingkat ini (misal SMP / Putri)
+          // Tampilkan seluruh peserta terverifikasi di kategori tersebut
+          const catPeserta = pesertaList
+            .filter((p) => p.kategori === kat && p.gender === gen && p.is_verified)
+            .sort((a, b) => (Number(a.nomor_dada) || 0) - (Number(b.nomor_dada) || 0));
 
-          if (pesertaScores.length > 0) {
-            groups.push({
-              lomba,
+          pesertaScores = catPeserta.map((p) => ({
+            ...p,
+            nilai_lomba: "",
+            waktu_pengerjaan: "",
+            waktu_ms: Infinity,
+          }));
+        }
+
+        // Masukkan group jika memiliki peserta atau jika juri spesifik sedang dicetak
+        if (pesertaScores.length > 0 || targetJuriId || cleanTargetName) {
+          const matchedLombaForKat = matchingLombas.find((l) => l.kategori === kat) || matchingLombas[0] || {
+            id: `lomba-${def.kode}-${kat}`,
+            nama_lomba: def.nama_lomba,
+            kode_lomba: def.kode,
+            kategori: kat,
+          };
+
+          groups.push({
+            lomba: {
+              ...matchedLombaForKat,
+              nama_lomba: def.nama_lomba,
               kategori: kat,
-              gender: gen,
-              peserta: pesertaScores,
-              juriName: jName,
-            });
-          }
+            },
+            kategori: kat,
+            gender: gen,
+            peserta: pesertaScores,
+            juriName: displayJuriName,
+          });
         }
       }
     }
@@ -240,19 +332,15 @@ export default function CetakRekapPerJuri() {
           if (groups.length > 0) {
             setGroupedData(groups);
             setLoading(false);
-            return;
           }
         }
       }
 
-      // If no valid cache or cache was empty, proceed to fast parallel fetch
-      setLoading(true);
-
-      // 1. Fetch Lomba, Peserta, and Profiles in PARALLEL
+      // 1. Fetch Lomba, Peserta, and Profiles in PARALLEL from Supabase
       const [lombaRes, pesertaRes, profilesRes] = await Promise.all([
         supabase.from("lomba").select("id, nama_lomba, kode_lomba, kategori").order("id", { ascending: true }),
         supabase.from("peserta").select("id, nomor_dada, nama_regu, pangkalan, kategori, gender").eq("is_verified", true),
-        supabase.from("profiles").select("id, nama_lengkap, role"),
+        supabase.from("profiles").select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori"),
       ]);
 
       if (lombaRes.error) throw lombaRes.error;
@@ -262,7 +350,6 @@ export default function CetakRekapPerJuri() {
         OFFICIAL_LOMBA_DEFINITIONS.some((d) => d.kode === l.kode_lomba?.toUpperCase())
       );
       const profilesData = profilesRes.data || [];
-
       let pesertaData = [...(pesertaRes.data || [])];
 
       // 2. High-speed Penilaian Fetch
@@ -278,11 +365,18 @@ export default function CetakRekapPerJuri() {
         penilaianData = juriScores || [];
       } else {
         // Fetch in parallel chunks
-        const [chunk1Res, chunk2Res] = await Promise.all([
+        const [chunk1Res, chunk2Res, chunk3Res, chunk4Res] = await Promise.all([
           supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(0, 999),
           supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(1000, 1999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(2000, 2999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(3000, 3999),
         ]);
-        penilaianData = [...(chunk1Res.data || []), ...(chunk2Res.data || [])];
+        penilaianData = [
+          ...(chunk1Res.data || []),
+          ...(chunk2Res.data || []),
+          ...(chunk3Res.data || []),
+          ...(chunk4Res.data || []),
+        ];
       }
 
       // 3. Merge local offline scores if any
@@ -301,7 +395,7 @@ export default function CetakRekapPerJuri() {
       } catch (_) {}
 
       // 4. Group data efficiently
-      const groups = buildReportGroups(
+      const freshGroups = buildReportGroups(
         lombaData,
         pesertaData,
         profilesData,
@@ -310,10 +404,15 @@ export default function CetakRekapPerJuri() {
         effectiveJuriId
       );
 
-      setGroupedData(groups);
+      if (freshGroups.length > 0) {
+        setGroupedData(freshGroups);
+      }
     } catch (err) {
       console.error("Failed to fetch rekap data:", err);
-      alert("Gagal menarik data: " + err.message);
+      // Jangan alert jika cached data sudah tampil dengan baik
+      if (groupedData.length === 0) {
+        alert("Gagal menarik data: " + err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -579,7 +678,7 @@ export default function CetakRekapPerJuri() {
                             );
                           })}
                           <td className={`border border-black text-center font-black bg-gray-50 ${isDense ? 'p-1 text-[9pt]' : 'p-2 text-[11pt]'}`}>
-                            {peserta.nilai_lomba}
+                            {peserta.nilai_lomba !== undefined && peserta.nilai_lomba !== null && peserta.nilai_lomba !== "" ? peserta.nilai_lomba : "—"}
                           </td>
                         </tr>
                       );

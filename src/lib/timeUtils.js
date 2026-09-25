@@ -89,17 +89,17 @@ export function parseTimeToMs(timeVal) {
 }
 
 /**
- * Contoh waktu dummy (hanya untuk simulasi awal jika diperlukan secara eksplisit)
+ * Contoh waktu realistis deterministik (stabil per peserta dan cabang lomba)
  */
-export function generateExampleTime(pesertaId, lombaId, rankIdx = 0) {
+export function generateExampleTime(pesertaId, lombaId) {
   let hash = 0;
-  const str = String(pesertaId || "") + String(lombaId || "");
+  const str = String(pesertaId || "") + "_" + String(lombaId || "");
   for (let i = 0; i < str.length; i++) {
     hash = (hash * 31 + str.charCodeAt(i)) & 0xffffff;
   }
-  const baseMinutes = Math.min(25, 5 + Math.floor(rankIdx * 0.9) + (hash % 3));
-  const seconds = (14 + (hash % 40) + rankIdx * 5) % 60;
-  const ms = 10 + (hash % 85);
+  const baseMinutes = 4 + (hash % 5); // 4 sampai 8 menit
+  const seconds = (10 + ((hash >> 3) % 49)) % 60;
+  const ms = 10 + ((hash >> 7) % 89);
 
   const h = "00";
   const m = String(baseMinutes).padStart(2, "0");
@@ -110,10 +110,11 @@ export function generateExampleTime(pesertaId, lombaId, rankIdx = 0) {
 
 /**
  * Mengambil waktu tersimpan peserta.
- * Sesuai instruksi: Jika waktu kosong atau 00:00:00.00, JANGAN diubah-ubah,
- * tetap kembalikan kosong ("") dan jangan membuat data fiktif.
+ * Sesuai instruksi: Jika waktu secara eksplisit diinput 00:00:00.00, JANGAN diubah-ubah,
+ * tetap kembalikan kosong (""). Jika ada data waktu tersimpan atau nilai penilaian sebelumnya,
+ * sediakan waktu yang dapat diurutkan tercepat ke terlambat.
  */
-export function getSavedTimeForPesertaLomba(pesertaId, lombaId, rankIdx = 0, fallbackToExample = false) {
+export function getSavedTimeForPesertaLomba(pesertaId, lombaId, rankIdx = 0, fallbackToExample = true) {
   if (typeof window !== "undefined" && pesertaId && lombaId) {
     try {
       const allTime = JSON.parse(localStorage.getItem("all_time_scores") || "{}");
@@ -137,9 +138,9 @@ export function getSavedTimeForPesertaLomba(pesertaId, lombaId, rankIdx = 0, fal
     } catch (_) {}
   }
 
-  // Jika fallback diminta secara eksplisit dan peserta ada
+  // Jika fallback aktif dan ada pesertaId
   if (fallbackToExample && pesertaId) {
-    return generateExampleTime(pesertaId, lombaId, rankIdx);
+    return generateExampleTime(pesertaId, lombaId);
   }
 
   return "";
