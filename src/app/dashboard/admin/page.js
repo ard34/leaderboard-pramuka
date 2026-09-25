@@ -574,22 +574,19 @@ export default function DashboardAdmin() {
     }
 
 
-    // Process penilaian map (Rata-rata otomatis jika terdapat multiple dewan juri pada cabang lomba yang sama)
+    // Process penilaian map (Akumulasi / Jumlahkan langsung jika terdapat multiple dewan juri pada cabang lomba yang sama)
     const activePenilaian = allPenilaian && allPenilaian.length > 0 ? allPenilaian : (penilaianRes?.data || []);
     if (activePenilaian.length > 0) {
       const map = {};
-      const counts = {};
       activePenilaian.forEach((p) => {
         const key = `${p.peserta_id}_${p.lomba_id}`;
         if (!map[key]) {
           map[key] = 0;
-          counts[key] = 0;
         }
         map[key] += Number(p.nilai) || 0;
-        counts[key] += 1;
       });
       Object.keys(map).forEach((key) => {
-        map[key] = Math.round((map[key] / counts[key]) * 100) / 100;
+        map[key] = Math.round(map[key] * 100) / 100;
       });
       setNilaiMap(map);
     }
