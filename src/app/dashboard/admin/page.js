@@ -1710,7 +1710,14 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
         const matchKontak = p.kontak_person?.toLowerCase().includes(q);
         if (!matchName && !matchSchool && !matchGudep && !matchNo && !matchKontak) return false;
       }
-      if (pesertaFilterTingkat !== "SEMUA" && p.kategori !== pesertaFilterTingkat) return false;
+      if (pesertaFilterTingkat === "SD" && p.kategori !== "SD") return false;
+      if (pesertaFilterTingkat === "SMP" && p.kategori !== "SMP") return false;
+      if (pesertaFilterTingkat === "PUTRA" && p.gender !== "Laki-laki") return false;
+      if (pesertaFilterTingkat === "PUTRI" && p.gender !== "Perempuan") return false;
+      if (pesertaFilterTingkat === "SD_PA" && (p.kategori !== "SD" || p.gender !== "Laki-laki")) return false;
+      if (pesertaFilterTingkat === "SD_PI" && (p.kategori !== "SD" || p.gender !== "Perempuan")) return false;
+      if (pesertaFilterTingkat === "SMP_PA" && (p.kategori !== "SMP" || p.gender !== "Laki-laki")) return false;
+      if (pesertaFilterTingkat === "SMP_PI" && (p.kategori !== "SMP" || p.gender !== "Perempuan")) return false;
       if (pesertaFilterStatus === "VERIFIED" && !p.is_verified) return false;
       if (pesertaFilterStatus === "PENDING" && p.is_verified) return false;
       return true;
@@ -2064,9 +2071,15 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
                     onChange={(e) => setPesertaFilterTingkat(e.target.value)}
                     className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none"
                   >
-                    <option value="SEMUA">Semua Tingkat</option>
-                    <option value="SD">SD / MI</option>
-                    <option value="SMP">SMP / MTs</option>
+                    <option value="SEMUA">Semua Kategori</option>
+                    <option value="SD">🏫 Tingkat SD / MI</option>
+                    <option value="SMP">🏫 Tingkat SMP / MTs</option>
+                    <option value="PUTRA">👦 Semua Putra</option>
+                    <option value="PUTRI">👧 Semua Putri</option>
+                    <option value="SD_PA">👦 SD Putra</option>
+                    <option value="SD_PI">👧 SD Putri</option>
+                    <option value="SMP_PA">👦 SMP Putra</option>
+                    <option value="SMP_PI">👧 SMP Putri</option>
                   </select>
                   <select
                     value={pesertaFilterStatus}

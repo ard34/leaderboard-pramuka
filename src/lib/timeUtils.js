@@ -23,11 +23,11 @@ export function isZeroOrEmptyTime(timeVal) {
 }
 
 /**
- * Format string waktu untuk tampilan: jika kosong atau 00:00:00.00, kembalikan string kosong ""
+ * Format string waktu untuk tampilan: jika kosong atau 00:00:00.00, kembalikan "-"
  */
 export function formatDisplayTime(timeVal) {
   if (isZeroOrEmptyTime(timeVal)) {
-    return "";
+    return "-";
   }
   return String(timeVal).trim();
 }
@@ -89,32 +89,19 @@ export function parseTimeToMs(timeVal) {
 }
 
 /**
- * Contoh waktu realistis deterministik (stabil per peserta dan cabang lomba)
+ * Contoh waktu realistis deterministik (hanya untuk testing lokal jika diminta eksplisit)
  */
 export function generateExampleTime(pesertaId, lombaId) {
-  let hash = 0;
-  const str = String(pesertaId || "") + "_" + String(lombaId || "");
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) & 0xffffff;
-  }
-  const baseMinutes = 4 + (hash % 5); // 4 sampai 8 menit
-  const seconds = (10 + ((hash >> 3) % 49)) % 60;
-  const ms = 10 + ((hash >> 7) % 89);
-
-  const h = "00";
-  const m = String(baseMinutes).padStart(2, "0");
-  const s = String(seconds).padStart(2, "0");
-  const milli = String(ms).padStart(2, "0");
-  return `${h}:${m}:${s}.${milli}`;
+  return "";
 }
 
 /**
  * Mengambil waktu tersimpan peserta.
- * Sesuai instruksi: Jika waktu secara eksplisit diinput 00:00:00.00, JANGAN diubah-ubah,
- * tetap kembalikan kosong (""). Jika ada data waktu tersimpan atau nilai penilaian sebelumnya,
- * sediakan waktu yang dapat diurutkan tercepat ke terlambat.
+ * Sesuai aturan: WAKTU MURNI DARI INPUT DEWAN JURI.
+ * Jika juri belum memasukkan waktu, kembalikan string kosong "" (akan ditampilkan sebagai "-").
+ * Tidak boleh membuat waktu otomatis tiruan.
  */
-export function getSavedTimeForPesertaLomba(pesertaId, lombaId, rankIdx = 0, fallbackToExample = true) {
+export function getSavedTimeForPesertaLomba(pesertaId, lombaId, rankIdx = 0, fallbackToExample = false) {
   if (typeof window !== "undefined" && pesertaId && lombaId) {
     try {
       const allTime = JSON.parse(localStorage.getItem("all_time_scores") || "{}");
@@ -136,11 +123,6 @@ export function getSavedTimeForPesertaLomba(pesertaId, lombaId, rankIdx = 0, fal
         }
       }
     } catch (_) {}
-  }
-
-  // Jika fallback aktif dan ada pesertaId
-  if (fallbackToExample && pesertaId) {
-    return generateExampleTime(pesertaId, lombaId);
   }
 
   return "";
