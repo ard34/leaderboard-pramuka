@@ -179,11 +179,12 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
               const pData = pesertaMap.get(s.peserta_id);
               if (!pData) return null;
               // Ambil waktu asli tersimpan atau waktu deterministik peserta
-              const savedTime = getSavedTimeForPesertaLomba(s.peserta_id, s.lomba_id || matchingLombas[0]?.id, 0, true);
-              const waktuClean = isZeroOrEmptyTime(savedTime) ? "" : String(savedTime).trim();
+              const rawTime = s.rubrik?.waktu || getSavedTimeForPesertaLomba(s.peserta_id, s.lomba_id || matchingLombas[0]?.id, 0, true);
+              const waktuClean = isZeroOrEmptyTime(rawTime) ? "" : String(rawTime).trim();
               return {
                 ...pData,
                 nilai_lomba: s.nilai,
+                rubrik: s.rubrik || null,
                 waktu_pengerjaan: waktuClean,
                 waktu_ms: parseTimeToMs(waktuClean),
               };
@@ -395,17 +396,17 @@ export default function CetakRekapPerJuri() {
       if (effectiveJuriId) {
         const { data: juriScores, error: errPenilaian } = await supabase
           .from("penilaian")
-          .select("id, peserta_id, juri_id, lomba_id, nilai")
+          .select("id, peserta_id, juri_id, lomba_id, nilai, rubrik")
           .eq("juri_id", effectiveJuriId);
         if (errPenilaian) throw errPenilaian;
         penilaianData = juriScores || [];
       } else {
         // Fetch in parallel chunks
         const [chunk1Res, chunk2Res, chunk3Res, chunk4Res] = await Promise.all([
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(0, 999),
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(1000, 1999),
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(2000, 2999),
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(3000, 3999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik").range(0, 999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik").range(1000, 1999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik").range(2000, 2999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik").range(3000, 3999),
         ]);
         penilaianData = [
           ...(chunk1Res.data || []),
@@ -674,18 +675,26 @@ export default function CetakRekapPerJuri() {
                   <tbody>
                     {group.peserta.map((peserta, idx) => {
                       let rubrikPoints = {};
-                      // 1. Coba ambil dari localStorage (cache lokal juri)
-                      try {
-                        const saved =
-                          typeof window !== "undefined"
-                            ? localStorage.getItem(`rubrik_scores_${peserta.id}_${group.lomba.id}`)
-                            : null;
-                        if (saved) {
-                          rubrikPoints = JSON.parse(saved);
-                        }
-                      } catch (_) {}
 
-                      // 2. Fallback: ambil dari catatan_berkas di cloud (Supabase)
+                      // 1. Ambil langsung dari rubrik penilaian di cloud database
+                      if (peserta.rubrik && typeof peserta.rubrik === "object" && Object.keys(peserta.rubrik).length > 0) {
+                        rubrikPoints = peserta.rubrik;
+                      }
+
+                      // 2. Coba ambil dari localStorage (cache lokal juri)
+                      if (Object.keys(rubrikPoints).length === 0) {
+                        try {
+                          const saved =
+                            typeof window !== "undefined"
+                              ? localStorage.getItem(`rubrik_scores_${peserta.id}_${group.lomba.id}`)
+                              : null;
+                          if (saved) {
+                            rubrikPoints = JSON.parse(saved);
+                          }
+                        } catch (_) {}
+                      }
+
+                      // 3. Fallback: ambil dari catatan_berkas di cloud (Supabase)
                       if (Object.keys(rubrikPoints).length === 0 && peserta.catatan_berkas) {
                         try {
                           const cloudRubrik = getRubrikForLomba(peserta.catatan_berkas, group.lomba.id);
@@ -695,7 +704,7 @@ export default function CetakRekapPerJuri() {
                         } catch (_) {}
                       }
 
-                      // 3. Terakhir: distribusikan secara proporsional dari total nilai
+                      // 4. Terakhir: distribusikan secara proporsional dari total nilai
                       if (Object.keys(rubrikPoints).length === 0) {
                         rubrikPoints = getRubrikPoints(peserta.nilai_lomba, rubriks, peserta.id, group.lomba.id, peserta.waktu_pengerjaan);
                       }

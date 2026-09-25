@@ -107,12 +107,16 @@ CREATE TABLE public.penilaian (
   juri_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   lomba_id UUID NOT NULL REFERENCES public.lomba(id) ON DELETE CASCADE,
   nilai NUMERIC NOT NULL CHECK (nilai >= 0 AND nilai <= 100),
+  rubrik JSONB DEFAULT '{}'::jsonb, -- Rincian format penilaian per kriteria (rubrik) & waktu dari dewan juri
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   
   -- Satu cabang lomba pada satu regu bisa diisi oleh beberapa juri berbeda
   UNIQUE (peserta_id, juri_id, lomba_id)
 );
+
+-- JIKA TABEL PENILAIAN SUDAH ADA, JALANKAN QUERY INI DI SQL EDITOR SUPABASE:
+-- ALTER TABLE public.penilaian ADD COLUMN IF NOT EXISTS rubrik JSONB DEFAULT '{}'::jsonb;
 
 -- 5B. Buat tabel INFORMASI (Live Announcement & Config)
 CREATE TABLE IF NOT EXISTS public.informasi (

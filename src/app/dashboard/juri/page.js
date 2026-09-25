@@ -497,7 +497,7 @@ export default function DashboardJuri() {
           .order("nomor_dada", { ascending: true }),
         supabase
           .from("penilaian")
-          .select("id, peserta_id, lomba_id, nilai, updated_at")
+          .select("id, peserta_id, lomba_id, nilai, rubrik, updated_at")
           .eq("juri_id", userId),
       ]);
 
@@ -591,8 +591,8 @@ export default function DashboardJuri() {
       let allScores = [...(penilaianRes?.data || [])];
       if (activeRole === "admin") {
         const [c1, c2] = await Promise.all([
-          supabase.from("penilaian").select("id, peserta_id, lomba_id, nilai, updated_at").range(0, 999),
-          supabase.from("penilaian").select("id, peserta_id, lomba_id, nilai, updated_at").range(1000, 1999),
+          supabase.from("penilaian").select("id, peserta_id, lomba_id, nilai, rubrik, updated_at").range(0, 999),
+          supabase.from("penilaian").select("id, peserta_id, lomba_id, nilai, rubrik, updated_at").range(1000, 1999),
         ]);
         const fetchedScores = [...(c1.data || []), ...(c2.data || [])];
         if (fetchedScores.length > 0) {
@@ -644,12 +644,17 @@ export default function DashboardJuri() {
       setManualOverrideTotal(existing.nilai);
       if (currentLombaDef && activeRubriks) {
         let loadedRubrik = null;
-        try {
-          const saved = typeof window !== "undefined" ? localStorage.getItem(`rubrik_scores_${pesertaId}_${existing.lomba_id || selectedLombaId}`) : null;
-          if (saved) {
-            loadedRubrik = JSON.parse(saved);
-          }
-        } catch (_) {}
+        if (existing.rubrik && typeof existing.rubrik === "object" && Object.keys(existing.rubrik).length > 0) {
+          loadedRubrik = existing.rubrik;
+        }
+        if (!loadedRubrik) {
+          try {
+            const saved = typeof window !== "undefined" ? localStorage.getItem(`rubrik_scores_${pesertaId}_${existing.lomba_id || selectedLombaId}`) : null;
+            if (saved) {
+              loadedRubrik = JSON.parse(saved);
+            }
+          } catch (_) {}
+        }
 
         if (!loadedRubrik) {
           const currentP = pesertaList.find((p) => p.id === pesertaId);
@@ -777,7 +782,15 @@ export default function DashboardJuri() {
       return;
     }
 
-    // Upsert score in Supabase
+    const rawWaktu = rubrikScores["waktu"];
+    const cleanWaktu = isZeroOrEmptyTime(rawWaktu) ? "" : String(rawWaktu).trim();
+    const rubrikPayload = {
+      ...rubrikScores,
+      waktu: cleanWaktu,
+      nilai: finalScore,
+    };
+
+    // Upsert score in Supabase with detailed rubric criteria
     try {
       await supabase
         .from("penilaian")
@@ -786,6 +799,8 @@ export default function DashboardJuri() {
           juri_id: targetJuriId,
           lomba_id: targetLombaId,
           nilai: finalScore,
+          rubrik: rubrikPayload,
+          updated_at: new Date().toISOString(),
         }, { onConflict: "peserta_id, juri_id, lomba_id" });
     } catch (e) {
       console.warn("DB upsert notice:", e);
@@ -804,6 +819,7 @@ export default function DashboardJuri() {
           juri_id: targetJuriId,
           lomba_id: targetLombaId,
           nilai: finalScore,
+          rubrik: rubrikPayload,
           updated_at: new Date().toISOString(),
         });
         localStorage.setItem("offline_penilaian", JSON.stringify(filteredOffline));
