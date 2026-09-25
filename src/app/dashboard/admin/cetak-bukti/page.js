@@ -38,36 +38,10 @@ function CetakBuktiSemuaContent() {
           .order("nomor_dada", { ascending: true });
 
         if (err) throw err;
-
-        if (data && data.length > 0) {
-          setPesertaList(data);
-        } else {
-          // Fallback ke local cache jika ada
-          try {
-            const cached = localStorage.getItem("_cetak_cache");
-            if (cached) {
-              const parsed = JSON.parse(cached);
-              const verifiedCached = (parsed.pesertaList || []).filter((p) => p.is_verified);
-              if (verifiedCached.length > 0) {
-                setPesertaList(verifiedCached);
-              }
-            }
-          } catch (_) {}
-        }
+        setPesertaList(data || []);
       } catch (err) {
-        console.warn("Gagal fetch via Supabase, mencoba cache:", err);
-        try {
-          const cached = localStorage.getItem("_cetak_cache");
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            const verifiedCached = (parsed.pesertaList || []).filter((p) => p.is_verified);
-            setPesertaList(verifiedCached);
-          } else {
-            setError(err.message);
-          }
-        } catch (_) {
-          setError(err.message);
-        }
+        console.error("Gagal fetch data peserta dari Supabase:", err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }

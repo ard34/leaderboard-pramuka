@@ -152,7 +152,6 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
             const sLomba = lombaList.find((l) => l.id === s.lomba_id);
             if (!sLomba || findOfficialLombaDef(sLomba)?.kode !== def.kode) return false;
           }
-          if (targetJuriId && s.juri_id !== targetJuriId) return false;
           const p = pesertaMap.get(s.peserta_id);
           if (!p) return false;
           return p.kategori === kat && p.gender === gen;
@@ -172,37 +171,48 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           displayJuriName = "Dewan Juri";
         }
 
-        let pesertaScores = [];
-        if (relevantScores.length > 0) {
-          pesertaScores = relevantScores
-            .map((s) => {
-              const pData = pesertaMap.get(s.peserta_id);
-              // Ambil waktu asli murni dari input Dewan Juri
-              const rawTime = (typeof s.rubrik === "object" && s.rubrik?.waktu !== undefined)
-                ? s.rubrik.waktu
-                : getSavedTimeForPesertaLomba(s.peserta_id, s.lomba_id || matchingLombas[0]?.id, 0, false);
-              const waktuClean = isZeroOrEmptyTime(rawTime) ? "" : String(rawTime).trim();
-              return {
-                ...pData,
-                nilai_lomba: s.nilai,
-                rubrik: s.rubrik || null,
-                waktu_pengerjaan: waktuClean,
-                waktu_ms: parseTimeToMs(waktuClean),
-              };
-            })
-            .filter(Boolean);
+        // Map nilai dan waktu resmi dari penilaian
+        const scoredPesertaMap = new Map();
+        relevantScores.forEach((s) => {
+          // Jika ada multiple score, prioritaskan yang milik targetJuriId jika ada
+          if (!scoredPesertaMap.has(s.peserta_id) || (targetJuriId && s.juri_id === targetJuriId)) {
+            scoredPesertaMap.set(s.peserta_id, s);
+          }
+        });
 
-          // Peringkat 1 s/d seterusnya:
-          pesertaScores.sort(comparePesertaByScoreAndTime);
-        } else if (catPeserta.length > 0) {
-          // Jika belum ada nilai, buat lembar rekap kosong siap nilai untuk peserta yang terdaftar di database
-          pesertaScores = catPeserta.map((p) => ({
+        // Gabungkan seluruh peserta terdaftar dalam kategori & gender ini
+        const allTargetPeserta = [...catPeserta];
+        relevantScores.forEach((s) => {
+          const p = pesertaMap.get(s.peserta_id);
+          if (p && !allTargetPeserta.some((tp) => tp.id === p.id)) {
+            allTargetPeserta.push(p);
+          }
+        });
+
+        const pesertaScores = allTargetPeserta.map((p) => {
+          const s = scoredPesertaMap.get(p.id);
+          let rawTime = "";
+          let rubrikObj = s?.rubrik || null;
+
+          if (rubrikObj && typeof rubrikObj === "object" && rubrikObj.waktu !== undefined) {
+            rawTime = rubrikObj.waktu;
+          } else {
+            rawTime = getSavedTimeForPesertaLomba(p.id, s?.lomba_id || matchingLombas[0]?.id, 0, false);
+          }
+
+          const waktuClean = isZeroOrEmptyTime(rawTime) ? "" : String(rawTime).trim();
+
+          return {
             ...p,
-            nilai_lomba: "",
-            waktu_pengerjaan: "",
-            waktu_ms: Infinity,
-          }));
-        }
+            nilai_lomba: s ? s.nilai : "",
+            rubrik: rubrikObj,
+            waktu_pengerjaan: waktuClean,
+            waktu_ms: waktuClean ? parseTimeToMs(waktuClean) : Infinity,
+          };
+        });
+
+        // Urutkan peringkat: Nilai tertinggi -> Waktu tercepat (tie-breaker)
+        pesertaScores.sort(comparePesertaByScoreAndTime);
 
         // Masukkan group HANYA jika memiliki baris peserta yang sah
         if (pesertaScores.length > 0) {
@@ -326,59 +336,12 @@ export default function CetakRekapPerJuri() {
       const targetJuriName = urlParams.get("juriName");
       const targetJuriId = urlParams.get("juriId");
 
-      // Sinkronkan catatan waktu tersimpan dari server agar juri dan admin selalu selaras
-      try {
-        const waktuRes = await fetch("/api/juri/waktu");
-        if (waktuRes.ok) {
-          const waktuJson = await waktuRes.json();
-          if (waktuJson && waktuJson.times) {
-            const allTime = JSON.parse(localStorage.getItem("all_time_scores") || "{}");
-            const merged = { ...allTime, ...waktuJson.times };
-            localStorage.setItem("all_time_scores", JSON.stringify(merged));
-          }
-        }
-      } catch (_) {}
-
-      // 0. INSTANT MEMORY CACHE: If opened from Admin Dashboard, render in <5ms!
-      let cached = null;
-      try {
-        const raw = localStorage.getItem("_cetak_cache");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && parsed.lombaList && parsed.penilaianList && Date.now() - (parsed.ts || 0) < 15 * 60 * 1000) {
-            cached = parsed;
-          }
-        }
-      } catch (_) {}
-
-      if (cached) {
-        let pesertaData = [...(cached.pesertaList || [])];
-        const validLomba = (cached.lombaList || []).filter((l) =>
-          OFFICIAL_LOMBA_DEFINITIONS.some((d) => d.kode === l.kode_lomba?.toUpperCase())
-        );
-
-        if (pesertaData.length > 0) {
-          const groups = buildReportGroups(
-            validLomba,
-            pesertaData,
-            cached.juriList,
-            cached.penilaianList,
-            targetJuriName,
-            targetJuriId
-          );
-
-          if (groups.length > 0) {
-            setGroupedData(groups);
-            setLoading(false);
-          }
-        }
-      }
-
-      // 1. Fetch Lomba, Peserta, and Profiles in PARALLEL from Supabase
-      const [lombaRes, pesertaRes, profilesRes] = await Promise.all([
+      // 1. Fetch Lomba, Peserta, Profiles, and Penilaian LANGSUNG dari Supabase (Direct from DB)
+      const [lombaRes, pesertaRes, profilesRes, penilaianRes] = await Promise.all([
         supabase.from("lomba").select("id, nama_lomba, kode_lomba, kategori").order("id", { ascending: true }),
         supabase.from("peserta").select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, catatan_berkas").eq("is_verified", true),
         supabase.from("profiles").select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender"),
+        supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik"),
       ]);
 
       if (lombaRes.error) throw lombaRes.error;
@@ -388,68 +351,24 @@ export default function CetakRekapPerJuri() {
         OFFICIAL_LOMBA_DEFINITIONS.some((d) => d.kode === l.kode_lomba?.toUpperCase())
       );
       const profilesData = profilesRes.data || [];
-      let pesertaData = [...(pesertaRes.data || [])];
+      const pesertaData = [...(pesertaRes.data || [])];
+      const penilaianData = penilaianRes.data || [];
 
-      // 2. High-speed Penilaian Fetch
-      let penilaianData = [];
-      const effectiveJuriId = targetJuriId || (targetJuriName ? profilesData.find((p) => p.nama_lengkap?.trim().toLowerCase() === targetJuriName.trim().toLowerCase())?.id : null);
-
-      if (effectiveJuriId) {
-        const { data: juriScores, error: errPenilaian } = await supabase
-          .from("penilaian")
-          .select("id, peserta_id, juri_id, lomba_id, nilai, rubrik")
-          .eq("juri_id", effectiveJuriId);
-        if (errPenilaian) throw errPenilaian;
-        penilaianData = juriScores || [];
-      } else {
-        // Fetch in parallel chunks
-        const [chunk1Res, chunk2Res, chunk3Res, chunk4Res] = await Promise.all([
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik").range(0, 999),
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik").range(1000, 1999),
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik").range(2000, 2999),
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik").range(3000, 3999),
-        ]);
-        penilaianData = [
-          ...(chunk1Res.data || []),
-          ...(chunk2Res.data || []),
-          ...(chunk3Res.data || []),
-          ...(chunk4Res.data || []),
-        ];
-      }
-
-      // 3. Merge local offline scores if any
-      try {
-        if (typeof window !== "undefined") {
-          const rawOffline = JSON.parse(localStorage.getItem("offline_penilaian") || "[]");
-          const offlineScores = rawOffline.filter((off) => pesertaData.some((p) => p.id === off.peserta_id));
-          offlineScores.forEach((off) => {
-            if (!penilaianData.some((p) => p.peserta_id === off.peserta_id && p.lomba_id === off.lomba_id && p.juri_id === off.juri_id)) {
-              if (!effectiveJuriId || off.juri_id === effectiveJuriId) {
-                penilaianData.push(off);
-              }
-            }
-          });
-        }
-      } catch (_) {}
-
-      // 4. Group data efficiently
+      // 2. Susun dan petakan data laporan rekapitulasi nilai resmi murni dari database
       const freshGroups = buildReportGroups(
         lombaData,
         pesertaData,
         profilesData,
         penilaianData,
         targetJuriName,
-        effectiveJuriId
+        targetJuriId
       );
 
-      if (freshGroups.length > 0) {
-        setGroupedData(freshGroups);
-      }
+      setGroupedData(freshGroups);
     } catch (err) {
-      console.error("Failed to fetch rekap data:", err);
-      // Jangan alert jika cached data sudah tampil dengan baik
+      console.error("Failed to fetch rekap data from database:", err);
       if (groupedData.length === 0) {
-        alert("Gagal menarik data: " + err.message);
+        alert("Gagal menarik data dari database: " + err.message);
       }
     } finally {
       setLoading(false);
@@ -682,20 +601,7 @@ export default function CetakRekapPerJuri() {
                         rubrikPoints = peserta.rubrik;
                       }
 
-                      // 2. Coba ambil dari localStorage (cache lokal juri)
-                      if (Object.keys(rubrikPoints).length === 0) {
-                        try {
-                          const saved =
-                            typeof window !== "undefined"
-                              ? localStorage.getItem(`rubrik_scores_${peserta.id}_${group.lomba.id}`)
-                              : null;
-                          if (saved) {
-                            rubrikPoints = JSON.parse(saved);
-                          }
-                        } catch (_) {}
-                      }
-
-                      // 3. Fallback: ambil dari catatan_berkas di cloud (Supabase)
+                      // 2. Fallback: ambil dari catatan_berkas di cloud (Supabase)
                       if (Object.keys(rubrikPoints).length === 0 && peserta.catatan_berkas) {
                         try {
                           const cloudRubrik = getRubrikForLomba(peserta.catatan_berkas, group.lomba.id);

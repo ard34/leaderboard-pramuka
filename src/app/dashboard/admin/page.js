@@ -1789,15 +1789,6 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
 
             <button
               onClick={() => {
-                try {
-                  localStorage.setItem("_cetak_cache", JSON.stringify({
-                    lombaList,
-                    pesertaList,
-                    juriList,
-                    penilaianList,
-                    ts: Date.now(),
-                  }));
-                } catch (_) {}
                 router.push("/dashboard/admin/cetak-rekap");
               }}
               className="text-[0.65rem] sm:text-xs font-bold tracking-wider px-3 py-1.5 sm:py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 transition-all shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer"
@@ -1808,15 +1799,6 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
 
             <button
               onClick={() => {
-                try {
-                  localStorage.setItem("_cetak_cache", JSON.stringify({
-                    lombaList,
-                    pesertaList,
-                    juriList,
-                    penilaianList,
-                    ts: Date.now(),
-                  }));
-                } catch (_) {}
                 window.open("/dashboard/admin/cetak-bukti", "_blank");
               }}
               className="text-[0.65rem] sm:text-xs font-black tracking-wider px-3.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/40 transition-all shadow-md flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer"
@@ -2094,15 +2076,6 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
                   <button
                     type="button"
                     onClick={() => {
-                      try {
-                        localStorage.setItem("_cetak_cache", JSON.stringify({
-                          lombaList,
-                          pesertaList,
-                          juriList,
-                          penilaianList,
-                          ts: Date.now(),
-                        }));
-                      } catch (_) {}
                       const qTingkat = pesertaFilterTingkat !== "SEMUA" ? `tingkat=${pesertaFilterTingkat}` : "";
                       const query = qTingkat ? `?${qTingkat}` : "";
                       window.open(`/dashboard/admin/cetak-bukti${query}`, "_blank");
@@ -2959,16 +2932,6 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
                               {j.is_verified && (
                                 <button
                                   onClick={() => {
-                                    try {
-                                      const juriScores = penilaianList.filter((p) => p.juri_id === j.id);
-                                      localStorage.setItem("_cetak_cache", JSON.stringify({
-                                        lombaList,
-                                        pesertaList,
-                                        juriList: [j],
-                                        penilaianList: juriScores,
-                                        ts: Date.now(),
-                                      }));
-                                    } catch (_) {}
                                     window.open(`/dashboard/admin/cetak-rekap?juriName=${encodeURIComponent(j.nama_lengkap)}&juriId=${j.id}`, '_blank');
                                   }}
                                   className="text-[0.65rem] font-bold bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all"
@@ -3137,16 +3100,6 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
                           {j.is_verified ? (
                             <button
                               onClick={() => {
-                                try {
-                                  const juriScores = penilaianList.filter((p) => p.juri_id === j.id);
-                                  localStorage.setItem("_cetak_cache", JSON.stringify({
-                                    lombaList,
-                                    pesertaList,
-                                    juriList: [j],
-                                    penilaianList: juriScores,
-                                    ts: Date.now(),
-                                  }));
-                                } catch (_) {}
                                 window.open(`/dashboard/admin/cetak-rekap?juriName=${encodeURIComponent(j.nama_lengkap)}&juriId=${j.id}`, '_blank');
                               }}
                               className="text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-sm"
@@ -3402,15 +3355,6 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
                 
                 <button
                   onClick={() => {
-                    try {
-                      localStorage.setItem("_cetak_cache", JSON.stringify({
-                        lombaList,
-                        pesertaList,
-                        juriList,
-                        penilaianList,
-                        ts: Date.now(),
-                      }));
-                    } catch (_) {}
                     window.open('/dashboard/admin/cetak-rekap', '_blank');
                   }}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-bold px-6 py-2.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-xs"
