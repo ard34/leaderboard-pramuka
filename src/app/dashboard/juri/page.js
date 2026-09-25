@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { generateExampleTime, isZeroOrEmptyTime } from "@/lib/timeUtils";
+import { buildCatatanWithRubrik, getRubrikForLomba } from "@/lib/catatanBerkasUtils";
 
 // Helper untuk mengambil rubrik sesuai tingkat (SD vs SMP)
 export function getLombaRubrik(lombaDef, kategori = "SD") {
@@ -491,7 +492,7 @@ export default function DashboardJuri() {
           .order("nama_lomba", { ascending: true }),
         supabase
           .from("peserta")
-          .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender")
+          .select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, catatan_berkas")
           .eq("is_verified", true)
           .order("nomor_dada", { ascending: true }),
         supabase
@@ -649,6 +650,21 @@ export default function DashboardJuri() {
             loadedRubrik = JSON.parse(saved);
           }
         } catch (_) {}
+
+        if (!loadedRubrik) {
+          const currentP = pesertaList.find((p) => p.id === pesertaId);
+          if (currentP?.catatan_berkas) {
+            const cloudRubrik = getRubrikForLomba(currentP.catatan_berkas, existing.lomba_id || selectedLombaId);
+            if (cloudRubrik && typeof cloudRubrik === "object") {
+              loadedRubrik = cloudRubrik;
+              try {
+                if (typeof window !== "undefined") {
+                  localStorage.setItem(`rubrik_scores_${pesertaId}_${existing.lomba_id || selectedLombaId}`, JSON.stringify(cloudRubrik));
+                }
+              } catch (_) {}
+            }
+          }
+        }
 
         if (loadedRubrik) {
           setRubrikScores(loadedRubrik);
@@ -826,6 +842,41 @@ export default function DashboardJuri() {
               waktu: cleanWaktu,
             }),
           }).catch(() => {});
+
+          // Simpan seluruh rincian rubrik ke cloud Supabase (peserta.catatan_berkas)
+          try {
+            const currentP = pesertaList.find((p) => p.id === selectedPeserta);
+            const rubrikData = {
+              ...rubrikScores,
+              waktu: cleanWaktu,
+              nilai: finalScore,
+              juri_id: targetJuriId,
+              updated_at: new Date().toISOString(),
+            };
+
+            let freshCatatan = currentP?.catatan_berkas || "";
+            try {
+              const { data: freshRow } = await supabase
+                .from("peserta")
+                .select("catatan_berkas")
+                .eq("id", selectedPeserta)
+                .single();
+              if (freshRow) freshCatatan = freshRow.catatan_berkas || "";
+            } catch (_) {}
+
+            const updatedCatatanStr = buildCatatanWithRubrik(freshCatatan, targetLombaId, rubrikData);
+
+            setPesertaList((prev) =>
+              prev.map((p) => (p.id === selectedPeserta ? { ...p, catatan_berkas: updatedCatatanStr } : p))
+            );
+
+            supabase
+              .from("peserta")
+              .update({ catatan_berkas: updatedCatatanStr })
+              .eq("id", selectedPeserta)
+              .then(() => {})
+              .catch(() => {});
+          } catch (_) {}
         }
       } catch (_) {}
 
