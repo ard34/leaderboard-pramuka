@@ -19,6 +19,7 @@ function CetakBuktiSemuaContent() {
 
   const [filterTingkat, setFilterTingkat] = useState(initialTingkat);
   const [filterGender, setFilterGender] = useState(initialGender);
+  const [sortOption, setSortOption] = useState("KAPLING"); // "KAPLING" (001-akhir) atau "KATEGORI"
   const [searchQuery, setSearchQuery] = useState("");
 
   const [pesertaList, setPesertaList] = useState([]);
@@ -99,21 +100,30 @@ function CetakBuktiSemuaContent() {
     }
 
     // Urutkan sistematis:
-    // 1. Kategori: SD duluan, lalu SMP
-    // 2. Gender: Laki-laki duluan, lalu Perempuan
-    // 3. Nomor dada (kapling) ascending
+    // Default: Urut murni berdasarkan nomor kapling (001 sampai akhir)
     return list.sort((a, b) => {
-      if (a.kategori !== b.kategori) {
-        return a.kategori === "SD" ? -1 : 1;
+      const numA = parseInt(String(a.nomor_dada || "9999").replace(/\D/g, ""), 10) || 9999;
+      const numB = parseInt(String(b.nomor_dada || "9999").replace(/\D/g, ""), 10) || 9999;
+
+      if (sortOption === "KAPLING") {
+        if (numA !== numB) {
+          return numA - numB;
+        }
+        if (a.kategori !== b.kategori) {
+          return a.kategori === "SD" ? -1 : 1;
+        }
+        return (a.nama_regu || "").localeCompare(b.nama_regu || "");
+      } else {
+        if (a.kategori !== b.kategori) {
+          return a.kategori === "SD" ? -1 : 1;
+        }
+        if (a.gender !== b.gender) {
+          return a.gender === "Laki-laki" ? -1 : 1;
+        }
+        return numA - numB;
       }
-      if (a.gender !== b.gender) {
-        return a.gender === "Laki-laki" ? -1 : 1;
-      }
-      const numA = parseInt(String(a.nomor_dada || "999").replace(/\D/g, ""), 10) || 999;
-      const numB = parseInt(String(b.nomor_dada || "999").replace(/\D/g, ""), 10) || 999;
-      return numA - numB;
     });
-  }, [pesertaList, filterTingkat, filterGender, searchQuery]);
+  }, [pesertaList, filterTingkat, filterGender, sortOption, searchQuery]);
 
   // Set document title untuk nama file saat save PDF
   useEffect(() => {
@@ -287,7 +297,7 @@ function CetakBuktiSemuaContent() {
         </div>
 
         {/* CUSTOM FILTERS & SEARCH */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-800/80">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-800/80">
           <div>
             <label className="block text-[0.65rem] text-slate-400 font-bold uppercase mb-1">
               Tingkat Satuan:
@@ -315,6 +325,20 @@ function CetakBuktiSemuaContent() {
               <option value="ALL">Semua Gender (Pa & Pi)</option>
               <option value="Laki-laki">👦 Putra (Laki-laki)</option>
               <option value="Perempuan">👧 Putri (Perempuan)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[0.65rem] text-amber-400 font-bold uppercase mb-1">
+              Urutkan Dokumen:
+            </label>
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+              className="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-3 py-1.5 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-500"
+            >
+              <option value="KAPLING">🔢 No. Kapling (001 - Akhir)</option>
+              <option value="KATEGORI">🏫 Kategori (SD lalu SMP)</option>
             </select>
           </div>
 
