@@ -80,9 +80,21 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
     const juriNameLower = (targetJuri.nama_lengkap || "").toLowerCase();
     const matchedKeyword = nameKeywords.find((k) => juriNameLower.includes(k.key));
 
+    // Cek juga dari riwayat penilaian di database Supabase untuk juri ini
+    const juriScoredLombaIds = new Set(
+      (penilaianList || []).filter((s) => s.juri_id === targetJuri.id).map((s) => s.lomba_id)
+    );
+    if (juriLombaId) juriScoredLombaIds.add(juriLombaId);
+
+    const matchedDefsFromDb = officialDefs.filter((d) => {
+      return lombaList.some((l) => juriScoredLombaIds.has(l.id) && findOfficialLombaDef(l)?.kode === d.kode);
+    });
+
     const targetKode = juriLombaDef?.kode || (matchedKeyword ? matchedKeyword.kode : null);
 
-    if (targetKode) {
+    if (matchedDefsFromDb.length > 0) {
+      selectedDefs = matchedDefsFromDb;
+    } else if (targetKode) {
       selectedDefs = officialDefs.filter((d) => d.kode === targetKode);
     } else if (juriLombaId) {
       const matched = lombaList.find((l) => l.id === juriLombaId);
@@ -119,7 +131,10 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
 
       // Tambahkan juga juri yang memiliki input penilaian di lomba ini
       const juriIdsInPenilaian = Array.from(new Set(
-        (penilaianList || []).filter((s) => matchingLombaIds.has(s.lomba_id)).map((s) => s.juri_id)
+        (penilaianList || []).filter((s) => {
+          const sLomba = lombaList.find((l) => l.id === s.lomba_id);
+          return matchingLombaIds.has(s.lomba_id) || (sLomba && findOfficialLombaDef(sLomba)?.kode === def.kode);
+        }).map((s) => s.juri_id)
       ));
       
       juriIdsInPenilaian.forEach((jId) => {
@@ -136,14 +151,24 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
       if (judgesForDef.length > 0) {
         assignedJudges = judgesForDef;
       } else {
-        assignedJudges = [null]; // Default jika belum ada profil juri spesifik
+        assignedJudges = [null];
       }
     }
 
     // 1. Lembar Penilaian Masing-masing Juri (Nilai Murni sesuai Database)
     for (const judge of assignedJudges) {
       for (const kat of ["SD", "SMP"]) {
+        const hasScoreInKat = (penilaianList || []).some((s) => {
+          const sLomba = lombaList.find((l) => l.id === s.lomba_id);
+          const isLombaMatch = matchingLombaIds.has(s.lomba_id) || (sLomba && findOfficialLombaDef(sLomba)?.kode === def.kode);
+          if (!isLombaMatch) return false;
+          if (judge && judge.id && s.juri_id !== judge.id) return false;
+          const p = pesertaMap.get(s.peserta_id);
+          return p && p.kategori === kat;
+        });
+
         const isKatAllowed =
+          hasScoreInKat ||
           !judge?.assigned_kategori ||
           judge.assigned_kategori === "SEMUA" ||
           judge.assigned_kategori === kat;
@@ -153,19 +178,25 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
         }
 
         const hasPesertaInKat = pesertaList.some((p) => p.kategori === kat && p.is_verified);
-        const hasScoreInKat = (penilaianList || []).some((s) => {
-          if (matchingLombaIds.size > 0 && !matchingLombaIds.has(s.lomba_id)) return false;
-          if (judge && judge.id && s.juri_id !== judge.id) return false;
-          const p = pesertaMap.get(s.peserta_id);
-          return p && p.kategori === kat;
-        });
-
         if (!hasPesertaInKat && !hasScoreInKat) {
           continue;
         }
 
         for (const gen of ["Laki-laki", "Perempuan"]) {
+          const relevantScores = (penilaianList || []).filter((s) => {
+            const sLomba = lombaList.find((l) => l.id === s.lomba_id);
+            const isLombaMatch = matchingLombaIds.has(s.lomba_id) || (sLomba && findOfficialLombaDef(sLomba)?.kode === def.kode);
+            if (!isLombaMatch) return false;
+            if (judge && judge.id && s.juri_id !== judge.id) {
+              return false;
+            }
+            const p = pesertaMap.get(s.peserta_id);
+            if (!p) return false;
+            return p.kategori === kat && p.gender === gen;
+          });
+
           const isGenAllowed =
+            relevantScores.length > 0 ||
             !judge?.assigned_gender ||
             judge.assigned_gender === "SEMUA" ||
             judge.assigned_gender === gen;
@@ -177,20 +208,6 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           const catPeserta = pesertaList
             .filter((p) => p.kategori === kat && p.gender === gen && p.is_verified)
             .sort((a, b) => (Number(a.nomor_dada) || 0) - (Number(b.nomor_dada) || 0));
-
-          // Ambil nilai murni yang dinilai oleh juri ini
-          const relevantScores = (penilaianList || []).filter((s) => {
-            if (matchingLombaIds.size > 0 && !matchingLombaIds.has(s.lomba_id)) {
-              const sLomba = lombaList.find((l) => l.id === s.lomba_id);
-              if (!sLomba || findOfficialLombaDef(sLomba)?.kode !== def.kode) return false;
-            }
-            if (judge && judge.id && s.juri_id !== judge.id) {
-              return false;
-            }
-            const p = pesertaMap.get(s.peserta_id);
-            if (!p) return false;
-            return p.kategori === kat && p.gender === gen;
-          });
 
           if (catPeserta.length === 0 && relevantScores.length === 0) {
             continue;
