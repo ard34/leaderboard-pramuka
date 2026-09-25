@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { OFFICIAL_LOMBA_DEFINITIONS, getLombaRubrik, findOfficialLombaDef } from "@/app/dashboard/juri/page";
 import { parseTimeToMs, getSavedTimeForPesertaLomba, isZeroOrEmptyTime, comparePesertaByScoreAndTime } from "@/lib/timeUtils";
+import { getRubrikForLomba } from "@/lib/catatanBerkasUtils";
 
 // Helper untuk menghitung/mendistribusikan poin rubrik secara proporsional & aman (bebas infinite loop)
 function getRubrikPoints(totalScore, rubriks, pesertaId = "", lombaId = "", pesertaWaktu = "") {
@@ -103,9 +104,21 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
     });
     const matchingLombaIds = new Set(matchingLombas.map((l) => l.id));
 
-    // Setiap juri cabang lomba (seperti Semaphore) bertugas menilai SD dan SMP (Putra & Putri)
+    // Setiap juri cabang lomba bertugas sesuai penugasan di DB (assigned_kategori & assigned_gender)
     for (const kat of ["SD", "SMP"]) {
+      // Cek apakah tingkat ini diizinkan untuk juri ini sesuai penugasan di database
+      const isKatAllowed =
+        !targetJuri?.assigned_kategori ||
+        targetJuri.assigned_kategori === "SEMUA" ||
+        targetJuri.assigned_kategori === kat;
+
       for (const gen of ["Laki-laki", "Perempuan"]) {
+        // Cek apakah gender ini diizinkan untuk juri ini sesuai penugasan di database
+        const isGenAllowed =
+          !targetJuri?.assigned_gender ||
+          targetJuri.assigned_gender === "SEMUA" ||
+          targetJuri.assigned_gender === gen;
+
         // Ambil nilai relevan untuk kombinasi lomba, tingkat (SD/SMP), dan gender ini
         const relevantScores = (penilaianList || []).filter((s) => {
           if (matchingLombaIds.size > 0 && !matchingLombaIds.has(s.lomba_id)) {
@@ -117,6 +130,11 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           if (!p) return false;
           return p.kategori === kat && p.gender === gen;
         });
+
+        // Sinkronkan dengan isi database: jika tingkat atau gender bukan tugasnya dan tidak ada nilai, lewati!
+        if (!relevantScores.length && (!isKatAllowed || !isGenAllowed)) {
+          continue;
+        }
 
         // Tentukan nama juri penanggung jawab
         let displayJuriName = targetJuri?.nama_lengkap || targetJuriName || null;
@@ -146,14 +164,9 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
             .filter(Boolean);
 
           // Peringkat 1 s/d seterusnya:
-          // 1. Nilai ketepatan / nilai utama tertinggi
-          // 2. Jika nilai sama: Waktu tercepat ke terlambat (milidetik terendah ke tertinggi)
-          // 3. Peserta dengan waktu kosong (Infinity) otomatis di bawah peserta yang memiliki catatan waktu
-          // 4. Jika nilai dan waktu sama persis, urutkan nama regu
           pesertaScores.sort(comparePesertaByScoreAndTime);
-        } else if (targetJuriId || cleanTargetName) {
-          // Jika juri spesifik dipilih, cetak rekap tetap memuat lembar untuk tingkat ini (misal SMP / Putri)
-          // Tampilkan seluruh peserta terverifikasi di kategori tersebut
+        } else if (isKatAllowed && isGenAllowed && (targetJuriId || cleanTargetName)) {
+          // Jika juri spesifik memang ditugaskan untuk kategori ini di DB, tampilkan peserta terdaftar di kategori ini
           const catPeserta = pesertaList
             .filter((p) => p.kategori === kat && p.gender === gen && p.is_verified)
             .sort((a, b) => (Number(a.nomor_dada) || 0) - (Number(b.nomor_dada) || 0));
@@ -166,8 +179,8 @@ function buildReportGroups(lombaList, pesertaList, juriList, penilaianList, targ
           }));
         }
 
-        // Masukkan group jika memiliki peserta atau jika juri spesifik sedang dicetak
-        if (pesertaScores.length > 0 || targetJuriId || cleanTargetName) {
+        // Masukkan group HANYA jika memiliki baris peserta yang sah
+        if (pesertaScores.length > 0) {
           const matchedLombaForKat = matchingLombas.find((l) => l.kategori === kat) || matchingLombas[0] || {
             id: `lomba-${def.kode}-${kat}`,
             nama_lomba: def.nama_lomba,
@@ -339,8 +352,8 @@ export default function CetakRekapPerJuri() {
       // 1. Fetch Lomba, Peserta, and Profiles in PARALLEL from Supabase
       const [lombaRes, pesertaRes, profilesRes] = await Promise.all([
         supabase.from("lomba").select("id, nama_lomba, kode_lomba, kategori").order("id", { ascending: true }),
-        supabase.from("peserta").select("id, nomor_dada, nama_regu, pangkalan, kategori, gender").eq("is_verified", true),
-        supabase.from("profiles").select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori"),
+        supabase.from("peserta").select("id, nomor_dada, nama_regu, pangkalan, kategori, gender, catatan_berkas").eq("is_verified", true),
+        supabase.from("profiles").select("id, nama_lengkap, role, assigned_lomba_id, assigned_kategori, assigned_gender"),
       ]);
 
       if (lombaRes.error) throw lombaRes.error;
@@ -638,6 +651,7 @@ export default function CetakRekapPerJuri() {
                   <tbody>
                     {group.peserta.map((peserta, idx) => {
                       let rubrikPoints = {};
+                      // 1. Coba ambil dari localStorage (cache lokal juri)
                       try {
                         const saved =
                           typeof window !== "undefined"
@@ -648,6 +662,17 @@ export default function CetakRekapPerJuri() {
                         }
                       } catch (_) {}
 
+                      // 2. Fallback: ambil dari catatan_berkas di cloud (Supabase)
+                      if (Object.keys(rubrikPoints).length === 0 && peserta.catatan_berkas) {
+                        try {
+                          const cloudRubrik = getRubrikForLomba(peserta.catatan_berkas, group.lomba.id);
+                          if (cloudRubrik && typeof cloudRubrik === "object" && Object.keys(cloudRubrik).length > 0) {
+                            rubrikPoints = cloudRubrik;
+                          }
+                        } catch (_) {}
+                      }
+
+                      // 3. Terakhir: distribusikan secara proporsional dari total nilai
                       if (Object.keys(rubrikPoints).length === 0) {
                         rubrikPoints = getRubrikPoints(peserta.nilai_lomba, rubriks, peserta.id, group.lomba.id, peserta.waktu_pengerjaan);
                       }
