@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { parseTimeToMs, getSavedTimeForPesertaLomba } from "@/lib/timeUtils";
 import { getNoGudepByGender } from "@/lib/gudepUtils";
+import { getRubrikForLomba } from "@/lib/catatanBerkasUtils";
 
 // Official 4 Groups of Competition Activities (13 Cabang Lomba Resmi LT-II 2026)
 const OFFICIAL_GROUP_ORDER = {
@@ -500,8 +501,8 @@ export default function DashboardAdmin() {
       // Fetch all penilaian in parallel chunks (fast concurrent loading)
       (async () => {
         const [c1, c2] = await Promise.all([
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(0, 999),
-          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai").range(1000, 1999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik, updated_at").range(0, 999),
+          supabase.from("penilaian").select("id, peserta_id, juri_id, lomba_id, nilai, rubrik, updated_at").range(1000, 1999),
         ]);
         const allScores = [...(c1.data || []), ...(c2.data || [])];
         return { data: allScores, error: c1.error || c2.error };
@@ -1463,6 +1464,21 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
     return { title: `JUARA ${rank}`, medal: "" };
   };
 
+  const getTimeForPesertaLomba = useCallback((pesertaId, lombaId) => {
+    const penItem = penilaianList.find((s) => s.peserta_id === pesertaId && s.lomba_id === lombaId);
+    if (penItem?.rubrik?.waktu && typeof penItem.rubrik.waktu === "string" && penItem.rubrik.waktu.trim()) {
+      return penItem.rubrik.waktu.trim();
+    }
+    const p = pesertaList.find((item) => item.id === pesertaId);
+    if (p?.catatan_berkas) {
+      const cloudRubrik = getRubrikForLomba(p.catatan_berkas, lombaId);
+      if (cloudRubrik?.waktu && typeof cloudRubrik.waktu === "string" && cloudRubrik.waktu.trim()) {
+        return cloudRubrik.waktu.trim();
+      }
+    }
+    return getSavedTimeForPesertaLomba(pesertaId, lombaId);
+  }, [penilaianList, pesertaList]);
+
   const rankedReguList = useMemo(() => {
     const filtered = pesertaList.filter(
       (p) => p.kategori === reportTingkat && p.gender === reportGender && p.is_verified === true
@@ -1473,7 +1489,7 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
       let totalTimeMs = 0;
       let countTime = 0;
       activeReportLomba.forEach((l) => {
-        const tMs = parseTimeToMs(getSavedTimeForPesertaLomba(p.id, l.id));
+        const tMs = parseTimeToMs(getTimeForPesertaLomba(p.id, l.id));
         if (tMs !== Infinity) {
           totalTimeMs += tMs;
           countTime++;
@@ -1495,7 +1511,7 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
       return (a.nama_regu || "").localeCompare(b.nama_regu || "");
     });
     return withScores;
-  }, [pesertaList, reportTingkat, reportGender, getPesertaScoreDynamic, activeReportLomba]);
+  }, [pesertaList, reportTingkat, reportGender, getPesertaScoreDynamic, activeReportLomba, getTimeForPesertaLomba]);
 
   const rankedPangkalanList = useMemo(() => {
     const filtered = pesertaList.filter(
@@ -1555,7 +1571,7 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
             totalLomba += Number(s);
             hasScore = true;
           }
-          const tMs = parseTimeToMs(getSavedTimeForPesertaLomba(p.id, l.id));
+          const tMs = parseTimeToMs(getTimeForPesertaLomba(p.id, l.id));
           if (tMs !== Infinity) {
             cumulativeTimeMs += tMs;
             countTime++;
@@ -1578,7 +1594,7 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
       return (a.pangkalan || "").localeCompare(b.pangkalan || "");
     });
     return list;
-  }, [pesertaList, reportTingkat, getPesertaScoreDynamic, activeReportLomba, getScoreForReguLomba]);
+  }, [pesertaList, reportTingkat, getPesertaScoreDynamic, activeReportLomba, getScoreForReguLomba, getTimeForPesertaLomba]);
 
   // Unified list for display based on reportGender
   const displayKlasemenList = useMemo(() => {
@@ -1617,18 +1633,27 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
 
   const getJuaraForLomba = (lombaId) => {
     if (reportGender === "Gabungan") {
-      const pangkalanScores = rankedPangkalanList.map((item) => {
-        const val = item.lombaScores[lombaId];
-        const paStr = item.reguPaList.length > 0 ? item.reguPaList.join(", ") : "—";
-        const piStr = item.reguPiList.length > 0 ? item.reguPiList.join(", ") : "—";
-        return {
-          id: item.pangkalan,
-          pangkalan: item.pangkalan,
-          nama_regu: `${paStr} & ${piStr}`,
-          score: val === "—" ? 0 : Number(val),
-        };
+      const pangkalanScores = rankedPangkalanList
+        .map((item) => {
+          const val = item.lombaScores[lombaId];
+          const paStr = item.reguPaList.length > 0 ? item.reguPaList.join(", ") : "—";
+          const piStr = item.reguPiList.length > 0 ? item.reguPiList.join(", ") : "—";
+          const score = val === "—" ? 0 : Number(val);
+          return {
+            id: item.pangkalan,
+            pangkalan: item.pangkalan,
+            nama_regu: `${paStr} & ${piStr}`,
+            score,
+            totalTimeMs: item.totalTimeMs || Infinity,
+          };
+        })
+        .filter((item) => item.score > 0);
+
+      pangkalanScores.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (a.totalTimeMs !== b.totalTimeMs) return a.totalTimeMs - b.totalTimeMs;
+        return a.pangkalan.localeCompare(b.pangkalan);
       });
-      pangkalanScores.sort((a, b) => b.score - a.score);
       return pangkalanScores.slice(0, 3);
     }
 
@@ -1647,22 +1672,26 @@ _Satyaku Kudarmakan, Darmaku Kubaktikan._`;
       } else if (nilaiMap[key] !== undefined) {
         score = Number(nilaiMap[key]);
       }
-      return { ...p, score };
+      const rawTime = getTimeForPesertaLomba(p.id, lombaId);
+      return { ...p, score, rawTime };
     });
 
+    // Hanya sertakan peserta yang telah memiliki nilai (> 0)
+    const validScores = scores.filter((s) => s.score > 0);
+
     // Peringkat per cabang lomba: Nilai tertinggi. Jika nilai sama, waktu tercepat!
-    scores.sort((a, b) => {
+    validScores.sort((a, b) => {
       if (b.score !== a.score) {
         return b.score - a.score;
       }
-      const timeA = parseTimeToMs(getSavedTimeForPesertaLomba(a.id, lombaId));
-      const timeB = parseTimeToMs(getSavedTimeForPesertaLomba(b.id, lombaId));
+      const timeA = parseTimeToMs(a.rawTime);
+      const timeB = parseTimeToMs(b.rawTime);
       if (timeA !== timeB) {
         return timeA - timeB;
       }
       return (a.nama_regu || "").localeCompare(b.nama_regu || "");
     });
-    return scores.slice(0, 3);
+    return validScores.slice(0, 3);
   };
 
   // --- RENDERING HELPERS ---
