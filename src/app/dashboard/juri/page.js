@@ -796,9 +796,12 @@ export default function DashboardJuri() {
       nilai: finalScore,
     };
 
-    // Upsert score in Supabase with detailed rubric criteria
+    let dbSuccess = false;
+    let saveErrorMessage = "";
+
+    // 1. Coba simpan via Supabase Client langsung
     try {
-      await supabase
+      const { error: upsertError } = await supabase
         .from("penilaian")
         .upsert({
           peserta_id: selectedPeserta,
@@ -808,8 +811,47 @@ export default function DashboardJuri() {
           rubrik: rubrikPayload,
           updated_at: new Date().toISOString(),
         }, { onConflict: "peserta_id, juri_id, lomba_id" });
+
+      if (!upsertError) {
+        dbSuccess = true;
+      } else {
+        console.warn("Client-side upsert warning, switching to API fallback:", upsertError);
+        saveErrorMessage = upsertError.message || "Gagal simpan ke Supabase";
+      }
     } catch (e) {
-      console.warn("DB upsert notice:", e);
+      console.warn("Client-side upsert exception, switching to API fallback:", e);
+      saveErrorMessage = e.message || "Gagal simpan ke Supabase";
+    }
+
+    // 2. Jika client-side gagal (misal diblokir RLS atau scope session), gunakan API server fallback
+    if (!dbSuccess) {
+      try {
+        const apiRes = await fetch("/api/juri/simpan-nilai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            peserta_id: selectedPeserta,
+            juri_id: targetJuriId,
+            lomba_id: targetLombaId,
+            nilai: finalScore,
+            rubrik: rubrikPayload,
+          }),
+        });
+        const apiData = await apiRes.json();
+        if (apiRes.ok && apiData.success) {
+          dbSuccess = true;
+        } else {
+          saveErrorMessage = apiData.error || saveErrorMessage;
+        }
+      } catch (err) {
+        saveErrorMessage = err.message || saveErrorMessage;
+      }
+    }
+
+    if (!dbSuccess) {
+      setPesan({ type: "error", text: `Gagal mengirim nilai ke database: ${saveErrorMessage}` });
+      setSaving(false);
+      return;
     }
 
     {
