@@ -370,17 +370,37 @@ export default function DashboardJuri() {
         localStorage.removeItem("offline_penilaian");
       }
     } catch (_) {}
-    cekAuthDanAmbilData();
+    cekAuthDanAmbilData(true);
   }, []);
 
-  // Real-time listener for Juri page
+  // Background score refresher that does NOT reset active forms, category, or selected participants
+  const refreshScoresOnly = async (userId) => {
+    if (!userId) return;
+    try {
+      const { data: scores } = await supabase
+        .from("penilaian")
+        .select("id, peserta_id, lomba_id, nilai, rubrik, updated_at")
+        .eq("juri_id", userId);
+
+      if (scores) {
+        setPenilaianList(scores);
+        const map = {};
+        scores.forEach((s) => {
+          map[s.peserta_id] = s;
+        });
+        setJuriScoresMap(map);
+      }
+    } catch (_) {}
+  };
+
+  // Real-time listener for Juri page (updates scores silently in background without resetting active category/form)
   useEffect(() => {
     if (!juri?.id) return;
 
     const channel = supabase
       .channel(`juri-realtime-${juri.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "penilaian" }, () => {
-        cekAuthDanAmbilData();
+        refreshScoresOnly(juri.id);
       })
       .subscribe();
 
@@ -450,7 +470,7 @@ export default function DashboardJuri() {
   // Locking checks: Kunci hanya ke cabang lomba yang dipilih saat daftar jika bukan akses "SEMUA"
   const isLockedPos = Boolean(juri && juri.role === "juri" && juri.assigned_lomba_id && juri.assigned_lomba_id !== "SEMUA");
   const isLockedGender = Boolean(juri && juri.role === "juri" && juri.assigned_gender && juri.assigned_gender !== "SEMUA");
-  const isLockedKategori = Boolean(juri && juri.role === "juri" && juri.assigned_kategori && juri.assigned_kategori !== "SEMUA");
+  const isLockedKategori = false; // Juri cabang lomba dapat menilai tingkat SD maupun SMP
 
   // Dapatkan kode lomba yang ditugaskan ke juri (misal "PNR" untuk Pionering)
   const assignedLombaKode = useMemo(() => {
@@ -490,7 +510,7 @@ export default function DashboardJuri() {
     }
   }, [selectedKategori, lombaList, juri, isLockedPos, assignedLombaKode, currentLombaDef?.kode]);
 
-  const cekAuthDanAmbilData = async () => {
+  const cekAuthDanAmbilData = async (isInitial = false) => {
     try {
       // 1. Verifikasi sesi autentikasi resmi dari Supabase Auth
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -554,45 +574,31 @@ export default function DashboardJuri() {
       }
 
       setLombaList(loadedLomba);
-      const defaultKategori = (profile.assigned_kategori && profile.assigned_kategori !== "SEMUA") 
-        ? profile.assigned_kategori 
-        : selectedKategori;
-      if (profile.assigned_kategori && profile.assigned_kategori !== "SEMUA") {
-        setSelectedKategori(profile.assigned_kategori);
-      }
-      if (profile.assigned_gender && profile.assigned_gender !== "SEMUA") {
-        setSelectedGender(profile.assigned_gender);
-      }
 
-      if (profile.assigned_lomba_id && profile.assigned_lomba_id !== "SEMUA") {
-        let matched = loadedLomba.find((l) => l.id === profile.assigned_lomba_id);
-        if (!matched && profile.lomba?.kode_lomba) {
-          matched = loadedLomba.find((l) => l.kode_lomba === profile.lomba.kode_lomba && (!profile.assigned_kategori || profile.assigned_kategori === "SEMUA" || l.kategori === profile.assigned_kategori));
+      // Inisialisasi awal hanya jika pertama kali load halaman
+      if (isInitial) {
+        if (profile.assigned_gender && profile.assigned_gender !== "SEMUA") {
+          setSelectedGender(profile.assigned_gender);
         }
-        if (matched) {
-          if (profile.assigned_kategori && profile.assigned_kategori !== "SEMUA") {
-            setSelectedLombaId(matched.id);
-            if (matched.kategori) setSelectedKategori(matched.kategori);
-          } else {
-            // Juri lintas kategori (SD & SMP)
-            const targetKat = defaultKategori || "SD";
-            const matchSameKat = loadedLomba.find(
-              (l) => l.kategori === targetKat && l.kode_lomba === (matched.kode_lomba || profile.lomba?.kode_lomba)
-            );
-            if (matchSameKat) {
-              setSelectedLombaId(matchSameKat.id);
-              setSelectedKategori(targetKat);
-            } else {
-              setSelectedLombaId(matched.id);
-              if (matched.kategori) setSelectedKategori(matched.kategori);
-            }
+
+        const initialKat = selectedKategori || "SD";
+        if (profile.assigned_lomba_id && profile.assigned_lomba_id !== "SEMUA") {
+          let matched = loadedLomba.find((l) => l.id === profile.assigned_lomba_id);
+          if (!matched && profile.lomba?.kode_lomba) {
+            matched = loadedLomba.find((l) => l.kode_lomba === profile.lomba.kode_lomba);
           }
-        } else {
-          setSelectedLombaId(profile.assigned_lomba_id);
+          if (matched) {
+            const matchSameKat = loadedLomba.find(
+              (l) => l.kategori === initialKat && l.kode_lomba === (matched.kode_lomba || profile.lomba?.kode_lomba)
+            );
+            setSelectedLombaId(matchSameKat ? matchSameKat.id : matched.id);
+          } else {
+            setSelectedLombaId(profile.assigned_lomba_id);
+          }
+        } else if (loadedLomba.length > 0) {
+          const matching = loadedLomba.find((l) => l.kategori === initialKat);
+          setSelectedLombaId(matching ? matching.id : loadedLomba[0].id);
         }
-      } else if (loadedLomba.length > 0) {
-        const matching = loadedLomba.find((l) => l.kategori === defaultKategori);
-        setSelectedLombaId(matching ? matching.id : loadedLomba[0].id);
       }
 
       // Ambil data peserta resmi yang terverifikasi langsung dari database Supabase
